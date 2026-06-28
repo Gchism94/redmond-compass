@@ -1,9 +1,10 @@
 /**
- * In-memory implementation of the DataSource contract over fictional seed data.
+ * In-memory implementation of the DataSource contract over fictional seed data,
+ * with a localStorage OVERLAY for owner writes (step 7) — new/edited listings,
+ * bulletins, and events persist across reloads and show throughout the app.
+ *
  * This is the MVP source. A real backend (base44 / Supabase) implements the same
  * interface and swaps in at src/data/source.ts with no feature-code changes.
- *
- * A small artificial latency makes loading/skeleton states observable in dev.
  */
 import type {
   Business,
@@ -27,14 +28,33 @@ import type {
   SearchQuery,
   Paged,
   CategoryCount,
+  NewBusinessInput,
+  NewBulletinInput,
+  NewEventInput,
 } from "../DataSource";
-import { businesses, bulletins, events, news, resources } from "./seed";
+import {
+  businesses as baseBusinesses,
+  bulletins as baseBulletins,
+  events as baseEvents,
+  news,
+  resources,
+} from "./seed";
 
 const LATENCY_MS = 180;
+const OVERLAY_KEY = "rc.owner.v1";
 
 function delay<T>(value: T): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), LATENCY_MS));
 }
+
+interface Overlay {
+  newBusinesses: Business[];
+  patches: Record<string, Partial<Business>>;
+  newBulletins: Bulletin[];
+  newEvents: EventItem[];
+}
+
+const EMPTY_OVERLAY: Overlay = { newBusinesses: [], patches: {}, newBulletins: [], newEvents: [] };
 
 function textMatch(b: Business, text: string): boolean {
   const hay = [b.name, b.description, b.category, ...(b.subcategories ?? []), ...b.amenityTags]
@@ -47,11 +67,68 @@ function textMatch(b: Business, text: string): boolean {
     .every((term) => hay.includes(term));
 }
 
+function slugify(s: string): string {
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+      .slice(0, 60) || "listing"
+  );
+}
+
 export class MockDataSource implements DataSource {
+  private overlay: Overlay;
+
+  constructor() {
+    this.overlay = this.loadOverlay();
+  }
+
+  private loadOverlay(): Overlay {
+    try {
+      const raw = localStorage.getItem(OVERLAY_KEY);
+      return raw ? { ...EMPTY_OVERLAY, ...JSON.parse(raw) } : { ...EMPTY_OVERLAY };
+    } catch {
+      return { ...EMPTY_OVERLAY };
+    }
+  }
+
+  private persist() {
+    try {
+      localStorage.setItem(OVERLAY_KEY, JSON.stringify(this.overlay));
+    } catch {
+      /* ignore quota/availability */
+    }
+  }
+
+  // ---- merged views (seed + overlay) ----
+  private applyPatch(b: Business): Business {
+    const p = this.overlay.patches[b.id];
+    return p ? { ...b, ...p } : b;
+  }
+  private businessList(): Business[] {
+    return [...baseBusinesses, ...this.overlay.newBusinesses].map((b) => this.applyPatch(b));
+  }
+  private bulletinList(): Bulletin[] {
+    return [...baseBulletins, ...this.overlay.newBulletins];
+  }
+  private eventList(): EventItem[] {
+    return [...baseEvents, ...this.overlay.newEvents];
+  }
+
+  private uniqueSlug(name: string): string {
+    const base = slugify(name);
+    const taken = new Set(this.businessList().map((b) => b.slug));
+    if (!taken.has(base)) return base;
+    let i = 2;
+    while (taken.has(`${base}-${i}`)) i++;
+    return `${base}-${i}`;
+  }
+
   // ---- Businesses ----
   async listBusinesses(query: BusinessQuery = {}): Promise<Paged<Business>> {
     const origin = query.origin ?? REDMOND_CENTER;
-    let items = [...businesses];
+    let items = this.businessList();
 
     if (query.text) items = items.filter((b) => textMatch(b, query.text!));
     if (query.categorySlug && query.categorySlug !== "more") {
@@ -96,37 +173,47 @@ export class MockDataSource implements DataSource {
   }
 
   async getBusinessBySlug(slug: string): Promise<Business | null> {
-    return delay(businesses.find((b) => b.slug === slug) ?? null);
+    return delay(this.businessList().find((b) => b.slug === slug) ?? null);
   }
 
   async getBusinessById(id: ID): Promise<Business | null> {
-    return delay(businesses.find((b) => b.id === id) ?? null);
+    return delay(this.businessList().find((b) => b.id === id) ?? null);
   }
 
   async listCategories(): Promise<CategoryCount[]> {
+    const list = this.businessList();
     const counts: CategoryCount[] = TOP_CATEGORIES.map((c) => ({
       slug: c.slug,
       label: c.label,
-      count:
-        c.slug === "more"
-          ? 0
-          : businesses.filter((b) => topCategoryFor(b.category) === c.slug).length,
+      count: c.slug === "more" ? 0 : list.filter((b) => topCategoryFor(b.category) === c.slug).length,
     }));
     return delay(counts);
   }
 
   // ---- Bulletins ----
-  async listBulletins(params: { businessId?: ID; limit?: number } = {}): Promise<Bulletin[]> {
-    let items = bulletins.filter((b) => b.status === "live");
+  async listBulletins(
+    params: { businessId?: ID; limit?: number; status?: "live" | "all" } = {},
+  ): Promise<Bulletin[]> {
+    let items = this.bulletinList();
+    if (params.status !== "all") items = items.filter((b) => b.status === "live");
     if (params.businessId) items = items.filter((b) => b.businessId === params.businessId);
     items = items.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
     if (params.limit != null) items = items.slice(0, params.limit);
     return delay(items);
   }
 
+  async countBulletinsThisMonth(businessId: ID): Promise<number> {
+    const now = new Date();
+    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const n = this.bulletinList().filter(
+      (b) => b.businessId === businessId && b.createdAt.slice(0, 7) === ym,
+    ).length;
+    return delay(n);
+  }
+
   // ---- Events ----
   async listEvents(query: EventQuery = {}): Promise<EventItem[]> {
-    let items = [...events];
+    let items = this.eventList();
     if (query.businessId) items = items.filter((e) => e.businessId === query.businessId);
     if (!query.includePast) {
       const now = Date.now();
@@ -147,7 +234,7 @@ export class MockDataSource implements DataSource {
   }
 
   async getEventById(id: ID): Promise<EventItem | null> {
-    return delay(events.find((e) => e.id === id) ?? null);
+    return delay(this.eventList().find((e) => e.id === id) ?? null);
   }
 
   // ---- News ----
@@ -184,19 +271,16 @@ export class MockDataSource implements DataSource {
     const out: SearchResult[] = [];
 
     if (types.includes("business")) {
-      for (const b of businesses) if (textMatch(b, term)) out.push({ type: "business", item: b });
+      for (const b of this.businessList()) if (textMatch(b, term)) out.push({ type: "business", item: b });
     }
     if (types.includes("event")) {
-      for (const e of events) {
-        if (
-          e.title.toLowerCase().includes(term) ||
-          (e.category ?? "").toLowerCase().includes(term)
-        )
+      for (const e of this.eventList()) {
+        if (e.title.toLowerCase().includes(term) || (e.category ?? "").toLowerCase().includes(term))
           out.push({ type: "event", item: e });
       }
     }
     if (types.includes("bulletin")) {
-      for (const bl of bulletins) {
+      for (const bl of this.bulletinList()) {
         if (bl.status === "live" && bl.body.toLowerCase().includes(term))
           out.push({ type: "bulletin", item: bl });
       }
@@ -213,13 +297,90 @@ export class MockDataSource implements DataSource {
 
   // ---- Reputation (DEFERRED seam) ----
   async getRecommendations(businessId: ID): Promise<{ count: number; recent: Recommendation[] }> {
-    const b = businesses.find((x) => x.id === businessId);
-    // MVP: count only, notes are fast-follow (positive-only; never a rating).
+    const b = this.businessList().find((x) => x.id === businessId);
     return delay({ count: b?.recommendCount ?? 0, recent: [] });
   }
 
   // ---- Session (guest at MVP; auth wiring is step 6) ----
   async getCurrentUser(): Promise<User | null> {
     return delay(null);
+  }
+
+  // ---- Owner writes (step 7) ----
+  async createBusiness(input: NewBusinessInput): Promise<Business> {
+    const id = `b_${Date.now().toString(36)}`;
+    const biz: Business = {
+      id,
+      name: input.name,
+      slug: this.uniqueSlug(input.name),
+      category: input.category,
+      subcategories: input.subcategories ?? [],
+      description: input.description ?? "",
+      address: input.address,
+      geo: input.geo ?? REDMOND_CENTER,
+      phone: input.phone,
+      website: input.website,
+      email: input.email,
+      hours: input.hours,
+      photos: [],
+      amenityTags: input.amenityTags ?? [],
+      claimed: true,
+      verified: false, // new listings start unverified; "claimed & verified" is earned
+      ownerId: input.ownerId,
+      tier: "free",
+      createdAt: new Date().toISOString(),
+    };
+    this.overlay.newBusinesses.push(biz);
+    this.persist();
+    return delay(biz);
+  }
+
+  async updateBusiness(id: ID, patch: Partial<Business>): Promise<Business> {
+    const created = this.overlay.newBusinesses.find((b) => b.id === id);
+    if (created) Object.assign(created, patch);
+    else this.overlay.patches[id] = { ...this.overlay.patches[id], ...patch };
+    this.persist();
+    const updated = this.businessList().find((b) => b.id === id);
+    if (!updated) throw new Error(`Business ${id} not found`);
+    return delay(updated);
+  }
+
+  async claimBusiness(id: ID, ownerId: ID): Promise<Business> {
+    return this.updateBusiness(id, { claimed: true, ownerId });
+  }
+
+  async createBulletin(input: NewBulletinInput): Promise<Bulletin> {
+    const bulletin: Bulletin = {
+      id: `bl_${Date.now().toString(36)}`,
+      businessId: input.businessId,
+      body: input.body,
+      linkCta: input.linkCta,
+      scheduledFor: input.scheduledFor,
+      status: input.status ?? (input.scheduledFor ? "scheduled" : "live"),
+      createdAt: new Date().toISOString(),
+    };
+    this.overlay.newBulletins.push(bulletin);
+    this.persist();
+    return delay(bulletin);
+  }
+
+  async createEvent(input: NewEventInput): Promise<EventItem> {
+    const event: EventItem = {
+      id: `e_${Date.now().toString(36)}`,
+      businessId: input.businessId,
+      title: input.title,
+      startAt: input.startAt,
+      endAt: input.endAt,
+      venueName: input.venueName,
+      address: input.address,
+      geo: input.geo,
+      description: input.description,
+      category: input.category,
+      tags: input.tags,
+      status: "upcoming",
+    };
+    this.overlay.newEvents.push(event);
+    this.persist();
+    return delay(event);
   }
 }

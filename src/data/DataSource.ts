@@ -18,6 +18,7 @@ import type {
   Business,
   Bulletin,
   EventItem,
+  Hours,
   NewsArticle,
   Resource,
   ResourceCategory,
@@ -28,6 +29,43 @@ import type {
   User,
   ID,
 } from "@/lib/types";
+
+/** Owner-path write inputs (BUILD-BRIEF §12 step 7). */
+export interface NewBusinessInput {
+  name: string;
+  category: string;
+  address: string;
+  geo?: GeoPoint;
+  description?: string;
+  phone?: string;
+  website?: string;
+  email?: string;
+  subcategories?: string[];
+  amenityTags?: string[];
+  hours?: Hours;
+  ownerId?: ID;
+}
+
+export interface NewBulletinInput {
+  businessId: ID;
+  body: string;
+  linkCta?: { label: string; url: string };
+  scheduledFor?: string;
+  status?: Bulletin["status"];
+}
+
+export interface NewEventInput {
+  businessId?: ID;
+  title: string;
+  startAt: string;
+  endAt?: string;
+  venueName?: string;
+  address?: string;
+  geo?: GeoPoint;
+  description?: string;
+  category?: string;
+  tags?: string[];
+}
 
 export type BusinessSort = "relevance" | "distance" | "recommend" | "openNow" | "name";
 
@@ -95,7 +133,9 @@ export interface DataSource {
   listCategories(): Promise<CategoryCount[]>;
 
   // ---- Bulletins (business posts) ----
-  listBulletins(params?: { businessId?: ID; limit?: number }): Promise<Bulletin[]>;
+  listBulletins(params?: { businessId?: ID; limit?: number; status?: "live" | "all" }): Promise<Bulletin[]>;
+  /** count toward the free monthly cap (all statuses, current month) */
+  countBulletinsThisMonth(businessId: ID): Promise<number>;
 
   // ---- Events ----
   listEvents(query?: EventQuery): Promise<EventItem[]>;
@@ -118,4 +158,15 @@ export interface DataSource {
   // ---- Session & personalization (BUILD-BRIEF §12 step 6 — seams now) ----
   /** Current resident, or null when browsing as a guest (the default at MVP). */
   getCurrentUser(): Promise<User | null>;
+
+  // ---- Owner writes (BUILD-BRIEF §12 step 7) ----
+  /** List/claim a free listing (current-site parity fields). */
+  createBusiness(input: NewBusinessInput): Promise<Business>;
+  updateBusiness(id: ID, patch: Partial<Business>): Promise<Business>;
+  /** Claim an existing (unclaimed) listing for an owner. */
+  claimBusiness(id: ID, ownerId: ID): Promise<Business>;
+  /** Post a bulletin (free monthly cap enforced in the UI, never destroys work). */
+  createBulletin(input: NewBulletinInput): Promise<Bulletin>;
+  /** Submit an event (free + uncapped for all tiers). */
+  createEvent(input: NewEventInput): Promise<EventItem>;
 }

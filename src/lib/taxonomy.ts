@@ -32,6 +32,11 @@ export function topCategoryFor(category: string): string {
   return hit?.slug ?? "more";
 }
 
+/** Flat, de-duped list of selectable business categories (owner forms B0/B4). */
+export const BUSINESS_CATEGORIES: string[] = [
+  ...new Set(TOP_CATEGORIES.flatMap((c) => c.includes)),
+].sort();
+
 /** Interest chips for onboarding (S1) + Account (S8). Shape the personalized feed. */
 export const INTERESTS: string[] = [
   "Food & Drink",

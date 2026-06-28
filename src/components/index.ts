@@ -12,6 +12,8 @@ export { OpenStatusLabel } from "./ui/OpenStatusLabel";
 export { CompletenessMeter } from "./ui/CompletenessMeter";
 export { EmptyState } from "./ui/EmptyState";
 export { Thumb } from "./ui/Thumb";
+export { Field, fieldInputClass } from "./ui/Field";
+export { Sheet } from "./ui/Sheet";
 
 export { ResultCard } from "./ResultCard";
 export { ActionBar } from "./ActionBar";

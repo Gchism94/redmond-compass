@@ -4,10 +4,17 @@
  * so screens never touch a concrete source. Query keys are structured for easy
  * invalidation once writes (saved/follow, owner path) land in steps 6–7.
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDataSource } from "./DataProvider";
-import type { BusinessQuery, EventQuery, SearchQuery } from "./DataSource";
-import type { ResourceCategory, ID } from "@/lib/types";
+import type {
+  BusinessQuery,
+  EventQuery,
+  SearchQuery,
+  NewBusinessInput,
+  NewBulletinInput,
+  NewEventInput,
+} from "./DataSource";
+import type { Business, ResourceCategory, ID } from "@/lib/types";
 
 export const qk = {
   businesses: (q?: BusinessQuery) => ["businesses", q ?? {}] as const,
@@ -111,4 +118,77 @@ export function useRecommendations(businessId: string | undefined) {
 export function useCurrentUser() {
   const ds = useDataSource();
   return useQuery({ queryKey: qk.currentUser(), queryFn: () => ds.getCurrentUser() });
+}
+
+export function useBulletinCount(businessId: string | undefined) {
+  const ds = useDataSource();
+  return useQuery({
+    queryKey: ["bulletin-count", businessId ?? ""] as const,
+    queryFn: () => ds.countBulletinsThisMonth(businessId!),
+    enabled: !!businessId,
+  });
+}
+
+// ---- Owner mutations (step 7). Invalidate the read caches the change affects. ----
+function useInvalidateBusiness() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ["businesses"] });
+    qc.invalidateQueries({ queryKey: ["business"] });
+    qc.invalidateQueries({ queryKey: ["business-by-id"] });
+    qc.invalidateQueries({ queryKey: ["categories"] });
+    qc.invalidateQueries({ queryKey: ["search"] });
+  };
+}
+
+export function useCreateBusiness() {
+  const ds = useDataSource();
+  const invalidate = useInvalidateBusiness();
+  return useMutation({
+    mutationFn: (input: NewBusinessInput) => ds.createBusiness(input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateBusiness() {
+  const ds = useDataSource();
+  const invalidate = useInvalidateBusiness();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: ID; patch: Partial<Business> }) => ds.updateBusiness(id, patch),
+    onSuccess: invalidate,
+  });
+}
+
+export function useClaimBusiness() {
+  const ds = useDataSource();
+  const invalidate = useInvalidateBusiness();
+  return useMutation({
+    mutationFn: ({ id, ownerId }: { id: ID; ownerId: ID }) => ds.claimBusiness(id, ownerId),
+    onSuccess: invalidate,
+  });
+}
+
+export function useCreateBulletin() {
+  const ds = useDataSource();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: NewBulletinInput) => ds.createBulletin(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["bulletins"] });
+      qc.invalidateQueries({ queryKey: ["bulletin-count"] });
+      qc.invalidateQueries({ queryKey: ["search"] });
+    },
+  });
+}
+
+export function useCreateEvent() {
+  const ds = useDataSource();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: NewEventInput) => ds.createEvent(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["events"] });
+      qc.invalidateQueries({ queryKey: ["search"] });
+    },
+  });
 }

@@ -42,6 +42,8 @@ interface Profile {
   location: GeoPoint | null;
   notificationPrefs: NotificationPrefs;
   onboarded: boolean;
+  /** the business this user manages (owner path, step 7); null = not an owner yet */
+  ownerBusinessId: string | null;
 }
 
 const DEFAULT_PROFILE: Profile = {
@@ -53,6 +55,7 @@ const DEFAULT_PROFILE: Profile = {
   location: null,
   notificationPrefs: { followedBulletins: true, savedEvents: true, localNews: false },
   onboarded: false,
+  ownerBusinessId: null,
 };
 
 const PROFILE_KEY = "rc.profile";
@@ -87,6 +90,7 @@ interface SessionValue extends Profile {
   setNotificationPref: (key: keyof NotificationPrefs, value: boolean) => void;
   setLocation: (loc: GeoPoint | null) => void;
   completeOnboarding: (patch?: Partial<Pick<Profile, "interests" | "location">>) => void;
+  setOwnerBusinessId: (id: string | null) => void;
 
   // auth
   signIn: (email: string, name?: string) => void;
@@ -220,6 +224,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setProfile((p) => ({ ...p, notificationPrefs: { ...p.notificationPrefs, [key]: val } })),
       setLocation: (loc) => setProfile((p) => ({ ...p, location: loc })),
       completeOnboarding: (patch) => setProfile((p) => ({ ...p, ...patch, onboarded: true })),
+      setOwnerBusinessId: (id) => setProfile((p) => ({ ...p, ownerBusinessId: id })),
       signIn: (email, name) => {
         const cleanName = name?.trim() || email.split("@")[0];
         setUser({ id: `u_${email.toLowerCase()}`, email: email.trim(), name: cleanName });
