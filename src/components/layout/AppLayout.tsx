@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { BottomTabNav } from "../BottomTabNav";
+import { RouteFallback } from "./RouteFallback";
 import { OfflineBanner } from "@/pwa/OfflineBanner";
 
 /**
@@ -31,7 +32,9 @@ export function AppLayout() {
         ref={mainRef}
         className="app-frame min-h-[100dvh] pb-[calc(58px+env(safe-area-inset-bottom))]"
       >
-        <Outlet />
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
       <OfflineBanner />
       <BottomTabNav />

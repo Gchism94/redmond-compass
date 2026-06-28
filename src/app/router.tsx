@@ -1,33 +1,42 @@
+import { lazy, type ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { GalleryPage } from "./GalleryPage";
-import { HomeScreen } from "@/features/directory/HomeScreen";
-import { SearchScreen } from "@/features/directory/SearchScreen";
-import { ResultsScreen } from "@/features/directory/ResultsScreen";
-import { BusinessProfileScreen } from "@/features/directory/BusinessProfileScreen";
-import { EventsScreen } from "@/features/events/EventsScreen";
-import { EventDetailScreen } from "@/features/events/EventDetailScreen";
-import { CommunityScreen } from "@/features/community/CommunityScreen";
-import { NewsArticleScreen } from "@/features/community/NewsArticleScreen";
-import { ResourcesScreen } from "@/features/resources/ResourcesScreen";
-import { SavedScreen } from "@/features/saved/SavedScreen";
-import { AccountScreen } from "@/features/account/AccountScreen";
-import { LoginScreen } from "@/features/account/LoginScreen";
-import { ClaimScreen } from "@/features/owner/ClaimScreen";
-import { OwnerDashboard } from "@/features/owner/OwnerDashboard";
-import { EditListingScreen } from "@/features/owner/EditListingScreen";
-import { PostBulletinScreen } from "@/features/owner/PostBulletinScreen";
-import { SubmitEventScreen } from "@/features/owner/SubmitEventScreen";
-import { NotFoundPage } from "./pages";
+import { ErrorPage } from "./ErrorPage";
 
 /**
- * Routes per BUILD-BRIEF §4. Consumer read path + JIT auth/personalization
- * (steps 1–6) are live on mock data. Owner routes (/claim, /manage…) arrive in
- * step 7. /gallery is the dev component gallery.
+ * Routes per BUILD-BRIEF §4. Screens are code-split (React.lazy) so each route is
+ * its own chunk — the gallery and owner path stay out of the initial bundle, which
+ * loads only the shell + Home. A Suspense boundary in AppLayout shows the fallback.
  */
+const named = <T extends Record<string, unknown>>(
+  factory: () => Promise<T>,
+  name: keyof T,
+) => lazy(async () => ({ default: (await factory())[name] as ComponentType }));
+
+const HomeScreen = named(() => import("@/features/directory/HomeScreen"), "HomeScreen");
+const SearchScreen = named(() => import("@/features/directory/SearchScreen"), "SearchScreen");
+const ResultsScreen = named(() => import("@/features/directory/ResultsScreen"), "ResultsScreen");
+const BusinessProfileScreen = named(() => import("@/features/directory/BusinessProfileScreen"), "BusinessProfileScreen");
+const EventsScreen = named(() => import("@/features/events/EventsScreen"), "EventsScreen");
+const EventDetailScreen = named(() => import("@/features/events/EventDetailScreen"), "EventDetailScreen");
+const CommunityScreen = named(() => import("@/features/community/CommunityScreen"), "CommunityScreen");
+const NewsArticleScreen = named(() => import("@/features/community/NewsArticleScreen"), "NewsArticleScreen");
+const ResourcesScreen = named(() => import("@/features/resources/ResourcesScreen"), "ResourcesScreen");
+const SavedScreen = named(() => import("@/features/saved/SavedScreen"), "SavedScreen");
+const AccountScreen = named(() => import("@/features/account/AccountScreen"), "AccountScreen");
+const LoginScreen = named(() => import("@/features/account/LoginScreen"), "LoginScreen");
+const ClaimScreen = named(() => import("@/features/owner/ClaimScreen"), "ClaimScreen");
+const OwnerDashboard = named(() => import("@/features/owner/OwnerDashboard"), "OwnerDashboard");
+const EditListingScreen = named(() => import("@/features/owner/EditListingScreen"), "EditListingScreen");
+const PostBulletinScreen = named(() => import("@/features/owner/PostBulletinScreen"), "PostBulletinScreen");
+const SubmitEventScreen = named(() => import("@/features/owner/SubmitEventScreen"), "SubmitEventScreen");
+const GalleryPage = named(() => import("./GalleryPage"), "GalleryPage");
+const NotFoundPage = named(() => import("./pages"), "NotFoundPage");
+
 export const router = createBrowserRouter([
   {
     element: <AppLayout />,
+    errorElement: <ErrorPage />,
     children: [
       { path: "/", element: <HomeScreen /> },
       { path: "/search", element: <SearchScreen /> },
