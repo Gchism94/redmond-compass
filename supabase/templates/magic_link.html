@@ -1,0 +1,8 @@
+<!-- Redmond Compass — passwordless sign-in (returning user). Surfaces the 6-digit
+     code the app's AuthSheet asks for, with the one-tap link as a fallback. -->
+<h2>Your Redmond Compass code</h2>
+<p>Enter this code to finish signing in:</p>
+<p style="font-size:28px;font-weight:700;letter-spacing:4px;margin:12px 0">{{ .Token }}</p>
+<p>It expires in 1 hour. Or just tap:</p>
+<p><a href="{{ .ConfirmationURL }}">Sign in to Redmond Compass</a></p>
+<p style="color:#888;font-size:12px">If you didn't request this, you can ignore this email.</p>
