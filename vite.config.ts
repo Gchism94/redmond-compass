@@ -83,4 +83,19 @@ export default defineConfig({
   resolve: {
     alias: { "@": path.resolve(__dirname, "./src") },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Split the heavy, rarely-changing libs into their own cached chunks. With the
+        // PWA's autoUpdate, an app-code change then re-downloads only the small app chunk
+        // instead of the whole entry (supabase-js + React + Query), and the vendors load
+        // in parallel. Screens are already route-split via React.lazy.
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          supabase: ["@supabase/supabase-js"],
+          query: ["@tanstack/react-query"],
+        },
+      },
+    },
+  },
 });
