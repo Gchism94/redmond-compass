@@ -16,6 +16,7 @@ export function CategoryGrid({ columns = 4 }: { columns?: 3 | 4 }) {
         <Link
           key={c.slug}
           to={c.slug === "more" ? "/search/results" : `/search/results?cat=${c.slug}`}
+          aria-label={c.slug === "more" ? "Browse more categories" : `Browse ${c.label}`}
           className="flex flex-col items-center gap-1.5 focus-visible:outline-none"
         >
           <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-secondary text-positive">

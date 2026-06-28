@@ -43,7 +43,8 @@ export function EventCard({
       <Link
         to={`/events/${event.id}`}
         className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-secondary px-2.5 py-1.5 leading-none text-secondary-foreground focus-visible:outline-none"
-        aria-label={`${badge.mo} ${badge.day}`}
+        tabIndex={-1}
+        aria-hidden
       >
         <span className="font-heading text-md font-bold">{badge.day}</span>
         <span className="text-[10px] font-medium uppercase text-muted-foreground">{badge.mo}</span>

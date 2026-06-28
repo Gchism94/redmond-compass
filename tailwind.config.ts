@@ -63,7 +63,8 @@ export default {
       },
       fontSize: {
         // App type scale from design-tokens.css (--rc-text-*). Adds `text-md` (17px).
-        xs: ["11px", { lineHeight: "1.4" }],
+        // xs is 12px (not 11) to keep metadata legible (Lighthouse "legible font sizes").
+        xs: ["12px", { lineHeight: "1.4" }],
         sm: ["12.5px", { lineHeight: "1.45" }],
         base: ["15px", { lineHeight: "1.5" }],
         md: ["17px", { lineHeight: "1.4" }],

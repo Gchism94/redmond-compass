@@ -23,14 +23,17 @@
   --popover: 0 0% 100%; /* #FFFFFF                                      */
   --popover-foreground: 214 83% 18%; /* #082954                                      */
 
-  --primary: 30 96% 40%; /* #C86604  amber — PRIMARY CTAs (Call, etc.)   */
+  /* #C86604 → nudged darker to #A85405 so cream text clears WCAG AA (4.9:1).
+     Brand amber from the live site is 30 96% 40%; this keeps the hue, deepens L. */
+  --primary: 29 94% 34%; /* amber — PRIMARY CTAs (Call, etc.)   */
   --primary-foreground: 36 33% 97%; /* #FAF8F5  cream text on amber                 */
 
   --secondary: 30 40% 92%; /* #F3EBE2  warm light — secondary surfaces     */
   --secondary-foreground: 150 20% 12%; /* #18251F  dark green                          */
 
   --muted: 30 20% 93%; /* #F1EDEA  muted surface                       */
-  --muted-foreground: 150 10% 45%; /* #677E73  green-gray — secondary text         */
+  /* #677E73 → darkened to ~#50645A for WCAG AA on cream/white/muted (≥4.5:1). */
+  --muted-foreground: 150 11% 35%; /* green-gray — secondary text         */
 
   --accent: 16 65% 55%; /* #D76942  terracotta — accent / highlights    */
   --accent-foreground: 0 0% 100%; /* #FFFFFF                                       */

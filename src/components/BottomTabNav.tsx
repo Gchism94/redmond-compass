@@ -28,7 +28,7 @@ export function BottomTabNav() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  "flex min-h-tap flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium transition",
+                  "flex min-h-tap flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition",
                   isActive ? "text-positive" : "text-muted-foreground hover:text-foreground",
                 )
               }

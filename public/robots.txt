@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Redmond Compass app (app.redmondcompass.com). Directory SEO is owned by the
+# main redmondcompass.com site; this PWA is the installable companion app.

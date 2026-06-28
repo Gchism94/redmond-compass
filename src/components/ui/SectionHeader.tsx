@@ -31,6 +31,7 @@ export function SectionHeader({
       {seeAllHref && (
         <Link
           to={seeAllHref}
+          aria-label={`${seeAllLabel}: ${title}`}
           className="shrink-0 text-sm font-semibold text-positive hover:underline"
         >
           {seeAllLabel}

@@ -23,7 +23,7 @@ export const TOP_CATEGORIES: TopCategory[] = [
   { slug: "home", label: "Home", icon: "Home", includes: ["Home", "Hardware", "Garden", "Repair"] },
   { slug: "auto", label: "Auto", icon: "Car", includes: ["Auto", "Automotive"] },
   { slug: "outdoors", label: "Outdoors", icon: "Mountain", includes: ["Outdoors", "Recreation", "Sports"] },
-  { slug: "more", label: "More", icon: "Grid3x3", includes: [] },
+  { slug: "more", label: "More categories", icon: "Grid3x3", includes: [] },
 ];
 
 /** Reverse lookup: a business category → its top category slug. */
