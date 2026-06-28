@@ -108,6 +108,16 @@ Providers. Mock signs in instantly (no real OAuth) so dev keeps flowing.
 mock). Re-run to refresh. Applied by `supabase db reset`. **Mock still works for dev**
 (`VITE_DATA_SOURCE=mock`) — Supabase and mock share the same seed data.
 
+## Recommend (♥) — positive-only reputation (wired)
+
+`DataSource.recommend(businessId)` + `hasRecommended(businessId)` light up the
+`recommendations` seam now that real auth exists. Insert-only, idempotent
+(`unique(business_id,user_id)` → can't be bombed; no un-recommend, no value/rating
+column), and the `bump_recommend_count` trigger raises the cached count shown on the
+Business Profile (`RecommendRow`). It's **JIT-gated** like save/follow (AuthReason
+`recommend`), and — critically — the count is display-only and **never reorders results**
+(equal ranking holds). `verified_customer` remains a fast-follow seam.
+
 ## GHL seam (not wired)
 
 `businesses.ghl_id` (stable upsert key) + `src/data/ghl/mapping.ts`: a documented
