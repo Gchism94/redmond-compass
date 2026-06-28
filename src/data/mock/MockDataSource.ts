@@ -31,6 +31,9 @@ import type {
   NewBusinessInput,
   NewBulletinInput,
   NewEventInput,
+  AuthUser,
+  StartAuthResult,
+  PersistedProfile,
 } from "../DataSource";
 import {
   businesses as baseBusinesses,
@@ -77,11 +80,36 @@ function slugify(s: string): string {
   );
 }
 
+const AUTH_KEY = "rc.auth.user";
+
 export class MockDataSource implements DataSource {
   private overlay: Overlay;
+  private authUser: AuthUser | null;
+  private authListeners = new Set<(u: AuthUser | null) => void>();
 
   constructor() {
     this.overlay = this.loadOverlay();
+    this.authUser = this.loadAuthUser();
+  }
+
+  private loadAuthUser(): AuthUser | null {
+    try {
+      const raw = localStorage.getItem(AUTH_KEY);
+      return raw ? (JSON.parse(raw) as AuthUser) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private setAuthUser(u: AuthUser | null) {
+    this.authUser = u;
+    try {
+      if (u) localStorage.setItem(AUTH_KEY, JSON.stringify(u));
+      else localStorage.removeItem(AUTH_KEY);
+    } catch {
+      /* ignore */
+    }
+    this.authListeners.forEach((cb) => cb(u));
   }
 
   private loadOverlay(): Overlay {
@@ -301,9 +329,62 @@ export class MockDataSource implements DataSource {
     return delay({ count: b?.recommendCount ?? 0, recent: [] });
   }
 
-  // ---- Session (guest at MVP; auth wiring is step 6) ----
+  // ---- Session ----
   async getCurrentUser(): Promise<User | null> {
-    return delay(null);
+    if (!this.authUser) return delay(null);
+    return delay({
+      id: this.authUser.id,
+      email: this.authUser.email,
+      name: this.authUser.name,
+      role: "resident",
+      interests: [],
+      savedBusinessIds: [],
+      followedBusinessIds: [],
+      savedEventIds: [],
+      recentlyViewedIds: [],
+      notificationPrefs: { followedBulletins: true, savedEvents: true, localNews: false },
+    });
+  }
+
+  // ---- Auth (mock: instant sign-in, no OTP — keeps dev frictionless) ----
+  async startEmailAuth(email: string, name?: string): Promise<StartAuthResult> {
+    const clean = email.trim();
+    const user: AuthUser = {
+      id: `u_${clean.toLowerCase()}`,
+      email: clean,
+      name: name?.trim() || clean.split("@")[0],
+    };
+    this.setAuthUser(user);
+    return delay({ otpSent: false, user });
+  }
+
+  async verifyEmailOtp(email: string, _token: string): Promise<AuthUser> {
+    // mock has no real OTP; if somehow called, just sign in.
+    void _token;
+    const res = await this.startEmailAuth(email);
+    return res.user!;
+  }
+
+  async signOut(): Promise<void> {
+    this.setAuthUser(null);
+  }
+
+  async getAuthUser(): Promise<AuthUser | null> {
+    return this.authUser;
+  }
+
+  onAuthChange(cb: (u: AuthUser | null) => void): () => void {
+    this.authListeners.add(cb);
+    return () => this.authListeners.delete(cb);
+  }
+
+  // ---- Profile (mock keeps prefs local in the session; no server row) ----
+  async getProfile(): Promise<Partial<PersistedProfile> | null> {
+    return null;
+  }
+
+  async saveProfile(_patch: Partial<PersistedProfile>): Promise<void> {
+    void _patch; // mock persists prefs via the session's own localStorage
   }
 
   // ---- Owner writes (step 7) ----

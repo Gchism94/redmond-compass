@@ -31,7 +31,11 @@ import type {
   NewBusinessInput,
   NewBulletinInput,
   NewEventInput,
+  AuthUser,
+  StartAuthResult,
+  PersistedProfile,
 } from "../DataSource";
+import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 import { getSupabaseClient } from "./client";
 import { rowToBusiness, rowToBulletin, rowToEvent, rowToNews, rowToResource } from "./mappers";
 
@@ -282,6 +286,95 @@ class SupabaseDataSource implements DataSource {
       recentlyViewedIds: [],
       notificationPrefs: { followedBulletins: true, savedEvents: true, localNews: false },
     };
+  }
+
+  // ---- Auth (real Supabase Auth: passwordless email OTP — no redirect, so the
+  //      pending JIT action completes in-place after the code is verified) ----
+  private mapAuthUser(u: SupabaseAuthUser): AuthUser {
+    return {
+      id: u.id,
+      email: u.email ?? "",
+      name: (u.user_metadata?.name as string) ?? u.email?.split("@")[0] ?? "You",
+    };
+  }
+
+  async startEmailAuth(email: string, name?: string): Promise<StartAuthResult> {
+    const { error } = await this.sb.auth.signInWithOtp({
+      email: email.trim(),
+      options: { shouldCreateUser: true, data: name?.trim() ? { name: name.trim() } : undefined },
+    });
+    if (error) throw error;
+    return { otpSent: true };
+  }
+
+  async verifyEmailOtp(email: string, token: string): Promise<AuthUser> {
+    const { data, error } = await this.sb.auth.verifyOtp({
+      email: email.trim(),
+      token: token.trim(),
+      type: "email",
+    });
+    if (error) throw error;
+    if (!data.user) throw new Error("Verification failed");
+    return this.mapAuthUser(data.user);
+  }
+
+  async signOut(): Promise<void> {
+    const { error } = await this.sb.auth.signOut();
+    if (error) throw error;
+  }
+
+  async getAuthUser(): Promise<AuthUser | null> {
+    const { data } = await this.sb.auth.getSession();
+    const u = data.session?.user;
+    return u ? this.mapAuthUser(u) : null;
+  }
+
+  onAuthChange(cb: (user: AuthUser | null) => void): () => void {
+    const { data } = this.sb.auth.onAuthStateChange((_event, session) => {
+      cb(session?.user ? this.mapAuthUser(session.user) : null);
+    });
+    return () => data.subscription.unsubscribe();
+  }
+
+  // ---- Profile (prefs persisted to the user's `profiles` row; RLS = own row only) ----
+  async getProfile(): Promise<Partial<PersistedProfile> | null> {
+    const { data: au } = await this.sb.auth.getUser();
+    const uid = au.user?.id;
+    if (!uid) return null;
+    const { data: row } = await this.sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+    // ownership source of truth is businesses.owner_id (not the cached column)
+    const { data: owned } = await this.sb.from("businesses").select("id").eq("owner_id", uid).limit(1);
+    const ownerBusinessId = owned?.[0]?.id ?? row?.owner_business_id ?? null;
+    if (!row) return { ownerBusinessId };
+    return {
+      savedBusinessIds: row.saved_business_ids ?? [],
+      followedBusinessIds: row.followed_business_ids ?? [],
+      savedEventIds: row.saved_event_ids ?? [],
+      recentlyViewedIds: row.recently_viewed_ids ?? [],
+      interests: row.interests ?? [],
+      notificationPrefs: row.notification_prefs ?? undefined,
+      location: row.location ?? null,
+      onboarded: row.onboarded ?? false,
+      ownerBusinessId,
+    };
+  }
+
+  async saveProfile(patch: Partial<PersistedProfile>): Promise<void> {
+    const { data: au } = await this.sb.auth.getUser();
+    const uid = au.user?.id;
+    if (!uid) return; // guest — nothing to persist server-side
+    const row: Record<string, unknown> = { id: uid };
+    if ("savedBusinessIds" in patch) row.saved_business_ids = patch.savedBusinessIds;
+    if ("followedBusinessIds" in patch) row.followed_business_ids = patch.followedBusinessIds;
+    if ("savedEventIds" in patch) row.saved_event_ids = patch.savedEventIds;
+    if ("recentlyViewedIds" in patch) row.recently_viewed_ids = patch.recentlyViewedIds;
+    if ("interests" in patch) row.interests = patch.interests;
+    if ("notificationPrefs" in patch) row.notification_prefs = patch.notificationPrefs;
+    if ("location" in patch) row.location = patch.location;
+    if ("onboarded" in patch) row.onboarded = patch.onboarded;
+    if ("ownerBusinessId" in patch) row.owner_business_id = patch.ownerBusinessId;
+    const { error } = await this.sb.from("profiles").upsert(row, { onConflict: "id" });
+    if (error) throw error;
   }
 
   // ---- Owner writes (RLS enforces ownership + tier; needs a Supabase auth session) ----

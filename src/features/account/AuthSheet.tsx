@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bookmark, UserPlus, CalendarPlus, Compass } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components";
@@ -27,26 +27,73 @@ const COPY: Record<AuthReason, { icon: React.ReactNode; title: string; sub: stri
   },
 };
 
+const inputClass =
+  "min-h-tap w-full rounded-lg border border-border bg-card px-3 text-base outline-none focus:border-positive focus:ring-2 focus:ring-positive/20";
+
 /**
  * Just-in-time auth (BUILD-BRIEF §1, §12 step 6). The ONLY place we ask to log in —
- * raised by a gated action (save/follow), never as a gate to browse. Mock sign-in.
+ * raised by a gated action (save/follow/owner), never as a gate to browse. Passwordless:
+ * Supabase emails a 6-digit code (verified in-app, no redirect, so the pending action
+ * completes right here); the mock signs in instantly.
  */
 export function AuthSheet() {
-  const { authPrompt, closeAuth, signIn } = useSession();
+  const { authPrompt, closeAuth, startSignIn, verifyOtp } = useSession();
+  const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const copy = COPY[authPrompt.reason];
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
+  // reset to a clean state whenever the sheet closes
+  useEffect(() => {
+    if (!authPrompt.open) {
+      setStep("email");
+      setEmail("");
+      setName("");
+      setCode("");
+      setError(null);
+      setBusy(false);
+    }
+  }, [authPrompt.open]);
+
+  // run the action that triggered the prompt (e.g. complete the save), then close
+  const finish = () => {
     const pending = authPrompt.pending;
-    signIn(email, name);
     closeAuth();
-    // run the action that triggered the prompt (e.g. complete the save)
     pending?.();
-    setEmail("");
-    setName("");
+  };
+
+  const submitEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { needsOtp } = await startSignIn(email, name);
+      if (needsOtp) setStep("code");
+      else finish(); // mock — signed in instantly
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't send your code. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code.trim() || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await verifyOtp(email, code);
+      finish();
+    } catch {
+      setError("That code didn't work. Check it and try again.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -55,40 +102,86 @@ export function AuthSheet() {
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-positive">
           {copy.icon}
         </div>
-        <h2 className="font-heading text-lg font-semibold text-foreground">{copy.title}</h2>
-        <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground">{copy.sub}</p>
+        <h2 className="font-heading text-lg font-semibold text-foreground">
+          {step === "code" ? "Enter your code" : copy.title}
+        </h2>
+        <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground">
+          {step === "code" ? (
+            <>
+              We emailed a 6-digit code to <b className="text-foreground">{email}</b>.
+            </>
+          ) : (
+            copy.sub
+          )}
+        </p>
       </div>
 
-      <form onSubmit={submit} className="mt-5 space-y-3">
-        <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-foreground">Email</span>
-          <input
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="min-h-tap w-full rounded-lg border border-border bg-card px-3 text-base outline-none focus:border-positive focus:ring-2 focus:ring-positive/20"
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-xs font-semibold text-foreground">
-            Name <span className="font-normal text-muted-foreground">(optional)</span>
-          </span>
-          <input
-            type="text"
-            autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="What should we call you?"
-            className="min-h-tap w-full rounded-lg border border-border bg-card px-3 text-base outline-none focus:border-positive focus:ring-2 focus:ring-positive/20"
-          />
-        </label>
-        <Button type="submit" variant="primary" size="lg" fullWidth>
-          Continue
-        </Button>
-      </form>
+      {step === "email" ? (
+        <form onSubmit={submitEmail} className="mt-5 space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-foreground">Email</span>
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className={inputClass}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-foreground">
+              Name <span className="font-normal text-muted-foreground">(optional)</span>
+            </span>
+            <input
+              type="text"
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="What should we call you?"
+              className={inputClass}
+            />
+          </label>
+          {error && <p className="text-sm text-danger">{error}</p>}
+          <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
+            {busy ? "Sending…" : "Continue"}
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={submitCode} className="mt-5 space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-foreground">6-digit code</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              required
+              autoFocus
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+              placeholder="123456"
+              className={`${inputClass} text-center text-lg tracking-[0.4em]`}
+            />
+          </label>
+          {error && <p className="text-sm text-danger">{error}</p>}
+          <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
+            {busy ? "Verifying…" : "Verify & continue"}
+          </Button>
+          <button
+            type="button"
+            onClick={() => {
+              setStep("email");
+              setCode("");
+              setError(null);
+            }}
+            className="w-full py-1 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            Use a different email
+          </button>
+        </form>
+      )}
 
       <button
         type="button"

@@ -2,12 +2,14 @@
  * Client session + personalization store (BUILD-BRIEF §12 step 6, §10).
  *
  * Local-first by design: onboarding prefs (location, interests, notifications) and
- * recently-viewed work with NO account — "store prefs locally until/unless the user
- * creates an account." Save / Follow / Save-event are the ONLY gated actions; tapping
- * one as a guest fires the just-in-time AuthSheet (login is never a browse gate).
+ * recently-viewed work with NO account — stored in localStorage until/unless the user
+ * signs in. Save / Follow / Save-event are the ONLY gated actions; tapping one as a
+ * guest fires the just-in-time AuthSheet (login is never a browse gate).
  *
- * Auth here is a MOCK (local) — the real backend implements DataSource.getCurrentUser
- * + sign-in and this provider swaps its internals; the hook surface stays the same.
+ * Auth is delegated to the DataSource (the swap seam): Supabase does real passwordless
+ * email-OTP sign-in (the session carries the Supabase JWT, so authed reads/writes use
+ * it); the mock signs in instantly for dev. On first sign-in the guest's local prefs are
+ * MERGED into the user's server row so nothing they did as a guest is lost.
  */
 import {
   createContext,
@@ -20,12 +22,10 @@ import {
   type ReactNode,
 } from "react";
 import type { GeoPoint } from "@/lib/types";
+import { useDataSource } from "@/data/DataProvider";
+import type { AuthUser, PersistedProfile } from "@/data/DataSource";
 
-export interface SessionUser {
-  id: string;
-  email: string;
-  name: string;
-}
+export type SessionUser = AuthUser;
 
 export interface NotificationPrefs {
   followedBulletins: boolean;
@@ -59,7 +59,6 @@ const DEFAULT_PROFILE: Profile = {
 };
 
 const PROFILE_KEY = "rc.profile";
-const USER_KEY = "rc.user";
 const MAX_RECENT = 10;
 
 /** The reason a JIT auth prompt was raised — tunes the AuthSheet copy. */
@@ -92,8 +91,11 @@ interface SessionValue extends Profile {
   completeOnboarding: (patch?: Partial<Pick<Profile, "interests" | "location">>) => void;
   setOwnerBusinessId: (id: string | null) => void;
 
-  // auth
-  signIn: (email: string, name?: string) => void;
+  // auth (passwordless email; Supabase = OTP code, mock = instant)
+  /** Begin sign-in. Returns whether a one-time code was emailed (→ call verifyOtp next). */
+  startSignIn: (email: string, name?: string) => Promise<{ needsOtp: boolean }>;
+  /** Complete OTP sign-in with the emailed code. */
+  verifyOtp: (email: string, token: string) => Promise<void>;
   signOut: () => void;
   requireAuth: (action: () => void, reason?: AuthReason) => void;
 
@@ -120,19 +122,53 @@ function load<T>(key: string, fallback: T): T {
   }
 }
 
+const uniq = (a: string[] = [], b: string[] = []) => Array.from(new Set([...a, ...b]));
+
+/** Pull only the persisted-profile fields out of the local Profile. */
+function toPersisted(p: Profile): PersistedProfile {
+  return {
+    savedBusinessIds: p.savedBusinessIds,
+    followedBusinessIds: p.followedBusinessIds,
+    savedEventIds: p.savedEventIds,
+    recentlyViewedIds: p.recentlyViewedIds,
+    interests: p.interests,
+    notificationPrefs: p.notificationPrefs,
+    location: p.location,
+    onboarded: p.onboarded,
+    ownerBusinessId: p.ownerBusinessId,
+  };
+}
+
+/** Merge guest-local prefs with the server row so a guest's activity is never lost. */
+function mergeProfiles(local: Profile, server: Partial<PersistedProfile> | null): Profile {
+  if (!server) return local;
+  return {
+    ...local,
+    savedBusinessIds: uniq(local.savedBusinessIds, server.savedBusinessIds),
+    followedBusinessIds: uniq(local.followedBusinessIds, server.followedBusinessIds),
+    savedEventIds: uniq(local.savedEventIds, server.savedEventIds),
+    recentlyViewedIds: uniq(local.recentlyViewedIds, server.recentlyViewedIds).slice(0, MAX_RECENT),
+    interests: uniq(local.interests, server.interests),
+    notificationPrefs: server.notificationPrefs ?? local.notificationPrefs,
+    location: local.location ?? server.location ?? null,
+    onboarded: local.onboarded || !!server.onboarded,
+    ownerBusinessId: server.ownerBusinessId ?? local.ownerBusinessId ?? null,
+  };
+}
+
 export function SessionProvider({ children }: { children: ReactNode }) {
+  const ds = useDataSource();
   const [profile, setProfile] = useState<Profile>(() => load(PROFILE_KEY, DEFAULT_PROFILE));
-  const [user, setUser] = useState<SessionUser | null>(() => {
-    try {
-      const raw = localStorage.getItem(USER_KEY);
-      return raw ? (JSON.parse(raw) as SessionUser) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState<SessionUser | null>(null);
   const [authPrompt, setAuthPrompt] = useState<AuthPrompt>({ open: false, reason: "save" });
 
-  // persist
+  // keep a live snapshot of the profile for the sign-in merge (avoids stale closures)
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
+  const syncedRef = useRef(false); // server-merge done → safe to push prefs back
+  const lastUserIdRef = useRef<string | null>(null);
+
+  // persist local-first prefs (works for guests and authed users alike)
   useEffect(() => {
     try {
       localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
@@ -140,24 +176,56 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
   }, [profile]);
+
+  // ---- auth wiring: reflect the DataSource session + merge prefs on sign-in ----
+  const syncProfileOnSignIn = useCallback(async () => {
+    const server = await ds.getProfile();
+    const merged = mergeProfiles(profileRef.current, server);
+    setProfile(merged);
+    await ds.saveProfile(toPersisted(merged));
+    syncedRef.current = true;
+  }, [ds]);
+
   useEffect(() => {
-    try {
-      if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
-      else localStorage.removeItem(USER_KEY);
-    } catch {
-      /* ignore */
-    }
-  }, [user]);
+    let active = true;
+    const apply = (u: SessionUser | null) => {
+      if (!active) return;
+      setUser(u);
+      if (u) {
+        if (lastUserIdRef.current !== u.id) {
+          lastUserIdRef.current = u.id;
+          void syncProfileOnSignIn();
+        }
+      } else {
+        lastUserIdRef.current = null;
+        syncedRef.current = false;
+      }
+    };
+    // initial (mock onAuthChange doesn't replay; Supabase fires INITIAL_SESSION — dedup'd by id)
+    void ds.getAuthUser().then(apply);
+    const unsub = ds.onAuthChange(apply);
+    return () => {
+      active = false;
+      unsub();
+    };
+  }, [ds, syncProfileOnSignIn]);
+
+  // once signed in (and merged), push later pref changes to the server row
+  useEffect(() => {
+    if (user && syncedRef.current) void ds.saveProfile(toPersisted(profile));
+  }, [profile, user, ds]);
 
   const isAuthed = !!user;
-  // keep a ref so requireAuth always sees current auth state
   const authedRef = useRef(isAuthed);
   authedRef.current = isAuthed;
 
   const openAuth = useCallback((reason: AuthReason, pending?: () => void) => {
     setAuthPrompt({ open: true, reason, pending });
   }, []);
-  const closeAuth = useCallback(() => setAuthPrompt((p) => ({ ...p, open: false, pending: undefined })), []);
+  const closeAuth = useCallback(
+    () => setAuthPrompt((p) => ({ ...p, open: false, pending: undefined })),
+    [],
+  );
 
   const requireAuth = useCallback(
     (action: () => void, reason: AuthReason = "save") => {
@@ -206,6 +274,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const startSignIn = useCallback(
+    async (email: string, name?: string) => {
+      const res = await ds.startEmailAuth(email, name);
+      return { needsOtp: res.otpSent };
+    },
+    [ds],
+  );
+
+  const verifyOtp = useCallback(
+    async (email: string, token: string) => {
+      await ds.verifyEmailOtp(email, token);
+      // onAuthChange fires → user + prefs sync; the Supabase client is already authed.
+    },
+    [ds],
+  );
+
+  const signOut = useCallback(() => {
+    void ds.signOut();
+  }, [ds]);
+
   const value = useMemo<SessionValue>(
     () => ({
       ...profile,
@@ -225,11 +313,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setLocation: (loc) => setProfile((p) => ({ ...p, location: loc })),
       completeOnboarding: (patch) => setProfile((p) => ({ ...p, ...patch, onboarded: true })),
       setOwnerBusinessId: (id) => setProfile((p) => ({ ...p, ownerBusinessId: id })),
-      signIn: (email, name) => {
-        const cleanName = name?.trim() || email.split("@")[0];
-        setUser({ id: `u_${email.toLowerCase()}`, email: email.trim(), name: cleanName });
-      },
-      signOut: () => setUser(null),
+      startSignIn,
+      verifyOtp,
+      signOut,
       requireAuth,
       authPrompt,
       openAuth,
@@ -244,6 +330,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       toggleSaveEvent,
       addRecentlyViewed,
       toggleInterest,
+      startSignIn,
+      verifyOtp,
+      signOut,
       requireAuth,
       authPrompt,
       openAuth,

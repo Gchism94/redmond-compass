@@ -16,7 +16,12 @@ export function getSupabaseClient(): SupabaseClient {
     );
   }
   client = createClient(url, key, {
-    auth: { persistSession: true, autoRefreshToken: true },
+    auth: {
+      persistSession: true, // session lives in localStorage so reload/PWA-relaunch stays signed in
+      autoRefreshToken: true,
+      detectSessionInUrl: true, // pick up magic-link / OAuth redirects (OTP-code flow needs no redirect)
+      flowType: "pkce",
+    },
   });
   return client;
 }

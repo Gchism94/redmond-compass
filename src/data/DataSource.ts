@@ -67,6 +67,39 @@ export interface NewEventInput {
   tags?: string[];
 }
 
+/** Lightweight authed identity (the session surface). */
+export interface AuthUser {
+  id: ID;
+  email: string;
+  name: string;
+}
+
+export type NotificationPrefs = User["notificationPrefs"];
+
+/**
+ * Per-user personalization persisted server-side (the `profiles` row in Supabase).
+ * Mirrors the local-first guest profile so a guest's prefs MERGE in on first sign-in.
+ */
+export interface PersistedProfile {
+  savedBusinessIds: ID[];
+  followedBusinessIds: ID[];
+  savedEventIds: ID[];
+  recentlyViewedIds: ID[];
+  interests: string[];
+  notificationPrefs: NotificationPrefs;
+  location: GeoPoint | null;
+  onboarded: boolean;
+  ownerBusinessId: ID | null;
+}
+
+/** Result of starting email sign-in: mock signs in instantly; Supabase emails an OTP. */
+export interface StartAuthResult {
+  /** true when a one-time code was emailed and verifyEmailOtp() is needed next */
+  otpSent: boolean;
+  /** present only when sign-in completed synchronously (mock) */
+  user?: AuthUser;
+}
+
 export type BusinessSort = "relevance" | "distance" | "recommend" | "openNow" | "name";
 
 export interface BusinessQuery {
@@ -155,9 +188,26 @@ export interface DataSource {
   /** Recommendation summary for a business. MVP returns count only; notes come fast-follow. */
   getRecommendations(businessId: ID): Promise<{ count: number; recent: Recommendation[] }>;
 
-  // ---- Session & personalization (BUILD-BRIEF §12 step 6 — seams now) ----
+  // ---- Session & personalization (BUILD-BRIEF §12 step 6) ----
   /** Current resident, or null when browsing as a guest (the default at MVP). */
   getCurrentUser(): Promise<User | null>;
+
+  // ---- Auth (JIT — real Supabase Auth; mock signs in instantly for dev) ----
+  /** Begin email sign-in. Supabase emails a 6-digit OTP; mock returns the user inline. */
+  startEmailAuth(email: string, name?: string): Promise<StartAuthResult>;
+  /** Complete email sign-in with the emailed code (Supabase). */
+  verifyEmailOtp(email: string, token: string): Promise<AuthUser>;
+  signOut(): Promise<void>;
+  /** The current authed user from the live session (restored on reload), or null. */
+  getAuthUser(): Promise<AuthUser | null>;
+  /** Subscribe to auth changes (sign-in/out, token refresh). Returns an unsubscribe fn. */
+  onAuthChange(cb: (user: AuthUser | null) => void): () => void;
+
+  // ---- Profile (prefs persistence — local-first, synced to the user row on sign-in) ----
+  /** The signed-in user's persisted prefs, or null if none/guest. */
+  getProfile(): Promise<Partial<PersistedProfile> | null>;
+  /** Upsert the signed-in user's prefs (no-op for a guest). */
+  saveProfile(patch: Partial<PersistedProfile>): Promise<void>;
 
   // ---- Owner writes (BUILD-BRIEF §12 step 7) ----
   /** List/claim a free listing (current-site parity fields). */
