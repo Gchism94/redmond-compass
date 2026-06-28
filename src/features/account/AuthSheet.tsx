@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bookmark, UserPlus, CalendarPlus, Compass } from "lucide-react";
+import { Bookmark, UserPlus, CalendarPlus, Heart, Compass } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components";
 import { useSession, type AuthReason } from "./session";
@@ -20,6 +20,11 @@ const COPY: Record<AuthReason, { icon: React.ReactNode; title: string; sub: stri
     icon: <CalendarPlus size={22} />,
     title: "Sign in to save events",
     sub: "Save events you're interested in and get reminders before they start.",
+  },
+  recommend: {
+    icon: <Heart size={22} />,
+    title: "Sign in to recommend",
+    sub: "Recommend places you love so other Redmond locals can find them.",
   },
   account: {
     icon: <Compass size={22} />,

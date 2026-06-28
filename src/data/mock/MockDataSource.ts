@@ -56,9 +56,17 @@ interface Overlay {
   patches: Record<string, Partial<Business>>;
   newBulletins: Bulletin[];
   newEvents: EventItem[];
+  /** business ids the current (mock) user has recommended — positive-only */
+  recommendedBusinessIds: string[];
 }
 
-const EMPTY_OVERLAY: Overlay = { newBusinesses: [], patches: {}, newBulletins: [], newEvents: [] };
+const EMPTY_OVERLAY: Overlay = {
+  newBusinesses: [],
+  patches: {},
+  newBulletins: [],
+  newEvents: [],
+  recommendedBusinessIds: [],
+};
 
 function textMatch(b: Business, text: string): boolean {
   const hay = [b.name, b.description, b.category, ...(b.subcategories ?? []), ...b.amenityTags]
@@ -324,10 +332,24 @@ export class MockDataSource implements DataSource {
     return delay(query.limit != null ? out.slice(0, query.limit) : out);
   }
 
-  // ---- Reputation (DEFERRED seam) ----
+  // ---- Reputation (positive-only count; never a rating) ----
   async getRecommendations(businessId: ID): Promise<{ count: number; recent: Recommendation[] }> {
     const b = this.businessList().find((x) => x.id === businessId);
-    return delay({ count: b?.recommendCount ?? 0, recent: [] });
+    const mine = this.overlay.recommendedBusinessIds.includes(businessId) ? 1 : 0;
+    return delay({ count: (b?.recommendCount ?? 0) + mine, recent: [] });
+  }
+
+  async recommend(businessId: ID): Promise<void> {
+    if (!this.authUser) throw new Error("Sign in to recommend");
+    if (!this.overlay.recommendedBusinessIds.includes(businessId)) {
+      this.overlay.recommendedBusinessIds.push(businessId); // idempotent, positive-only
+      this.persist();
+    }
+    return delay(undefined);
+  }
+
+  async hasRecommended(businessId: ID): Promise<boolean> {
+    return delay(!!this.authUser && this.overlay.recommendedBusinessIds.includes(businessId));
   }
 
   // ---- Session ----

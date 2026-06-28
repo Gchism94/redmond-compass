@@ -187,9 +187,13 @@ export interface DataSource {
   // ---- Unified search (S3 autocomplete / S4 results) ----
   search(text: string, query?: SearchQuery): Promise<SearchResult[]>;
 
-  // ---- Reputation (DEFERRED / fast-follow; positive-only, never a rating) ----
-  /** Recommendation summary for a business. MVP returns count only; notes come fast-follow. */
+  // ---- Reputation (positive-only, never a rating; never affects default ranking) ----
+  /** Recommendation summary for a business (count + recent). */
   getRecommendations(businessId: ID): Promise<{ count: number; recent: Recommendation[] }>;
+  /** Recommend a business — positive-only and idempotent (one per user, can't be undone). Requires auth. */
+  recommend(businessId: ID): Promise<void>;
+  /** Whether the current user has already recommended this business (false for guests). */
+  hasRecommended(businessId: ID): Promise<boolean>;
 
   // ---- Session & personalization (BUILD-BRIEF §12 step 6) ----
   /** Current resident, or null when browsing as a guest (the default at MVP). */

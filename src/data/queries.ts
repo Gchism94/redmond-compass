@@ -115,6 +115,27 @@ export function useRecommendations(businessId: string | undefined) {
   });
 }
 
+export function useHasRecommended(businessId: string | undefined) {
+  const ds = useDataSource();
+  return useQuery({
+    queryKey: ["has-recommended", businessId ?? ""] as const,
+    queryFn: () => ds.hasRecommended(businessId!),
+    enabled: !!businessId,
+  });
+}
+
+export function useRecommend() {
+  const ds = useDataSource();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (businessId: ID) => ds.recommend(businessId),
+    onSuccess: (_d, businessId) => {
+      qc.invalidateQueries({ queryKey: qk.recommendations(businessId) });
+      qc.invalidateQueries({ queryKey: ["has-recommended", businessId] });
+    },
+  });
+}
+
 export function useCurrentUser() {
   const ds = useDataSource();
   return useQuery({ queryKey: qk.currentUser(), queryFn: () => ds.getCurrentUser() });

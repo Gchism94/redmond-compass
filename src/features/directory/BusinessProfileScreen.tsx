@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock } from "lucide-react";
+import { ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock, Heart, Check } from "lucide-react";
 import {
   ActionBar,
+  Button,
   EventCard,
   FeedItem,
   StatusBadge,
@@ -14,7 +15,14 @@ import {
   EmptyState,
 } from "@/components";
 import { IconButton } from "@/components/ui/IconButton";
-import { useBusiness, useBulletins, useEvents } from "@/data/queries";
+import {
+  useBusiness,
+  useBulletins,
+  useEvents,
+  useRecommendations,
+  useHasRecommended,
+  useRecommend,
+} from "@/data/queries";
 import { WEEKDAY_ORDER, DAY_LABEL, todayKey, formatClock } from "@/lib/hours";
 import { directionsHref } from "@/lib/links";
 import { relativeTime } from "@/lib/format";
@@ -111,6 +119,9 @@ export function BusinessProfileScreen() {
         )}
       </div>
 
+      {/* Recommend — positive-only social proof (no stars; never affects ranking) */}
+      <RecommendRow businessId={business.id} />
+
       {/* At a glance */}
       <Section title="At a glance">
         {business.hours && <HoursBlock business={business} />}
@@ -190,6 +201,58 @@ export function BusinessProfileScreen() {
           See local resources
         </Link>
       </p>
+    </div>
+  );
+}
+
+/**
+ * Recommend (♥) — positive-only reputation (BUILD-BRIEF §1, §3). No stars/rating; the
+ * count only shows social proof and NEVER reorders results. One per person, can't be
+ * un-recommended or down-voted (insert-only at the DB). JIT-gated like save/follow.
+ */
+function RecommendRow({ businessId }: { businessId: string }) {
+  const session = useSession();
+  const recs = useRecommendations(businessId);
+  const mine = useHasRecommended(businessId);
+  const recommend = useRecommend();
+
+  const count = recs.data?.count ?? 0;
+  const recommended = mine.data ?? false;
+  const onRecommend = () =>
+    session.requireAuth(() => recommend.mutate(businessId), "recommend", {
+      type: "recommend",
+      id: businessId,
+    });
+
+  return (
+    <div className="mt-4 flex items-center justify-between gap-3 px-4">
+      <p className="flex items-center gap-1.5 text-sm">
+        <Heart size={15} className="text-accent" fill={count > 0 ? "currentColor" : "none"} aria-hidden />
+        {count > 0 ? (
+          <span className="text-foreground">
+            <b className="font-semibold">{count}</b>{" "}
+            {count === 1 ? "local recommends" : "locals recommend"} this
+          </span>
+        ) : (
+          <span className="text-muted-foreground">Be the first to recommend</span>
+        )}
+      </p>
+      <Button
+        size="sm"
+        variant={recommended ? "positive" : "ghost"}
+        onClick={onRecommend}
+        disabled={recommended || recommend.isPending}
+      >
+        {recommended ? (
+          <>
+            <Check size={14} /> Recommended
+          </>
+        ) : (
+          <>
+            <Heart size={14} /> Recommend
+          </>
+        )}
+      </Button>
     </div>
   );
 }

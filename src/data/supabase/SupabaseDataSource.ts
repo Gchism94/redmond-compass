@@ -249,10 +249,13 @@ class SupabaseDataSource implements DataSource {
 
   // ---- Reputation (positive-only count; never a rating) ----
   async getRecommendations(businessId: ID): Promise<{ count: number; recent: Recommendation[] }> {
-    const { count } = await this.sb
-      .from("recommendations")
-      .select("id", { count: "exact", head: true })
-      .eq("business_id", businessId);
+    // The displayed count is the cached, positive-only `businesses.recommend_count`
+    // (kept in sync by the bump trigger) — same field the mock + Business model use.
+    const { data: biz } = await this.sb
+      .from("businesses")
+      .select("recommend_count")
+      .eq("id", businessId)
+      .maybeSingle();
     const { data } = await this.sb
       .from("recommendations")
       .select("*")
@@ -267,7 +270,31 @@ class SupabaseDataSource implements DataSource {
       verifiedCustomer: !!r.verified_customer,
       createdAt: r.created_at,
     }));
-    return { count: count ?? 0, recent };
+    return { count: biz?.recommend_count ?? 0, recent };
+  }
+
+  async recommend(businessId: ID): Promise<void> {
+    const { data: au } = await this.sb.auth.getUser();
+    const uid = au.user?.id;
+    if (!uid) throw new Error("Sign in to recommend");
+    // insert-only; the unique(business_id,user_id) makes it idempotent (can't be bombed),
+    // and the bump_recommend_count trigger raises the cached count. No value/rating column.
+    const { error } = await this.sb
+      .from("recommendations")
+      .insert({ business_id: businessId, user_id: uid });
+    if (error && error.code !== "23505") throw error; // 23505 = already recommended → no-op
+  }
+
+  async hasRecommended(businessId: ID): Promise<boolean> {
+    const { data: au } = await this.sb.auth.getUser();
+    const uid = au.user?.id;
+    if (!uid) return false;
+    const { count } = await this.sb
+      .from("recommendations")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", businessId)
+      .eq("user_id", uid);
+    return (count ?? 0) > 0;
   }
 
   // ---- Session ----

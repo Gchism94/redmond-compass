@@ -22,6 +22,7 @@ import {
   type ReactNode,
 } from "react";
 import type { GeoPoint } from "@/lib/types";
+import { useQueryClient } from "@tanstack/react-query";
 import { useDataSource } from "@/data/DataProvider";
 import type { AuthUser, PersistedProfile, OAuthProvider } from "@/data/DataSource";
 
@@ -63,14 +64,14 @@ const PENDING_INTENT_KEY = "rc.pendingIntent";
 const MAX_RECENT = 10;
 
 /** The reason a JIT auth prompt was raised — tunes the AuthSheet copy. */
-export type AuthReason = "save" | "follow" | "saveEvent" | "account";
+export type AuthReason = "save" | "follow" | "saveEvent" | "recommend" | "account";
 
 /**
  * A gated action serialized so it can complete AFTER an OAuth redirect round-trip
  * (the in-memory `pending` closure can't survive the full-page navigation). Only the
  * simple add-to-list toggles are replayable; owner flows just land signed-in.
  */
-export type PendingIntent = { type: "save" | "follow" | "saveEvent"; id: string };
+export type PendingIntent = { type: "save" | "follow" | "saveEvent" | "recommend"; id: string };
 
 interface AuthPrompt {
   open: boolean;
@@ -170,6 +171,7 @@ function mergeProfiles(local: Profile, server: Partial<PersistedProfile> | null)
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const ds = useDataSource();
+  const qc = useQueryClient();
   const [profile, setProfile] = useState<Profile>(() => load(PROFILE_KEY, DEFAULT_PROFILE));
   const [user, setUser] = useState<SessionUser | null>(null);
   const [authPrompt, setAuthPrompt] = useState<AuthPrompt>({ open: false, reason: "save" });
@@ -210,13 +212,24 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (!intent?.id) return;
+    if (intent.type === "recommend") {
+      // recommend is a server write (positive-only) — fire it, then refresh the count
+      void ds
+        .recommend(intent.id)
+        .then(() => {
+          qc.invalidateQueries({ queryKey: ["recommendations"] });
+          qc.invalidateQueries({ queryKey: ["has-recommended"] });
+        })
+        .catch(() => {});
+      return;
+    }
     const key = (
       { save: "savedBusinessIds", follow: "followedBusinessIds", saveEvent: "savedEventIds" } as const
     )[intent.type];
     setProfile((p) =>
       p[key].includes(intent!.id) ? p : { ...p, [key]: [...p[key], intent!.id] },
     );
-  }, []);
+  }, [ds, qc]);
 
   useEffect(() => {
     let active = true;
