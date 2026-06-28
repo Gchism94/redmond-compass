@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B1 Owner Dashboard — Wireframe · Redmond Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16242E; --paper:#E8EBE9; --surface:#FBFCFB;
+    --navy:#213D50; --teal:#0F6E64; --brass:#B07D2A; --brass-deep:#8A5E16;
+    --muted:#5C6B66; --faint:#909994; --line:#D5DAD6;
+    --wire:#E0E4E1; --wire2:#D2D7D3;
+    --display:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:30px 18px 70px}
+  header.head{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:22px}
+  .kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass-deep)}
+  h1{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:clamp(23px,4.4vw,33px);margin:.3em 0 .15em}
+  .lede{color:var(--muted);max-width:66ch;margin:0;font-size:15px}
+  .controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin:20px 0 4px}
+  .toggle{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px}
+  .toggle button{font-family:var(--display);font-weight:600;font-size:13px;border:0;background:transparent;color:var(--muted);padding:8px 16px;border-radius:99px;cursor:pointer;transition:.15s}
+  .toggle button.on{background:var(--ink);color:#fff}
+  .toggle button:focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  .ctrl-hint{font-size:12.5px;color:var(--muted);max-width:40ch}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:16px 0 26px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .chip{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;letter-spacing:.03em;font-weight:600}
+  .chip.all{background:var(--wire2);color:#41504a}
+  .chip.gate{background:#F4ECDC;color:var(--brass-deep);border:1px solid #E4D2AC}
+  .chip.pro{background:var(--brass);color:#fff}
+
+  .stage{display:flex;gap:30px;align-items:flex-start}
+  .phone-col{flex:none}
+  .phone{width:360px;max-width:90vw;border:10px solid #11181E;border-radius:38px;background:#11181E;box-shadow:0 20px 50px -20px rgba(16,24,30,.5);overflow:hidden}
+  .statusbar{height:30px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-family:var(--mono);font-size:10px;color:var(--ink)}
+  .screen{height:min(72vh,690px);overflow-y:auto;background:var(--paper)}
+  .screen::-webkit-scrollbar{width:0}
+
+  .blk{position:relative;background:var(--surface);border-bottom:1px solid var(--line);padding:14px 16px}
+  .anno{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:5}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+  .ic{width:30px;height:30px;border-radius:50%;background:var(--wire);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:#46524c}
+  .topttl{font-family:var(--display);font-weight:600;font-size:14px}
+  .switch{font-family:var(--mono);font-size:10px;color:var(--teal);background:#E4F0ED;border:1px solid #BCD9D2;padding:4px 9px;border-radius:99px}
+
+  /* business header */
+  .bh{display:flex;gap:11px;align-items:flex-start}
+  .bh .logo{width:44px;height:44px;border-radius:9px;background:var(--wire2);flex:none}
+  .bh .bn{font-family:var(--display);font-weight:700;font-size:17px;line-height:1.1}
+  .bh .meta{font-size:11.5px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .verified{color:var(--teal);font-weight:600}
+  .tierbadge{font-family:var(--mono);font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;letter-spacing:.04em}
+  .tier-free .tierbadge{background:var(--wire2);color:#46524c}
+  .tier-member .tierbadge{background:#F4ECDC;color:var(--brass-deep);border:1px solid #E4D2AC}
+  .tier-pro .tierbadge{background:var(--brass);color:#fff}
+  .tierbadge::before{content:"Free"}
+  .tier-member .tierbadge::before{content:"Member"}
+  .tier-pro .tierbadge::before{content:"Pro"}
+  .viewlink{font-size:11.5px;color:var(--teal);margin-top:7px;display:inline-block}
+
+  /* completeness */
+  .meter{margin-top:4px}
+  .meter .mt{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+  .meter .mt b{font-family:var(--display)}
+  .track{height:8px;border-radius:6px;background:var(--wire);overflow:hidden}
+  .track i{display:block;height:100%;width:70%;background:var(--teal);border-radius:6px}
+  .meter .next{font-size:11.5px;color:var(--brass-deep);margin-top:7px}
+
+  /* quick actions */
+  .qa{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .qabtn{border:1.5px solid var(--line);border-radius:10px;background:#fff;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+  .qabtn .qi{width:24px;height:24px;border-radius:7px;background:var(--wire2)}
+  .qabtn .ql{font-family:var(--display);font-weight:600;font-size:11.5px;text-align:center;line-height:1.1}
+  .cap-badge{display:none;position:absolute;top:6px;right:6px;font-family:var(--mono);font-size:9px;color:var(--brass-deep);background:#F4ECDC;border:1px solid #E4D2AC;padding:1px 5px;border-radius:99px}
+  .tier-free .cap-badge{display:block}
+
+  /* snapshot */
+  .sec-h{font-family:var(--display);font-weight:600;font-size:13.5px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center}
+  .sec-h .win{font-family:var(--mono);font-size:10px;color:var(--faint);font-weight:400}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 6px;text-align:center}
+  .stat .v{font-family:var(--display);font-weight:700;font-size:17px}
+  .stat .l{font-size:9.5px;color:var(--muted);margin-top:2px}
+  .analytics-link{margin-top:10px;font-size:12px;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;display:flex;justify-content:space-between;align-items:center}
+  .analytics-link.locked{border-style:dashed;border-color:var(--brass);background:#FBF6EC;color:var(--brass-deep)}
+  .analytics-link .arr{font-family:var(--mono);font-weight:600}
+  .if-paid .a-open{display:none}
+
+  /* demand signals */
+  .demand{border-radius:10px;padding:13px 14px}
+  .demand.locked{border:1.5px dashed var(--brass);background:#FBF6EC}
+  .demand.live{border:1px solid var(--line);background:#fff}
+  .demand .dh{font-family:var(--display);font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px}
+  .demand .gatechip{font-family:var(--mono);font-size:9px;font-weight:600;color:#fff;background:var(--brass);padding:2px 7px;border-radius:99px}
+  .demand .teaser{font-size:12px;color:var(--brass-deep);margin-top:8px;line-height:1.4}
+  .demand .blur{margin-top:9px;display:flex;flex-direction:column;gap:6px}
+  .demand .blur i{height:11px;border-radius:4px;background:var(--wire);filter:blur(.5px)}
+  .demand .blur i:nth-child(1){width:80%} .demand .blur i:nth-child(2){width:62%} .demand .blur i:nth-child(3){width:71%}
+  .dterm{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .dterm:last-child{border-bottom:0}
+  .dterm .c{font-family:var(--mono);color:var(--teal);font-weight:600}
+
+  /* tools strip */
+  .toolrow{display:flex;flex-direction:column;gap:8px}
+  .toolitem{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+  .toolitem .td{width:30px;height:30px;border-radius:8px;background:var(--wire2);flex:none}
+  .toolitem .tt{font-family:var(--display);font-weight:600;font-size:12.5px}
+  .toolitem .tm{font-size:11px;color:var(--muted);margin-top:1px}
+  .toolitem .cnt{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;background:var(--teal);border-radius:99px;padding:2px 8px}
+  .addtools{border:1.5px dashed var(--brass);border-radius:10px;background:#FBF6EC;padding:13px 14px}
+  .addtools .at-t{font-family:var(--display);font-weight:600;font-size:13px;color:var(--brass-deep)}
+  .addtools .at-m{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .addtools .at-ic{display:flex;gap:7px;margin-top:9px}
+  .addtools .at-ic i{font-style:normal;font-size:10.5px;background:#fff;border:1px solid #E4D2AC;color:var(--brass-deep);padding:4px 9px;border-radius:99px}
+
+  /* membership card */
+  .memcard{border-radius:11px;padding:15px 16px}
+  .memcard.pitch{background:var(--ink);color:#fff}
+  .memcard.manage{background:#fff;border:1px solid var(--line)}
+  .memcard .mc-k{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+  .memcard.manage .mc-k{color:var(--muted);opacity:1}
+  .memcard .mc-t{font-family:var(--display);font-weight:600;font-size:16px;margin:5px 0 7px;line-height:1.15}
+  .memcard.manage .mc-t{color:var(--ink)}
+  .memcard .mc-list{font-size:12px;line-height:1.5;color:#C8D2CE}
+  .memcard .mc-btn{margin-top:12px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:600;font-size:13px}
+  .memcard.pitch .mc-btn{background:var(--brass);color:#fff}
+  .memcard.manage .mc-btn{background:var(--ink);color:#fff}
+  .memcard .mc-2nd{margin-top:8px;font-size:11.5px;text-align:center;opacity:.85}
+  .memcard.manage .mc-2nd{color:var(--brass-deep)}
+
+  /* tier visibility */
+  .if-free,.if-member,.if-pro,.if-paid,.if-prepro{display:none}
+  .tier-free .if-free{display:block} .tier-member .if-member{display:block} .tier-pro .if-pro{display:block}
+  .tier-member .if-paid,.tier-pro .if-paid{display:block}
+  .tier-free .if-prepro,.tier-member .if-prepro{display:block}
+
+  .cap{font-size:12px;color:var(--muted);max-width:360px;margin:12px auto 0;text-align:center;line-height:1.4}
+
+  .notes-col{flex:1;min-width:0}
+  .notes-col h2{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 4px}
+  .notes-col .nh{color:var(--muted);font-size:13px;margin:0 0 16px}
+  ol.notes{list-style:none;counter-reset:n;margin:0;padding:0}
+  ol.notes li{counter-increment:n;position:relative;padding:0 0 14px 38px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+  ol.notes li::before{content:counter(n);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  ol.notes li:last-child{border-bottom:0}
+  ol.notes .t{font-family:var(--display);font-weight:600;font-size:14px}
+  ol.notes p{margin:5px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;font-size:12.5px;color:var(--faint);line-height:1.55}
+  footer b{color:var(--muted)}
+  :focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  @media (max-width:840px){.stage{flex-direction:column;align-items:center}.notes-col{width:100%;max-width:520px}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="kick">Wireframe · Screen B1 · the business hub</div>
+    <h1>Owner Dashboard</h1>
+    <p class="lede">Where owners post, see delivered value, and meet the membership pitch. Toggle the tier to watch the hub re-point itself: Free leads with the pitch and a locked demand teaser, Member unlocks insight, Pro turns the tools strip live. The discipline — lead with real numbers, ask only against a limit they felt.</p>
+
+    <div class="controls">
+      <div class="toggle" role="group" aria-label="Tier view">
+        <button id="bFree" class="on" onclick="setTier('free')">Free</button>
+        <button id="bMember" onclick="setTier('member')">Member</button>
+        <button id="bPro" onclick="setTier('pro')">Pro</button>
+      </div>
+      <p class="ctrl-hint">Same hub, three entitlement states.</p>
+    </div>
+
+    <div class="legend" aria-label="Annotation legend">
+      <span><i class="chip all">ALL</i> shown every tier</span>
+      <span><i class="chip gate">GATE</i> teased on Free, unlocks with Member</span>
+      <span><i class="chip pro">PRO</i> live only on Pro</span>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="phone-col">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC · Business</span></div>
+        <div class="screen tier-free" id="screen">
+
+          <div class="blk topbar" style="background:var(--surface)">
+            <div class="topttl">Dashboard</div>
+            <span class="switch">&#8644; Consumer view</span>
+          </div>
+
+          <div class="blk"><span class="anno">1</span>
+            <div class="bh">
+              <div class="logo"></div>
+              <div>
+                <div class="bn">Juniper &amp; Sage Cafe</div>
+                <div class="meta"><span class="tierbadge"></span><span class="verified">&#10003; Verified</span></div>
+                <a class="viewlink">View public profile &rarr;</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno">2</span>
+            <div class="sec-h">Profile completeness</div>
+            <div class="meter">
+              <div class="mt"><span>Looking good</span><b>70%</b></div>
+              <div class="track"><i></i></div>
+              <div class="next">Next: add 2 photos &middot; add holiday hours</div>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno">3</span>
+            <div class="sec-h">Quick actions</div>
+            <div class="qa">
+              <div class="qabtn"><span class="cap-badge">2/3</span><div class="qi"></div><div class="ql">Post Bulletin</div></div>
+              <div class="qabtn"><div class="qi"></div><div class="ql">Submit Event</div></div>
+              <div class="qabtn"><div class="qi"></div><div class="ql">Edit Profile</div></div>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno">4</span>
+            <div class="sec-h">This week <span class="win">last 7 days</span></div>
+            <div class="stats">
+              <div class="stat"><div class="v">312</div><div class="l">Views</div></div>
+              <div class="stat"><div class="v">18</div><div class="l">Calls</div></div>
+              <div class="stat"><div class="v">41</div><div class="l">Directions</div></div>
+              <div class="stat"><div class="v">+9</div><div class="l">Follows</div></div>
+            </div>
+            <div class="analytics-link locked if-free"><span>Full analytics &amp; trends</span><span class="arr">Member &rarr;</span></div>
+            <div class="analytics-link a-open if-paid"><span>View full analytics &amp; trends</span><span class="arr">&rarr;</span></div>
+          </div>
+
+          <div class="blk"><span class="anno">5</span>
+            <div class="demand locked if-free">
+              <div class="dh">Local demand signals <span class="gatechip">MEMBER</span></div>
+              <div class="teaser">3 people searched &ldquo;gluten-free&rdquo; near you this week. See exactly what locals want &mdash; and aren&rsquo;t finding &mdash; with Member.</div>
+              <div class="blur"><i></i><i></i><i></i></div>
+            </div>
+            <div class="demand live if-paid">
+              <div class="dh">Local demand signals</div>
+              <div style="margin-top:9px">
+                <div class="dterm"><span>&ldquo;gluten-free&rdquo;</span><span class="c">18 searches</span></div>
+                <div class="dterm"><span>&ldquo;dog-friendly patio&rdquo;</span><span class="c">11 searches</span></div>
+                <div class="dterm"><span>&ldquo;open late&rdquo;</span><span class="c">7 · unmet</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno">6</span>
+            <div class="sec-h">Your tools</div>
+            <!-- Free + Member: add tools -->
+            <div class="addtools if-prepro">
+              <div class="at-t">Add operating tools</div>
+              <div class="at-m">Bookings, an inquiry inbox, and loyalty — all included with Pro.</div>
+              <div class="at-ic"><i>Bookings</i><i>Inquiry inbox</i><i>Loyalty</i></div>
+            </div>
+            <!-- Pro: live strip -->
+            <div class="toolrow if-pro">
+              <div class="toolitem"><div class="td"></div><div><div class="tt">Bookings</div><div class="tm">New requests to confirm</div></div><span class="cnt">2 new</span></div>
+              <div class="toolitem"><div class="td"></div><div><div class="tt">Inquiry inbox</div><div class="tm">Unread — incl. private feedback</div></div><span class="cnt">1</span></div>
+              <div class="toolitem"><div class="td"></div><div><div class="tt">Loyalty</div><div class="tm">Redemptions this week</div></div><span class="cnt">5</span></div>
+            </div>
+          </div>
+
+          <div class="blk" style="border-bottom:0"><span class="anno">7</span>
+            <!-- Free: pitch Member -->
+            <div class="memcard pitch if-free">
+              <div class="mc-k">Unlock more</div>
+              <div class="mc-t">Become a Member &mdash; $15/mo</div>
+              <div class="mc-list">Full analytics + demand signals · unlimited &amp; scheduled bulletins · storytelling profile · follower tools · team access.</div>
+              <div class="mc-btn">See Member</div>
+              <div class="mc-2nd">Want Bookings, inbox &amp; loyalty too? Pro $29 &rarr;</div>
+            </div>
+            <!-- Member: manage + nudge Pro -->
+            <div class="memcard manage if-member">
+              <div class="mc-k">Your plan · Member</div>
+              <div class="mc-t">Add the operating tools</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5">You&rsquo;ve got profile + insight. Pro ($29) adds Bookings, the inquiry inbox &amp; loyalty.</div>
+              <div class="mc-btn">Upgrade to Pro</div>
+              <div class="mc-2nd">Manage plan &middot; billing</div>
+            </div>
+            <!-- Pro: quiet manage -->
+            <div class="memcard manage if-pro">
+              <div class="mc-k">Your plan · Pro</div>
+              <div class="mc-t">Everything&rsquo;s on</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5">All tools active. New tools are added automatically as they ship.</div>
+              <div class="mc-2nd" style="margin-top:11px">Manage plan &middot; billing &middot; cancel</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <p class="cap">Free leads with the pitch; the demand teaser shows the <b>shape</b> of value before asking. Pro replaces the pitch with a quiet &ldquo;manage plan&rdquo; — no one&rsquo;s upsold once they&rsquo;ve bought.</p>
+    </div>
+
+    <div class="notes-col">
+      <h2>Annotations</h2>
+      <p class="nh">Numbered to the screen. Tags show what renders when.</p>
+      <ol class="notes">
+        <li><div class="t">Business header <i class="chip all">ALL</i></div><p>Name, tier badge, verification, and &ldquo;view public profile&rdquo; (see what residents see). Badge color/text tracks the tier. Unverified state replaces this with a verify CTA and locks actions.</p></li>
+        <li><div class="t">Profile completeness <i class="chip all">ALL</i></div><p>The best free-tier engagement driver — completeness improves discoverability for everyone, so it helps the owner and the directory. More prominent when low; surfaces the single next best action.</p></li>
+        <li><div class="t">Quick actions <i class="chip all">ALL</i></div><p>Post Bulletin · Submit Event · Edit Profile — the mobile-native &ldquo;standing in my shop&rdquo; moments. On Free, Post shows the remaining cap (2/3) quietly, not as a countdown of doom.</p></li>
+        <li><div class="t">Value snapshot <i class="chip all">ALL</i> <i class="chip gate">GATE</i></div><p>Views/calls/directions/follows are free for every tier — prove value first. The &ldquo;full analytics&rdquo; row is the gate: locked → Member on Free, an open link on Member/Pro.</p></li>
+        <li><div class="t">Demand-signal teaser <i class="chip gate">GATE</i></div><p>The headline hook and the most on-mission upsell. Free sees the <em>shape</em> (&ldquo;3 searched gluten-free&rdquo;) with blurred specifics; Member/Pro see the real terms incl. unmet demand. This replaces any ad-style pitch.</p></li>
+        <li><div class="t">Your tools <i class="chip gate">GATE</i> <i class="chip pro">PRO</i></div><p>Free &amp; Member see a quiet &ldquo;add tools&rdquo; card routing to B6 (Pro). Pro turns it into a live strip — booking requests, unread inquiries (incl. private feedback), loyalty activity — each deep-linking to its manage view.</p></li>
+        <li><div class="t">Membership card <i class="chip all">ALL</i></div><p>Contextual and singular. Free pitches Member (with a Pro nod); Member nudges Pro for tools + manage; Pro goes quiet to &ldquo;manage plan · cancel.&rdquo; Arriving from a specific limit, this leads with that benefit. One card, never a wall of upsells.</p></li>
+        <li><div class="t">Switch to consumer view <i class="chip all">ALL</i></div><p>Top-right — owners are also residents. Mode switch lives here and in Account (S8). Other states: incomplete (meter dominates), unverified (actions locked), offline (cached snapshot).</p></li>
+      </ol>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Open questions.</b> Whether the demand teaser blurs specifics or just hides counts · how hard the Member→Pro nudge should push (risk of nagging existing payers) · whether completeness should weight discoverability visibly (&ldquo;profiles at 100% get 3&times; the calls&rdquo;) · default snapshot window (7 vs 30 days). <b>Next:</b> consumer-side surfaces — the S5 Recommend action + the S7 Rewards wallet — or the S4/S3 search pair that reuses the S5 action vocabulary.</p>
+  </footer>
+</div>
+
+<script>
+  var T={free:'bFree',member:'bMember',pro:'bPro'};
+  function setTier(t){
+    var s=document.getElementById('screen');
+    s.className='screen tier-'+t;
+    for(var k in T){document.getElementById(T[k]).classList.toggle('on',k===t);}
+    s.scrollTop=0;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S5 Business Profile — Wireframe · Redmond Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16242E; --paper:#E8EBE9; --surface:#FBFCFB;
+    --navy:#213D50; --teal:#0F6E64; --brass:#B07D2A; --brass-deep:#8A5E16;
+    --muted:#5C6B66; --faint:#909994; --line:#D5DAD6;
+    --wire:#E0E4E1; --wire2:#D2D7D3; --wire3:#C7CdC9;
+    --display:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);
+    font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:30px 18px 70px}
+
+  header.head{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:22px}
+  .kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass-deep)}
+  h1{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:clamp(23px,4.4vw,33px);margin:.3em 0 .15em}
+  .lede{color:var(--muted);max-width:64ch;margin:0;font-size:15px}
+
+  .controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin:20px 0 4px}
+  .toggle{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px}
+  .toggle button{font-family:var(--display);font-weight:600;font-size:13px;border:0;background:transparent;
+    color:var(--muted);padding:8px 16px;border-radius:99px;cursor:pointer;transition:.15s}
+  .toggle button.on{background:var(--ink);color:#fff}
+  .toggle button:focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  .ctrl-hint{font-size:12.5px;color:var(--muted);max-width:40ch}
+
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:16px 0 26px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .chip{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;letter-spacing:.03em;font-weight:600}
+  .chip.all{background:var(--wire2);color:#41504a}
+  .chip.mem{background:#F4ECDC;color:var(--brass-deep);border:1px solid #E4D2AC}
+  .chip.mod{background:#fff;color:var(--brass-deep);border:1px dashed var(--brass)}
+  .chip.act{background:#E4F0ED;color:var(--teal);border:1px solid #BCD9D2}
+  .chip.st{background:#E7EDF1;color:var(--navy);border:1px solid #C4D2DC}
+
+  .stage{display:flex;gap:30px;align-items:flex-start}
+  .phone-col{flex:none}
+
+  /* phone */
+  .phone{width:360px;max-width:90vw;border:10px solid #11181E;border-radius:38px;background:#11181E;
+    box-shadow:0 20px 50px -20px rgba(16,24,30,.5);overflow:hidden}
+  .statusbar{height:30px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;
+    padding:0 18px;font-family:var(--mono);font-size:10px;color:var(--ink)}
+  .statusbar .notch{position:absolute}
+  .screen{height:min(72vh,680px);overflow-y:auto;background:var(--surface);scroll-behavior:smooth}
+  .screen::-webkit-scrollbar{width:0}
+
+  .blk{position:relative;border-bottom:1px solid var(--line);padding:14px 16px}
+  .anno{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;
+    background:var(--ink);color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;z-index:5}
+
+  /* topbar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:0}
+  .ic{width:30px;height:30px;border-radius:50%;background:var(--wire);display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:13px;color:#46524c}
+  .viewtag{font-family:var(--mono);font-size:10px;color:var(--brass-deep);background:#F4ECDC;border:1px solid #E4D2AC;
+    padding:3px 8px;border-radius:99px}
+
+  /* hero */
+  .hero{height:160px;background:repeating-linear-gradient(135deg,var(--wire) 0 14px,var(--wire2) 14px 28px);
+    display:flex;align-items:flex-end;justify-content:space-between;padding:10px;border-bottom:1px solid var(--line)}
+  .hero .ph-label{font-family:var(--mono);font-size:10px;color:#5a655f;background:rgba(251,252,251,.8);padding:3px 7px;border-radius:3px}
+  .dots{display:none;gap:5px;align-items:center}
+  .tier-paid .dots{display:flex}
+  .dots i{width:6px;height:6px;border-radius:50%;background:rgba(251,252,251,.9)}
+  .dots i:first-child{width:16px;border-radius:99px}
+  .tier-paid .hero .ph-label::after{content:" · gallery 1/8"}
+  .ph-label .single{display:inline}
+  .tier-paid .ph-label .single{display:none}
+
+  /* header */
+  .nm{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.1;letter-spacing:-.01em}
+  .cat{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .statusline{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px}
+  .open{color:var(--teal);font-weight:600}
+  .open::before{content:"●";font-size:9px;margin-right:5px;vertical-align:1px}
+  .dist{color:var(--muted)}
+  .rev-slot{margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--faint);
+    border:1px dashed var(--line);border-radius:4px;padding:5px 8px;display:inline-block}
+
+  /* action bar (sticky) */
+  .actionbar{position:sticky;top:0;background:var(--surface);z-index:4;display:grid;grid-template-columns:repeat(4,1fr);
+    gap:8px;padding:11px 14px;border-bottom:1px solid var(--line);box-shadow:0 4px 12px -8px rgba(16,24,30,.25)}
+  .act{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .act .b{width:100%;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:13px;font-weight:600}
+  .act .l{font-size:10.5px;color:var(--muted);font-family:var(--display);font-weight:500}
+  .act.primary .b{background:var(--teal);color:#fff}
+  .act.ghost .b{background:#fff;border:1.5px solid var(--line);color:#46524c}
+
+  /* module buttons */
+  .modrow{display:none;gap:8px;padding:12px 14px}
+  .tier-paid .modrow{display:flex}
+  .modbtn{flex:1;height:40px;border-radius:9px;border:1.5px dashed var(--brass);background:#fff;
+    color:var(--brass-deep);font-family:var(--display);font-weight:600;font-size:12px;
+    display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.05}
+
+  /* facts */
+  .sec-h{font-family:var(--display);font-weight:600;font-size:14px;margin:0 0 9px}
+  .fact{display:flex;gap:10px;font-size:13px;margin-bottom:8px}
+  .fact .k{font-family:var(--mono);font-size:10.5px;color:var(--faint);width:62px;flex:none;padding-top:1px;text-transform:uppercase}
+  .fact .v{color:var(--ink)}
+  .fact .v .today{color:var(--teal);font-weight:600}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .tags i{font-style:normal;font-size:11px;background:var(--wire);color:#46524c;padding:3px 9px;border-radius:99px}
+
+  /* cards (bulletins/events) */
+  .card{display:flex;gap:10px;border:1px solid var(--line);border-radius:8px;padding:9px;margin-bottom:8px;background:#fff}
+  .card .thumb{width:46px;height:46px;border-radius:6px;background:var(--wire2);flex:none}
+  .card .ct{flex:1;min-width:0}
+  .card .ct .t{font-family:var(--display);font-weight:600;font-size:13px;line-height:1.15}
+  .card .ct .m{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .bar{height:7px;border-radius:4px;background:var(--wire);margin:4px 0}
+  .bar.s{width:70%} .bar.xs{width:45%}
+  .more-paid{display:none} .tier-paid .more-paid{display:block}
+
+  /* story / about */
+  .about-basic{display:block} .tier-paid .about-basic{display:none}
+  .about-story{display:none} .tier-paid .about-story{display:block}
+  .story-badge{font-family:var(--mono);font-size:10px;color:var(--brass-deep);background:#F4ECDC;
+    border:1px solid #E4D2AC;padding:2px 7px;border-radius:3px;margin-left:7px;font-weight:600}
+  .spotlight{display:flex;gap:10px;align-items:center;margin-top:10px}
+  .spotlight .av{width:40px;height:40px;border-radius:50%;background:var(--wire2);flex:none}
+
+  /* follower perk (paid) */
+  .perk{display:none;border:1px solid #E4D2AC;background:#FBF6EC;border-radius:8px;padding:11px 12px}
+  .tier-paid .perk{display:block}
+  .perk .pt{font-family:var(--display);font-weight:600;font-size:13px;color:var(--brass-deep)}
+  .perk .pm{font-size:12px;color:var(--muted);margin-top:3px}
+
+  /* free-complete note */
+  .freenote{display:block;font-family:var(--mono);font-size:10.5px;color:var(--teal);
+    background:#E4F0ED;border:1px solid #BCD9D2;border-radius:6px;padding:8px 10px;margin-top:2px}
+  .tier-paid .freenote{display:none}
+
+  /* tabbar */
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding:7px 4px 9px}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--display);font-size:9px;color:var(--faint)}
+  .tab .d{width:18px;height:18px;border-radius:5px;background:var(--wire2)}
+  .tab.rew .d{background:#F4ECDC;border:1px solid #E4D2AC}
+
+  .cap{font-size:12px;color:var(--muted);max-width:360px;margin:12px auto 0;text-align:center;line-height:1.4}
+
+  /* notes column */
+  .notes-col{flex:1;min-width:0}
+  .notes-col h2{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 4px}
+  .notes-col .nh{color:var(--muted);font-size:13px;margin:0 0 16px}
+  ol.notes{list-style:none;counter-reset:n;margin:0;padding:0}
+  ol.notes li{counter-increment:n;position:relative;padding:0 0 14px 38px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+  ol.notes li::before{content:counter(n);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;
+    background:var(--ink);color:#fff;font-family:var(--mono);font-size:12px;font-weight:600;
+    display:flex;align-items:center;justify-content:center}
+  ol.notes li:last-child{border-bottom:0}
+  ol.notes .t{font-family:var(--display);font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  ol.notes p{margin:5px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;font-size:12.5px;color:var(--faint);line-height:1.55}
+  footer b{color:var(--muted)}
+
+  :focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  @media (max-width:840px){.stage{flex-direction:column;align-items:center}.notes-col{width:100%;max-width:520px}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="kick">Wireframe · Screen S5 · the anchor screen</div>
+    <h1>Business Profile</h1>
+    <p class="lede">Every search points here, and it&rsquo;s where membership becomes visible to residents. Toggle the tier to see the same screen as a free listing vs a member with modules — the free view must read complete, the member view adds capability.</p>
+
+    <div class="controls">
+      <div class="toggle" role="group" aria-label="Tier view">
+        <button id="bFree" class="on" onclick="setTier('free')">Free listing</button>
+        <button id="bPaid" onclick="setTier('paid')">Member + modules</button>
+      </div>
+      <p class="ctrl-hint">Same business, two entitlement states. Watch what appears — and what stays put.</p>
+    </div>
+
+    <div class="legend" aria-label="Annotation legend">
+      <span><i class="chip all">ALL</i> renders for every tier</span>
+      <span><i class="chip mem">MEMBER+</i> Member / Pro only</span>
+      <span><i class="chip mod">MODULE</i> only if that module is attached</span>
+      <span><i class="chip act">ACTION</i> resident action — always free</span>
+      <span><i class="chip st">STATE</i> notable state behaviour</span>
+    </div>
+  </header>
+
+  <div class="stage">
+    <!-- PHONE -->
+    <div class="phone-col">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen" id="screen">
+
+          <div class="blk topbar" style="border-bottom:1px solid var(--line)">
+            <div class="ic">&larr;</div>
+            <span class="viewtag" id="viewtag">Free listing</span>
+            <div class="ic">&#8943;</div>
+          </div>
+
+          <div class="blk hero" style="padding:10px"><span class="anno">1</span>
+            <span class="ph-label"><span class="single">photo</span></span>
+            <div class="dots"><i></i><i></i><i></i><i></i></div>
+          </div>
+
+          <div class="blk"><span class="anno">2</span>
+            <div class="nm">Juniper &amp; Sage Cafe</div>
+            <div class="cat">Cafe · Breakfast · Coffee</div>
+            <div class="statusline"><span class="open">Open</span><span class="dist">· closes 6:00 PM · 0.4 mi</span></div>
+            <div class="rev-slot">&#9734; Reviews — reserved for v2</div>
+          </div>
+
+          <div class="actionbar"><span class="anno" style="top:6px">3</span>
+            <div class="act primary"><div class="b">Call</div><div class="l">Call</div></div>
+            <div class="act primary"><div class="b">Go</div><div class="l">Directions</div></div>
+            <div class="act ghost"><div class="b">&#9825;</div><div class="l">Save</div></div>
+            <div class="act ghost"><div class="b">+</div><div class="l">Follow</div></div>
+          </div>
+
+          <div class="blk" style="padding-top:0;padding-bottom:0;border:0">
+            <div class="modrow" style="position:relative"><span class="anno" style="top:14px">4</span>
+              <button class="modbtn">Book</button>
+              <button class="modbtn">Request a quote</button>
+              <button class="modbtn">Join rewards</button>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno">5</span>
+            <div class="sec-h">At a glance</div>
+            <div class="fact"><span class="k">Hours</span><span class="v"><span class="today">Today 7 AM – 6 PM</span> · tap for week</span></div>
+            <div class="fact"><span class="k">Address</span><span class="v">512 SW Evergreen Ave · tap to map</span></div>
+            <div class="fact"><span class="k">Phone</span><span class="v">(541) 555-0142</span></div>
+            <div class="fact"><span class="k">Web</span><span class="v">juniperandsage.com</span></div>
+            <div class="tags"><i>Outdoor seating</i><i>Kid-friendly</i><i>Wi-Fi</i><span class="more-paid"><i>Gluten-free</i><i>Dog-friendly</i></span></div>
+          </div>
+
+          <div class="blk"><span class="anno">6</span>
+            <div class="sec-h">What&rsquo;s new</div>
+            <div class="card"><div class="thumb"></div><div class="ct"><div class="t">Fresh sourdough — Saturdays</div><div class="m">Bulletin · 2 days ago</div></div></div>
+            <div class="card more-paid"><div class="thumb"></div><div class="ct"><div class="t">New fall menu is live</div><div class="m">Bulletin · 5 days ago</div></div></div>
+            <div class="freenote">Free posts up to the monthly cap. Member = unlimited + scheduled.</div>
+          </div>
+
+          <div class="blk"><span class="anno">7</span>
+            <div class="sec-h">Upcoming</div>
+            <div class="card"><div class="thumb"></div><div class="ct"><div class="t">Live acoustic · Fri 7 PM</div><div class="m">Event · this week</div></div></div>
+          </div>
+
+          <div class="blk"><span class="anno">8</span>
+            <div class="sec-h">About<span class="story-badge">storytelling · Member</span></div>
+            <div class="about-basic">
+              <div class="bar"></div><div class="bar s"></div><div class="bar xs"></div>
+            </div>
+            <div class="about-story">
+              <div class="bar"></div><div class="bar"></div><div class="bar s"></div>
+              <div class="spotlight"><div class="av"></div><div><div style="font-family:var(--display);font-weight:600;font-size:12.5px">Owner spotlight</div><div style="font-size:11.5px;color:var(--muted)">Meet Dana · roasting since 2014</div></div></div>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno">9</span>
+            <div class="perk">
+              <div class="pt">Follower perk</div>
+              <div class="pm">Followers get a free pastry with any drink, Mondays. Reach you earn — not an ad.</div>
+            </div>
+            <div class="freenote" style="margin-top:0">Follower perks &amp; announcements unlock with Member.</div>
+          </div>
+
+        </div>
+        <div class="tabbar" aria-hidden="true">
+          <div class="tab"><div class="d"></div>Home</div>
+          <div class="tab"><div class="d"></div>Search</div>
+          <div class="tab"><div class="d"></div>Events</div>
+          <div class="tab rew"><div class="d"></div>Saved</div>
+          <div class="tab"><div class="d"></div>Account</div>
+        </div>
+      </div>
+      <p class="cap">Free reads <b>complete</b> — header, actions, hours, contact, bulletins, events, about. Member <b>adds</b> capability. A resident should never sense a field is missing or &ldquo;locked.&rdquo;</p>
+    </div>
+
+    <!-- NOTES -->
+    <div class="notes-col">
+      <h2>Annotations</h2>
+      <p class="nh">Numbered to the screen. Tier tags show what renders when.</p>
+      <ol class="notes">
+        <li><div class="t">Hero / gallery <i class="chip st">STATE</i></div><p>Free shows one photo; Member shows a gallery (dots appear when toggled). One hero minimum so a free listing is never bare.</p></li>
+        <li><div class="t">Name + status line <i class="chip all">ALL</i> <i class="chip st">STATE</i></div><p>The most-glanced element. Open/closed + closing time leads; states cover closed (shows next open), temporarily/permanently closed. Reviews slot reserved for v2 so adding it isn&rsquo;t a redesign.</p></li>
+        <li><div class="t">Action bar — sticky <i class="chip act">ACTION</i></div><p>Call · Directions · Save · Follow, pinned so it&rsquo;s always one tap away as you scroll. Same four verbs as the result card (S4). Logged-out tap on Save/Follow fires the just-in-time login — the only place we ask.</p></li>
+        <li><div class="t">Module buttons <i class="chip mod">MODULE</i></div><p>Book (B7), Request a quote (B8), Join rewards (B9) appear only when that module is attached. This is the clearest place residents feel the membership — as added utility, never as a paywall.</p></li>
+        <li><div class="t">At a glance <i class="chip all">ALL</i></div><p>Hours (today highlighted), address→map, phone, website, amenity tags. Tags use the same vocabulary as the S4 search facets — profile and filters speak the same language. Member exposes the fuller tag set.</p></li>
+        <li><div class="t">What&rsquo;s new — bulletins <i class="chip all">ALL</i></div><p>The follow payoff and engagement hook. Free posts up to the monthly cap; Member is unlimited + scheduled — so a member simply has more here, not a different screen.</p></li>
+        <li><div class="t">Upcoming — events <i class="chip all">ALL</i></div><p>Events tied to this business. Free and uncapped for everyone — pure consumer value, never gated.</p></li>
+        <li><div class="t">About / story <i class="chip st">STATE</i> <i class="chip mem">MEMBER+</i></div><p>Free shows a basic description (still complete). Member swaps in the storytelling block + owner spotlight — the local-character content that makes the directory feel like a community.</p></li>
+        <li><div class="t">Follower perks <i class="chip mem">MEMBER+</i></div><p>A standing offer for people who chose to follow — earned reach, the inverse of an ad. Renders nothing on a free profile (no empty stub).</p></li>
+        <li><div class="t">Bottom tabs <i class="chip all">ALL</i></div><p>Persist on this pushed screen. Saved carries the Rewards wallet (the Loyalty crossover) once the resident joins a program.</p></li>
+      </ol>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Open questions for this screen.</b> Photo cap for free (placeholder 5) · whether the module button row sits above or below At-a-glance when multiple modules are active · exact closed-state copy · whether follower perks live in their own block or fold into the bulletin stream. <b>Next:</b> with S5 agreed, S4 result card and S3 search reuse its action vocabulary, and the business-side B7–B9 setup screens define what these buttons connect to.</p>
+  </footer>
+</div>
+
+<script>
+  function setTier(t){
+    var s=document.getElementById('screen');
+    var free=document.getElementById('bFree'), paid=document.getElementById('bPaid');
+    var tag=document.getElementById('viewtag');
+    if(t==='paid'){s.classList.add('tier-paid');paid.classList.add('on');free.classList.remove('on');
+      tag.textContent='Member + modules';}
+    else{s.classList.remove('tier-paid');free.classList.add('on');paid.classList.remove('on');
+      tag.textContent='Free listing';}
+    s.scrollTop=0;
+  }
+</script>
+</body>
+</html>

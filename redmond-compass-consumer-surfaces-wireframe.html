@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consumer Surfaces — Reputation &amp; Rewards · Redmond Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16242E; --paper:#E8EBE9; --surface:#FBFCFB;
+    --navy:#213D50; --teal:#0F6E64; --teal-bright:#127C71; --brass:#B07D2A; --brass-deep:#8A5E16;
+    --muted:#5C6B66; --faint:#909994; --line:#D5DAD6;
+    --wire:#E0E4E1; --wire2:#D2D7D3;
+    --display:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:30px 18px 70px}
+  header.head{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:22px}
+  .kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal)}
+  h1{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:clamp(23px,4.4vw,33px);margin:.3em 0 .15em}
+  .lede{color:var(--muted);max-width:68ch;margin:0;font-size:15px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:18px 0 0;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .chip{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;letter-spacing:.03em;font-weight:600}
+  .chip.auto{background:var(--wire2);color:#41504a}
+  .chip.pos{background:#E4F0ED;color:var(--teal);border:1px solid #BCD9D2}
+  .chip.priv{background:#E7EDF1;color:var(--navy);border:1px solid #C4D2DC}
+
+  .duo{display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+  .col{flex:1;min-width:300px;max-width:380px}
+  .col-h{font-family:var(--display);font-weight:600;font-size:15px;margin:0 0 3px}
+  .col-s{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+  .toggle{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px;margin-bottom:14px}
+  .toggle button{font-family:var(--display);font-weight:600;font-size:12.5px;border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:99px;cursor:pointer;transition:.15s}
+  .toggle button.on{background:var(--ink);color:#fff}
+  .toggle button:focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+
+  .phone{width:340px;max-width:88vw;border:10px solid #11181E;border-radius:36px;background:#11181E;box-shadow:0 18px 44px -20px rgba(16,24,30,.5);overflow:hidden}
+  .statusbar{height:28px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-family:var(--mono);font-size:10px;color:var(--ink)}
+  .screen{height:min(66vh,580px);overflow-y:auto;background:var(--surface)}
+  .screen::-webkit-scrollbar{width:0}
+  .blk{position:relative;border-bottom:1px solid var(--line);padding:13px 15px}
+  .anno{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:5}
+  .anno.b{background:var(--teal)}
+
+  .navrow{display:flex;align-items:center;justify-content:space-between;padding:9px 13px}
+  .ic{width:28px;height:28px;border-radius:50%;background:var(--wire);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:#46524c}
+  .crumb{font-family:var(--mono);font-size:9.5px;color:var(--faint);letter-spacing:.05em}
+
+  /* mini profile context */
+  .mini{display:flex;gap:10px;align-items:center}
+  .mini .lg{width:38px;height:38px;border-radius:8px;background:var(--wire2);flex:none}
+  .mini .nm{font-family:var(--display);font-weight:700;font-size:15px}
+  .mini .ct{font-size:11px;color:var(--muted)}
+
+  .sec-h{font-family:var(--display);font-weight:600;font-size:13px;margin:0 0 9px}
+
+  /* trust signals */
+  .signals{display:flex;flex-wrap:wrap;gap:6px}
+  .sig{font-size:11px;background:var(--wire);color:#42504a;padding:4px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:5px}
+  .sig .v{color:var(--teal);font-weight:700}
+
+  /* recommendations */
+  .rec-head{display:flex;align-items:center;gap:9px}
+  .rec-ico{width:30px;height:30px;border-radius:50%;background:#E4F0ED;border:1px solid #BCD9D2;color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
+  .rec-n{font-family:var(--display);font-weight:700;font-size:16px}
+  .rec-sub{font-size:11px;color:var(--muted)}
+  .recnote{border:1px solid var(--line);border-radius:9px;padding:10px 11px;margin-top:9px;background:#fff}
+  .recnote .who{font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .vbadge{font-family:var(--mono);font-size:8.5px;color:var(--teal);background:#E4F0ED;border:1px solid #BCD9D2;padding:1px 6px;border-radius:99px;font-weight:600;letter-spacing:.03em}
+  .recnote .tx{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.4}
+  .recbtn{margin-top:11px;width:100%;height:42px;border-radius:10px;border:1.5px solid var(--teal);background:#fff;color:var(--teal);
+    font-family:var(--display);font-weight:600;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}
+  .recbtn.done{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .youline{display:none;font-size:11px;color:var(--teal);text-align:center;margin-top:7px}
+  .recbtn.done ~ .youline{display:block}
+
+  /* new business state */
+  .newstate{display:none;border:1.5px dashed var(--teal);border-radius:10px;background:#EDF5F2;padding:13px 14px;text-align:center}
+  .newstate .nt{font-family:var(--display);font-weight:600;font-size:14px;color:var(--teal)}
+  .newstate .nm{font-size:11.5px;color:var(--muted);margin-top:4px}
+  .state-new .est-only{display:none}
+  .state-new .newstate{display:block}
+
+  /* private feedback */
+  .privrow{display:flex;gap:10px;align-items:flex-start;background:#EEF2F5;border:1px solid #C4D2DC;border-radius:9px;padding:11px 12px}
+  .privrow .pi{font-family:var(--mono);font-size:13px;color:var(--navy);flex:none;margin-top:1px}
+  .privrow .pt{font-size:12px;color:var(--navy);font-weight:600}
+  .privrow .pm{font-size:11px;color:var(--muted);margin-top:2px}
+
+  .nostars-note{font-family:var(--mono);font-size:10px;color:var(--faint);text-align:center;padding:11px;letter-spacing:.03em}
+
+  /* S7 wallet */
+  .stitle{font-family:var(--display);font-weight:700;font-size:18px;padding:11px 15px 0}
+  .tabs{display:flex;gap:5px;padding:10px 12px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tab{font-family:var(--display);font-weight:500;font-size:12px;color:var(--muted);padding:8px 11px;white-space:nowrap;border-bottom:2px solid transparent}
+  .tab.on{color:var(--teal);border-bottom-color:var(--teal);font-weight:600}
+  .tab .nw{font-family:var(--mono);font-size:8px;background:var(--teal);color:#fff;border-radius:99px;padding:1px 5px;margin-left:4px;vertical-align:1px}
+
+  .prog{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px;background:#fff}
+  .prog .ph{display:flex;align-items:center;gap:10px}
+  .prog .lg{width:34px;height:34px;border-radius:8px;background:var(--wire2);flex:none}
+  .prog .bn{font-family:var(--display);font-weight:600;font-size:13px}
+  .prog .pt{font-size:11px;color:var(--muted);margin-top:1px}
+  .punches{display:flex;gap:5px;margin-top:11px;flex-wrap:wrap}
+  .punches i{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--teal);display:inline-block}
+  .punches i.f{background:var(--teal)}
+  .ptrack{height:8px;border-radius:6px;background:var(--wire);margin-top:11px;overflow:hidden}
+  .ptrack i{display:block;height:100%;background:var(--teal);border-radius:6px}
+  .pmeta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:7px}
+  .pmeta b{font-family:var(--mono);color:var(--ink)}
+  .ready{border-color:var(--brass);background:#FBF6EC}
+  .ready .badge{font-family:var(--mono);font-size:9px;font-weight:600;color:#fff;background:var(--brass);padding:2px 8px;border-radius:99px;margin-left:auto}
+  .redeem{margin-top:11px;height:38px;border-radius:9px;background:var(--brass);color:#fff;font-family:var(--display);font-weight:600;font-size:12.5px;display:flex;align-items:center;justify-content:center}
+
+  .empty{display:none;text-align:center;padding:34px 20px}
+  .empty .eic{width:52px;height:52px;border-radius:50%;background:var(--wire);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#46524c}
+  .empty .et{font-family:var(--display);font-weight:600;font-size:15px}
+  .empty .em{font-size:12.5px;color:var(--muted);margin:7px auto 0;max-width:30ch;line-height:1.45}
+  .empty .eb{margin-top:16px;display:inline-flex;height:40px;align-items:center;padding:0 18px;border-radius:99px;background:var(--teal);color:#fff;font-family:var(--display);font-weight:600;font-size:12.5px}
+  .state-empty .has-only{display:none}
+  .state-empty .empty{display:block}
+
+  .cap{font-size:11.5px;color:var(--muted);max-width:340px;margin:11px auto 0;text-align:center;line-height:1.4}
+
+  /* notes */
+  .notes-wrap{margin-top:40px;display:flex;gap:30px;flex-wrap:wrap}
+  .ncol{flex:1;min-width:280px}
+  .ncol h2{font-family:var(--display);font-weight:600;font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:9px}
+  .ncol h2 .pin{font-family:var(--mono);font-size:10px;color:#fff;padding:3px 8px;border-radius:4px}
+  .pin.a{background:var(--ink)} .pin.b{background:var(--teal)}
+  ol.notes{list-style:none;counter-reset:n;margin:0;padding:0}
+  ol.notes li{counter-increment:n;position:relative;padding:0 0 13px 34px;margin-bottom:13px;border-bottom:1px solid var(--line)}
+  ol.notes li::before{content:counter(n);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  ol.notes.a li::before{background:var(--ink)} ol.notes.b li::before{background:var(--teal)}
+  ol.notes li:last-child{border-bottom:0}
+  ol.notes .t{font-family:var(--display);font-weight:600;font-size:13.5px}
+  ol.notes p{margin:5px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;font-size:12.5px;color:var(--faint);line-height:1.55}
+  footer b{color:var(--muted)}
+  :focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="kick">Wireframe · Consumer surfaces · where the model meets residents</div>
+    <h1>Reputation &amp; Rewards</h1>
+    <p class="lede">The two places the model touches residents: the <b>no-stars reputation block</b> on the business profile (S5), and the <b>Rewards wallet</b> that the Loyalty tool adds to Saved (S7). Each has a toggle for the state that matters — a new business that can&rsquo;t be review-bombed, and a wallet before anyone&rsquo;s joined a program.</p>
+    <div class="legend" aria-label="Signal legend">
+      <span><i class="chip auto">AUTO</i> factual, automatic</span>
+      <span><i class="chip pos">POSITIVE</i> only goes up — no bombing</span>
+      <span><i class="chip priv">PRIVATE</i> criticism routed to owner</span>
+    </div>
+  </header>
+
+  <div class="duo">
+
+    <!-- ============ PHONE A : S5 REPUTATION ============ -->
+    <div class="col">
+      <h3 class="col-h">S5 · Reputation &amp; Recommend</h3>
+      <p class="col-s">The block that replaces star ratings, shown in profile context.</p>
+      <div class="toggle" role="group" aria-label="Business maturity">
+        <button id="aEst" class="on" onclick="setA('est')">Established</button>
+        <button id="aNew" onclick="setA('new')">New to Compass</button>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen state-est" id="screenA">
+
+          <div class="blk navrow" style="border-bottom:1px solid var(--line)">
+            <div class="ic">&larr;</div>
+            <span class="crumb">BUSINESS PROFILE · S5</span>
+            <div class="ic">&#8943;</div>
+          </div>
+
+          <div class="blk">
+            <div class="mini"><div class="lg"></div><div><div class="nm">Juniper &amp; Sage Cafe</div><div class="ct">Cafe · 0.4 mi · Open</div></div></div>
+          </div>
+
+          <div class="blk"><span class="anno">1</span>
+            <div class="sec-h">Trust signals</div>
+            <div class="signals">
+              <span class="sig"><span class="v">&#10003;</span> Verified</span>
+              <span class="sig">Posts weekly</span>
+              <span class="sig">Replies in a day</span>
+              <span class="sig est-only">Local since 2019</span>
+              <span class="sig" style="display:none" id="aNewBadge">New &middot; joined this month</span>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno">2</span>
+            <!-- established -->
+            <div class="est-only">
+              <div class="rec-head">
+                <div class="rec-ico">&#9829;</div>
+                <div><div class="rec-n"><span id="recN">43</span> locals recommend this</div><div class="rec-sub">positive-only · no 1&ndash;5 score</div></div>
+              </div>
+              <div class="recnote"><span class="anno b" style="top:7px">3</span>
+                <div class="who">Maria L. <span class="vbadge">VERIFIED CUSTOMER</span></div>
+                <div class="tx">Best breakfast burrito in Redmond, and the patio is dog-friendly.</div>
+              </div>
+              <div class="recnote">
+                <div class="who">Tom R. <span class="vbadge">VERIFIED CUSTOMER</span></div>
+                <div class="tx">Owner remembered my order on visit two. That&rsquo;s why I keep coming back.</div>
+              </div>
+            </div>
+            <!-- new -->
+            <div class="newstate">
+              <div class="nt">New to Compass</div>
+              <div class="nm">No score, no judgment — just newly listed. Be the first local to recommend.</div>
+            </div>
+
+            <button class="recbtn" id="recBtn" onclick="rec()">&#9825; Recommend</button>
+            <div class="youline">You recommend this place &middot; thanks!</div>
+          </div>
+
+          <div class="blk"><span class="anno">4</span>
+            <div class="privrow">
+              <span class="pi">&#9993;</span>
+              <div><div class="pt">Had an issue? Tell the owner privately</div><div class="pm">Goes straight to them to fix — never posted publicly.</div></div>
+            </div>
+          </div>
+
+          <div class="nostars-note">&#9734; no star average anywhere — by design</div>
+
+        </div>
+      </div>
+      <p class="cap">Tap Recommend to see the positive-only mechanic. Switch to <b>New</b>: it reads neutral and inviting, never a damning low score.</p>
+    </div>
+
+    <!-- ============ PHONE B : S7 REWARDS WALLET ============ -->
+    <div class="col">
+      <h3 class="col-h">S7 · Rewards wallet</h3>
+      <p class="col-s">The Loyalty crossover — a new tab inside Saved.</p>
+      <div class="toggle" role="group" aria-label="Wallet state">
+        <button id="bHas" class="on" onclick="setB('has')">Has rewards</button>
+        <button id="bEmpty" onclick="setB('empty')">Empty</button>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen state-has" id="screenB">
+
+          <div class="stitle">Saved</div>
+          <div class="tabs">
+            <span class="tab">Businesses</span>
+            <span class="tab">Following</span>
+            <span class="tab">Events</span>
+            <span class="tab on">Rewards</span>
+          </div>
+
+          <div class="blk has-only" style="border:0;padding-top:13px"><span class="anno b">2</span>
+            <div class="prog ready">
+              <div class="ph"><div class="lg"></div><div><div class="bn">High Desert Bakery</div><div class="pt">Punch card</div></div><span class="badge anno-none">READY</span></div>
+              <div class="punches"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></div>
+              <div class="redeem">Redeem &middot; Free pastry</div>
+            </div>
+
+            <div class="prog"><span class="anno b" style="top:7px">3</span>
+              <div class="ph"><div class="lg"></div><div><div class="bn">Juniper &amp; Sage Cafe</div><div class="pt">Punch card · 7 of 10</div></div></div>
+              <div class="punches"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i></div>
+              <div class="pmeta"><span>3 more for a free drink</span></div>
+            </div>
+
+            <div class="prog">
+              <div class="ph"><div class="lg"></div><div><div class="bn">Cascade Hardware</div><div class="pt">Points</div></div></div>
+              <div class="ptrack"><i style="width:80%"></i></div>
+              <div class="pmeta"><span><b>240</b> pts</span><span>60 to next reward</span></div>
+            </div>
+          </div>
+
+          <div class="empty"><span class="anno b" style="background:var(--teal)">4</span>
+            <div class="eic">&#9825;</div>
+            <div class="et">No rewards yet</div>
+            <div class="em">Join a loyalty program at a local business and your cards show up here.</div>
+            <div class="eb">Find local businesses</div>
+          </div>
+
+        </div>
+      </div>
+      <p class="cap">The Rewards tab appears once you join a program. <b>Empty</b> routes back into discovery — a wallet with nothing in it still pulls you toward local shops.</p>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="notes-wrap">
+    <div class="ncol">
+      <h2><span class="pin a">S5</span> Reputation</h2>
+      <ol class="notes a">
+        <li><div class="t">Trust signals</div><p>Factual, automatic badges — verified, posts weekly, replies-in-a-day, local-since. No opinion, just whether the business shows up and responds. These render for every tier, so even a free listing earns real trust.</p></li>
+        <li><div class="t">Recommendations — positive-only</div><p>A count that can only rise, so it can&rsquo;t be review-bombed. Notes are short and come from people who actually transacted (Verified customer badge, drawn from booking/loyalty). The sub-line states plainly: no 1&ndash;5 score.</p></li>
+        <li><div class="t">Recommend action</div><p>One tap (the demo). Logged-out fires the just-in-time login; an optional short note can be added. It only ever adds a positive — there is no negative direction to weaponize.</p></li>
+        <li><div class="t">Private feedback routing</div><p>The anti-Yelp move: an unhappy customer is steered to tell the owner <em>privately</em>, not post a public 1-star. For a Pro business this lands in the managed Inquiry inbox (service recovery); otherwise it reaches their contact. Criticism becomes a fix, not a wound.</p></li>
+        <li><div class="t">New-business state</div><p>Toggle it: a new or quiet listing reads &ldquo;New to Compass&rdquo; — neutral and inviting — instead of a damning empty score. Fairness for the business, honesty for the resident.</p></li>
+      </ol>
+    </div>
+    <div class="ncol">
+      <h2><span class="pin b">S7</span> Rewards wallet</h2>
+      <ol class="notes b">
+        <li><div class="t">Lives in Saved, as a tab</div><p>Rewards joins Businesses / Following / Events. It appears only once a resident has joined at least one program — so it never clutters Saved for people who don&rsquo;t use loyalty. Saved was already the &ldquo;my stuff&rdquo; return surface; rewards belong with it.</p></li>
+        <li><div class="t">Program cards</div><p>Each business&rsquo;s program with live progress — punch cards as filled dots, points as a bar. Tapping a card opens that business&rsquo;s profile (S5). Progress also shows on S5 itself and can nudge from Home.</p></li>
+        <li><div class="t">Reward ready &rarr; redeem</div><p>When earned, the card flips to a clear Redeem state. Redemption is confirmed at the counter (staff scan / owner tap) — defined back in the Loyalty setup (B9).</p></li>
+        <li><div class="t">Empty state pulls toward discovery</div><p>Before any program is joined, the tab invites action — &ldquo;find local businesses&rdquo; routes into Search. An empty wallet still does re-engagement work.</p></li>
+      </ol>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Open questions.</b> Whether recommendation <em>notes</em> are optional or encouraged (count-only is simplest and safest) · how &ldquo;verified customer&rdquo; is earned for businesses without Bookings/Loyalty · whether private feedback for a non-Pro business routes to email or a lightweight in-app note · redeem method default for Loyalty (staff-scan vs owner-tap). <b>Next:</b> the search pair — S3 (search/explore) and S4 (results) — which reuse the S5 action vocabulary and round out the consumer spine, or the lighter content screens (News/Community, Resources).</p>
+  </footer>
+</div>
+
+<script>
+  function setA(s){
+    var sc=document.getElementById('screenA');
+    sc.className='screen state-'+s;
+    document.getElementById('aEst').classList.toggle('on',s==='est');
+    document.getElementById('aNew').classList.toggle('on',s==='new');
+    document.getElementById('aNewBadge').style.display = s==='new' ? 'inline-flex':'none';
+    // reset recommend
+    var b=document.getElementById('recBtn');
+    b.classList.remove('done'); b.innerHTML='&#9825; Recommend';
+    document.getElementById('recN').textContent='43';
+    sc.scrollTop=0;
+  }
+  var recd=false;
+  function rec(){
+    var b=document.getElementById('recBtn'), n=document.getElementById('recN');
+    recd=!recd;
+    if(recd){b.classList.add('done');b.innerHTML='&#9829; Recommended';n.textContent='44';}
+    else{b.classList.remove('done');b.innerHTML='&#9825; Recommend';n.textContent='43';}
+  }
+  function setB(s){
+    var sc=document.getElementById('screenB');
+    sc.className='screen state-'+s;
+    document.getElementById('bHas').classList.toggle('on',s==='has');
+    document.getElementById('bEmpty').classList.toggle('on',s==='empty');
+    sc.scrollTop=0;
+  }
+</script>
+</body>
+</html>

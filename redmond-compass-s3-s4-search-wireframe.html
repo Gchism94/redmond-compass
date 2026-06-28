@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S3 + S4 Search &amp; Results — Wireframe · Redmond Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16242E; --paper:#E8EBE9; --surface:#FBFCFB;
+    --navy:#213D50; --teal:#0F6E64; --teal-bright:#127C71; --brass:#B07D2A; --brass-deep:#8A5E16;
+    --muted:#5C6B66; --faint:#909994; --line:#D5DAD6;
+    --wire:#E0E4E1; --wire2:#D2D7D3;
+    --display:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:30px 18px 70px}
+  header.head{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:22px}
+  .kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal)}
+  h1{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:clamp(23px,4.4vw,33px);margin:.3em 0 .15em}
+  .lede{color:var(--muted);max-width:68ch;margin:0;font-size:15px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:18px 0 0;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .chip{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;letter-spacing:.03em;font-weight:600}
+  .chip.t1{background:var(--wire2);color:#41504a}
+  .chip.t2{background:#E4F0ED;color:var(--teal);border:1px solid #BCD9D2}
+  .chip.t3{background:#E7EDF1;color:var(--navy);border:1px solid #C4D2DC}
+
+  .duo{display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+  .col{flex:1;min-width:300px;max-width:380px}
+  .col-h{font-family:var(--display);font-weight:600;font-size:15px;margin:0 0 3px}
+  .col-s{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+  .toggle{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px;margin-bottom:14px;flex-wrap:wrap}
+  .toggle button{font-family:var(--display);font-weight:600;font-size:12.5px;border:0;background:transparent;color:var(--muted);padding:7px 13px;border-radius:99px;cursor:pointer;transition:.15s}
+  .toggle button.on{background:var(--ink);color:#fff}
+  .toggle button:focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+
+  .phone{width:340px;max-width:88vw;border:10px solid #11181E;border-radius:36px;background:#11181E;box-shadow:0 18px 44px -20px rgba(16,24,30,.5);overflow:hidden}
+  .statusbar{height:28px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-family:var(--mono);font-size:10px;color:var(--ink)}
+  .screen{height:min(68vh,600px);overflow-y:auto;background:var(--surface)}
+  .screen::-webkit-scrollbar{width:0}
+  .blk{position:relative;border-bottom:1px solid var(--line);padding:13px 15px}
+  .anno{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:5}
+  .anno.b{background:var(--teal)}
+
+  /* search bar */
+  .sbar{display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:0 12px;height:44px}
+  .sbar.focus{border-color:var(--teal);box-shadow:0 0 0 3px #E4F0ED}
+  .sbar .mag{font-family:var(--mono);color:var(--faint);font-size:14px}
+  .sbar .txt{flex:1;font-size:13.5px;color:var(--muted)}
+  .sbar .txt.typed{color:var(--ink)}
+  .sbar .caret{width:1.5px;height:17px;background:var(--teal);display:none}
+  .state-typing .sbar .caret{display:inline-block}
+  .sbar .voice{width:26px;height:26px;border-radius:50%;background:var(--wire);display:flex;align-items:center;justify-content:center;font-size:12px;color:#46524c}
+  .qpills{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+  .qpill{font-size:11.5px;border:1.5px solid var(--line);background:#fff;color:#46524c;padding:5px 12px;border-radius:99px;display:inline-flex;align-items:center;gap:6px}
+  .qpill.act{border-color:var(--teal);background:#E4F0ED;color:var(--teal);font-weight:600}
+
+  .sec-h{font-family:var(--display);font-weight:600;font-size:12.5px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:11px}
+
+  /* category grid */
+  .cats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .catt{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .catt .ci{width:46px;height:46px;border-radius:13px;background:var(--wire);}
+  .catt .cl{font-size:9.5px;color:#42504a;text-align:center;font-family:var(--display);font-weight:500}
+
+  .reclist{display:flex;flex-direction:column;gap:2px}
+  .recitem{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .recitem:last-child{border-bottom:0}
+  .recitem .ri{font-family:var(--mono);color:var(--faint);font-size:12px}
+  .trend{display:flex;flex-wrap:wrap;gap:6px}
+  .trend i{font-style:normal;font-size:11.5px;background:var(--wire);color:#42504a;padding:5px 11px;border-radius:99px}
+  .colls{display:flex;flex-direction:column;gap:8px}
+  .collcard{height:54px;border-radius:10px;background:linear-gradient(100deg,var(--wire2),var(--wire));display:flex;align-items:center;padding:0 14px;font-family:var(--display);font-weight:600;font-size:13px;color:#3a473f}
+
+  /* autocomplete */
+  .ac{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line)}
+  .ac .at{width:30px;height:30px;border-radius:7px;background:var(--wire2);flex:none}
+  .ac .an{font-size:13px;font-weight:500}
+  .ac .am{font-size:10.5px;color:var(--muted)}
+  .ac .tag{margin-left:auto;font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 7px;border-radius:99px;letter-spacing:.03em}
+  .tag.biz{background:#E4F0ED;color:var(--teal);border:1px solid #BCD9D2}
+  .tag.evt{background:#F4ECDC;color:var(--brass-deep);border:1px solid #E4D2AC}
+  .tag.com{background:#E7EDF1;color:var(--navy);border:1px solid #C4D2DC}
+  .tag.sug{background:var(--wire2);color:#46524c}
+
+  /* S4 results header */
+  .reshead{position:sticky;top:0;background:var(--surface);z-index:4;border-bottom:1px solid var(--line);padding:11px 15px;box-shadow:0 4px 12px -10px rgba(16,24,30,.3)}
+  .resq{display:flex;align-items:center;gap:9px}
+  .resq .rb{flex:1;display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:0 11px;height:38px;font-size:13px}
+  .vt{width:38px;height:38px;border-radius:10px;border:1.5px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:#46524c;flex:none}
+  .vt.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .resmeta{display:flex;align-items:center;justify-content:space-between;margin-top:9px}
+  .rescount{font-size:12px;color:var(--muted)} .rescount b{color:var(--ink);font-family:var(--display)}
+  .toolbtns{display:flex;gap:7px}
+  .tbtn{font-size:11px;border:1.5px solid var(--line);background:#fff;color:#46524c;padding:4px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:5px}
+  .fchips{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+  .fchip{font-size:10.5px;background:#E4F0ED;color:var(--teal);border:1px solid #BCD9D2;padding:3px 9px;border-radius:99px;font-weight:600;display:inline-flex;gap:5px;align-items:center}
+  .fchip .x{opacity:.7}
+  .rtabs{display:flex;gap:4px;margin-top:11px}
+  .rtab{font-family:var(--display);font-size:11px;font-weight:500;color:var(--muted);padding:5px 10px;border-radius:99px;background:var(--wire)}
+  .rtab.on{background:var(--ink);color:#fff}
+
+  /* result card */
+  .rcard{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .rcard .th{width:58px;height:58px;border-radius:9px;background:var(--wire2);flex:none}
+  .rc-main{flex:1;min-width:0}
+  .rc-nm{font-family:var(--display);font-weight:600;font-size:14px;line-height:1.1}
+  .rc-cat{font-size:11px;color:var(--muted);margin-top:2px}
+  .rc-meta{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:11.5px;flex-wrap:wrap}
+  .rc-open{color:var(--teal);font-weight:600}
+  .rc-rec{color:var(--teal);font-weight:600}
+  .rc-dist{color:var(--muted)}
+  .rc-acts{display:flex;gap:7px;margin-top:9px}
+  .rc-acts .a{height:30px;border-radius:8px;font-family:var(--display);font-weight:600;font-size:11px;display:flex;align-items:center;justify-content:center;gap:5px;flex:1}
+  .rc-acts .a.p{background:var(--teal);color:#fff} .rc-acts .a.g{background:#fff;border:1.5px solid var(--line);color:#46524c;flex:none;width:38px}
+
+  /* map */
+  .mapwrap{height:100%;min-height:420px;position:relative;background:
+    repeating-linear-gradient(0deg,#DFE5E1 0 38px,#E6EBE7 38px 39px),
+    repeating-linear-gradient(90deg,transparent 0 38px,rgba(0,0,0,.04) 38px 39px)}
+  .pin{position:absolute;width:30px;height:30px;border-radius:50% 50% 50% 2px;background:var(--teal);transform:rotate(45deg);box-shadow:0 4px 10px -4px rgba(16,24,30,.5)}
+  .pin.cluster{width:36px;height:36px;border-radius:50%;transform:none;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:600}
+  .searcharea{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid var(--line);
+    border-radius:99px;padding:7px 15px;font-family:var(--display);font-weight:600;font-size:12px;color:var(--ink);box-shadow:0 4px 12px -6px rgba(16,24,30,.4);white-space:nowrap}
+  .peekcard{position:absolute;left:12px;right:12px;bottom:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;display:flex;gap:10px;box-shadow:0 8px 20px -10px rgba(16,24,30,.4)}
+  .peekcard .th{width:46px;height:46px;border-radius:8px;background:var(--wire2);flex:none}
+
+  /* no results */
+  .nores{padding:26px 18px;text-align:center}
+  .nores .ei{width:48px;height:48px;border-radius:50%;background:var(--wire);margin:0 auto 13px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;color:#46524c}
+  .nores .nt{font-family:var(--display);font-weight:600;font-size:15px}
+  .nores .dym{margin-top:12px;font-size:13px}
+  .nores .dym a{color:var(--teal);font-weight:600}
+  .nores .acts{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+  .nores .nb{height:40px;border-radius:9px;border:1.5px solid var(--line);background:#fff;font-family:var(--display);font-weight:600;font-size:12.5px;color:#46524c;display:flex;align-items:center;justify-content:center}
+  .nores .sugh{font-size:11px;color:var(--faint);margin-top:18px;text-transform:uppercase;letter-spacing:.05em;font-family:var(--mono)}
+  .nores .sug{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:10px}
+  .nores .sug i{font-style:normal;font-size:11.5px;background:var(--wire);color:#42504a;padding:5px 12px;border-radius:99px}
+
+  /* state visibility */
+  .state-idle .if-typing,.state-typing .if-idle{display:none}
+  .if-list,.if-map,.if-empty{display:none}
+  .state-list .if-list{display:block} .state-map .if-map{display:block} .state-empty .if-empty{display:block}
+  .state-map .reshead .resmeta,.state-map .reshead .rtabs,.state-empty .reshead .rtabs{display:none}
+
+  .cap{font-size:11.5px;color:var(--muted);max-width:340px;margin:11px auto 0;text-align:center;line-height:1.4}
+
+  .notes-wrap{margin-top:40px;display:flex;gap:30px;flex-wrap:wrap}
+  .ncol{flex:1;min-width:280px}
+  .ncol h2{font-family:var(--display);font-weight:600;font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:9px}
+  .ncol h2 .pin2{font-family:var(--mono);font-size:10px;color:#fff;padding:3px 8px;border-radius:4px}
+  .pin2.a{background:var(--ink)} .pin2.b{background:var(--teal)}
+  ol.notes{list-style:none;counter-reset:n;margin:0;padding:0}
+  ol.notes li{counter-increment:n;position:relative;padding:0 0 13px 34px;margin-bottom:13px;border-bottom:1px solid var(--line)}
+  ol.notes li::before{content:counter(n);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  ol.notes.a li::before{background:var(--ink)} ol.notes.b li::before{background:var(--teal)}
+  ol.notes li:last-child{border-bottom:0}
+  ol.notes .t{font-family:var(--display);font-weight:600;font-size:13.5px}
+  ol.notes p{margin:5px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;font-size:12.5px;color:var(--faint);line-height:1.55}
+  footer b{color:var(--muted)}
+  :focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="kick">Wireframe · Screens S3 + S4 · the discovery spine</div>
+    <h1>Search &amp; Results</h1>
+    <p class="lede">The core find-a-business flow. S3 is the entry surface — never an empty box; S4 turns a query into a decision. Result cards carry recommendation counts (not stars) and the same Call · Directions · Save verbs as the profile, and every dead end offers a way forward. Toggle the states on each.</p>
+    <div class="legend" aria-label="Legend">
+      <span><i class="chip t1">EQUAL</i> ranking — no paid placement</span>
+      <span><i class="chip t2">UNIFIED</i> one box, all data types</span>
+      <span><i class="chip t3">RECOVERY</i> dead ends offer a next step</span>
+    </div>
+  </header>
+
+  <div class="duo">
+
+    <!-- ============ S3 SEARCH ============ -->
+    <div class="col">
+      <h3 class="col-h">S3 · Search / Explore</h3>
+      <p class="col-s">The entry surface — browse without a query, or type for unified autocomplete.</p>
+      <div class="toggle" role="group" aria-label="Search state">
+        <button id="sIdle" class="on" onclick="setA('idle')">Browse (idle)</button>
+        <button id="sType" onclick="setA('typing')">Typing</button>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen state-idle" id="screenA">
+
+          <div class="blk"><span class="anno">1</span>
+            <div class="sbar">
+              <span class="mag">&#9906;</span>
+              <span class="txt"><span class="if-idle">Search Redmond&hellip;</span><span class="if-typing txt typed" style="padding:0">gluten</span></span>
+              <span class="caret"></span>
+              <span class="voice if-idle">&#127908;</span>
+            </div>
+            <div class="qpills if-idle"><span class="qpill act">&#9679; Open now</span><span class="qpill">&#9678; Near me</span></div>
+          </div>
+
+          <!-- IDLE -->
+          <div class="blk if-idle"><span class="anno">2</span>
+            <div class="sec-h">Browse by category</div>
+            <div class="cats">
+              <div class="catt"><div class="ci"></div><div class="cl">Food &amp; Drink</div></div>
+              <div class="catt"><div class="ci"></div><div class="cl">Services</div></div>
+              <div class="catt"><div class="ci"></div><div class="cl">Retail</div></div>
+              <div class="catt"><div class="ci"></div><div class="cl">Health</div></div>
+              <div class="catt"><div class="ci"></div><div class="cl">Home</div></div>
+              <div class="catt"><div class="ci"></div><div class="cl">Auto</div></div>
+              <div class="catt"><div class="ci"></div><div class="cl">Outdoors</div></div>
+              <div class="catt"><div class="ci"></div><div class="cl">More</div></div>
+            </div>
+          </div>
+
+          <div class="blk if-idle"><span class="anno">3</span>
+            <div class="sec-h">Recent</div>
+            <div class="reclist">
+              <div class="recitem"><span class="ri">&#8635;</span> bike repair</div>
+              <div class="recitem"><span class="ri">&#8635;</span> breakfast near me</div>
+              <div class="recitem"><span class="ri">&#8635;</span> hardware store</div>
+            </div>
+          </div>
+
+          <div class="blk if-idle">
+            <div class="sec-h">Trending in Redmond</div>
+            <div class="trend"><i>Farmers market</i><i>New cafes</i><i>Live music</i><i>Fall festival</i></div>
+          </div>
+
+          <div class="blk if-idle" style="border-bottom:0">
+            <div class="sec-h">Collections</div>
+            <div class="colls"><div class="collcard">New in town</div><div class="collcard">Kid-friendly</div><div class="collcard">Open late</div></div>
+          </div>
+
+          <!-- TYPING -->
+          <div class="blk if-typing" style="border-bottom:0"><span class="anno">4</span>
+            <div class="ac"><div class="at"></div><div><div class="an">gluten-free bakery</div><div class="am">search</div></div><span class="tag sug">SUGGESTION</span></div>
+            <div class="ac"><div class="at"></div><div><div class="an">High Desert Bakery</div><div class="am">Cafe · 0.6 mi · 31 recommend</div></div><span class="tag biz">BUSINESS</span></div>
+            <div class="ac"><div class="at"></div><div><div class="an">Gluten-Free Food Fair</div><div class="am">Sat · Centennial Park</div></div><span class="tag evt">EVENT</span></div>
+            <div class="ac"><div class="at"></div><div><div class="an">New GF menu at Juniper &amp; Sage</div><div class="am">Bulletin · 2 days ago</div></div><span class="tag com">COMMUNITY</span></div>
+          </div>
+
+        </div>
+      </div>
+      <p class="cap">Idle is full of doorways — categories, recents, trending, collections. Switch to <b>Typing</b>: one box returns every data type, each tagged.</p>
+    </div>
+
+    <!-- ============ S4 RESULTS ============ -->
+    <div class="col">
+      <h3 class="col-h">S4 · Results &amp; filters</h3>
+      <p class="col-s">A query becomes a decision — list, map, and the recovery state.</p>
+      <div class="toggle" role="group" aria-label="Results state">
+        <button id="rList" class="on" onclick="setB('list')">List</button>
+        <button id="rMap" onclick="setB('map')">Map</button>
+        <button id="rEmpty" onclick="setB('empty')">No results</button>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen state-list" id="screenB">
+
+          <div class="reshead"><span class="anno">1</span>
+            <div class="resq">
+              <div class="rb"><span style="font-family:var(--mono);color:var(--faint)">&#9906;</span> <span class="if-list if-map">coffee</span><span class="if-empty">plummer</span></div>
+              <div class="vt" id="vtList">List</div>
+              <div class="vt" id="vtMap">Map</div>
+            </div>
+            <div class="resmeta">
+              <div class="rescount"><b>12</b> places · Open now</div>
+              <div class="toolbtns"><span class="tbtn">&#8645; Sort</span><span class="tbtn">&#9881; Filters</span></div>
+            </div>
+            <div class="fchips"><span class="fchip">Open now <span class="x">&times;</span></span><span class="fchip">&lt; 2 mi <span class="x">&times;</span></span></div>
+            <div class="rtabs"><span class="rtab on">All</span><span class="rtab">Businesses</span><span class="rtab">Events</span><span class="rtab">Community</span></div>
+          </div>
+
+          <!-- LIST -->
+          <div class="blk if-list" style="border-bottom:0"><span class="anno">3</span>
+            <div class="rcard">
+              <div class="th"></div>
+              <div class="rc-main">
+                <div class="rc-nm">Juniper &amp; Sage Cafe</div>
+                <div class="rc-cat">Cafe · Coffee · Breakfast</div>
+                <div class="rc-meta"><span class="rc-open">Open</span><span class="rc-dist">· closes 6 · 0.4 mi</span><span class="rc-rec">&#9829; 43</span></div>
+                <div class="rc-acts"><div class="a p">Call</div><div class="a p">Directions</div><div class="a g">&#9825;</div></div>
+              </div>
+            </div>
+            <div class="rcard">
+              <div class="th"></div>
+              <div class="rc-main">
+                <div class="rc-nm">Basalt Coffee Roasters</div>
+                <div class="rc-cat">Coffee · Roastery</div>
+                <div class="rc-meta"><span class="rc-open">Open</span><span class="rc-dist">· closes 5 · 0.9 mi</span><span class="rc-rec">&#9829; 67</span></div>
+                <div class="rc-acts"><div class="a p">Call</div><div class="a p">Directions</div><div class="a g">&#9825;</div></div>
+              </div>
+            </div>
+            <div class="rcard" style="border-bottom:0">
+              <div class="th"></div>
+              <div class="rc-main">
+                <div class="rc-nm">The Daily Grind</div>
+                <div class="rc-cat">Cafe · Bakery</div>
+                <div class="rc-meta"><span class="rc-open">Open</span><span class="rc-dist">· closes 7 · 1.3 mi</span><span class="rc-rec">&#9829; 22</span></div>
+                <div class="rc-acts"><div class="a p">Call</div><div class="a p">Directions</div><div class="a g">&#9825;</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MAP -->
+          <div class="if-map"><span class="anno" style="top:46px;z-index:6">4</span>
+            <div class="mapwrap">
+              <div class="searcharea">&#9906; Search this area</div>
+              <div class="pin" style="top:120px;left:80px"></div>
+              <div class="pin" style="top:180px;left:200px"></div>
+              <div class="pin cluster" style="top:250px;left:120px">5</div>
+              <div class="pin" style="top:320px;left:230px"></div>
+              <div class="peekcard">
+                <div class="th"></div>
+                <div class="rc-main">
+                  <div class="rc-nm">Basalt Coffee Roasters</div>
+                  <div class="rc-meta"><span class="rc-open">Open</span><span class="rc-dist">· 0.9 mi</span><span class="rc-rec">&#9829; 67</span></div>
+                  <div class="rc-acts"><div class="a p">Directions</div><div class="a g">&#9825;</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NO RESULTS -->
+          <div class="if-empty"><span class="anno" style="top:46px">5</span>
+            <div class="nores">
+              <div class="ei">&#9906;</div>
+              <div class="nt">No matches for &ldquo;plummer&rdquo;</div>
+              <div class="dym">Did you mean <a>plumber</a>?</div>
+              <div class="acts">
+                <div class="nb">Remove &ldquo;Open now&rdquo; filter</div>
+                <div class="nb">Widen radius to 10 mi</div>
+              </div>
+              <div class="sugh">Try a category</div>
+              <div class="sug"><i>Services</i><i>Home</i><i>Plumbing</i></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <p class="cap">Cards show recommend counts (&#9829;), never stars, and act inline. <b>Map</b> shares the same results &amp; filters; <b>No results</b> always offers a fix.</p>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="notes-wrap">
+    <div class="ncol">
+      <h2><span class="pin2 a">S3</span> Search / Explore</h2>
+      <ol class="notes a">
+        <li><div class="t">Search bar + quick filters</div><p>The focal element, with a voice slot (Tier-2, designed in now) and Open-now / Near-me pills for one-tap intent. Tapping any route leads to S4, pre-scoped.</p></li>
+        <li><div class="t">Browse by category</div><p>For people who don&rsquo;t know what to type — the larger half of users. A tappable grid is the backbone of the idle surface.</p></li>
+        <li><div class="t">Recent · trending · collections</div><p>The empty state is never empty. Recents for one-tap repeat, trending for local pulse, collections (&ldquo;New in town,&rdquo; &ldquo;Open late&rdquo;) for browsable discovery.</p></li>
+        <li><div class="t">Unified autocomplete</div><p>One box spans all five data types; each suggestion is tagged Business / Event / Community / Suggestion so a unified query stays legible. Results route to S4 sectioned the same way.</p></li>
+      </ol>
+    </div>
+    <div class="ncol">
+      <h2><span class="pin2 b">S4</span> Results &amp; filters</h2>
+      <ol class="notes b">
+        <li><div class="t">Header — count, filters, view, sort</div><p>Active filter chips are removable in one tap so the user always sees <em>why</em> these results show. List &#8646; Map share one result set and filter state. Sort: relevance · distance · recommend · open now (no &ldquo;rating&rdquo; — there isn&rsquo;t one).</p></li>
+        <li><div class="t">Unified result tabs</div><p>All · Businesses · Events · Community — one search stays legible across types, mirroring S3&rsquo;s autocomplete tags.</p></li>
+        <li><div class="t">Result card — act without opening</div><p>Open status + closing time, distance, and a recommend count (&#9829;, not stars). Inline Call · Directions · Save — the exact verbs from S5, so the vocabulary is learned once. Ranking is equal for all; no featured slots.</p></li>
+        <li><div class="t">Map view</div><p>Clustered pins, &ldquo;search this area&rdquo; on pan, tap-to-peek a bottom card → full profile. Same query and filters as the list — switching never resets them.</p></li>
+        <li><div class="t">No-results recovery</div><p>The screen that matters most: did-you-mean for typos, one-tap &ldquo;broaden&rdquo; actions (drop the tightest filter, widen radius), and suggested categories. A dead end always offers a forward path.</p></li>
+      </ol>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Open questions.</b> Whether voice + semantic search make v1 or stay Tier-2 · default sort per entry point (category tap &rarr; distance, text query &rarr; relevance) · how recommend counts factor into ranking, if at all (keep it light to stay honest) · whether Community results blend bulletins + news or split them. <b>Next:</b> the consumer spine is now complete end-to-end (S1&ndash;S8). Sensible closers: the lighter content screens (News/Community, Resources), or a take-stock pass — refresh the flow-map artifact so every wireframed screen is marked done.</p>
+  </footer>
+</div>
+
+<script>
+  function setA(s){
+    var sc=document.getElementById('screenA');
+    sc.className='screen state-'+s;
+    document.getElementById('sIdle').classList.toggle('on',s==='idle');
+    document.getElementById('sType').classList.toggle('on',s==='typing');
+    var bar=sc.querySelector('.sbar'); if(bar){bar.classList.toggle('focus',s==='typing');}
+    sc.scrollTop=0;
+  }
+  function setB(s){
+    var sc=document.getElementById('screenB');
+    sc.className='screen state-'+s;
+    document.getElementById('rList').classList.toggle('on',s==='list');
+    document.getElementById('rMap').classList.toggle('on',s==='map');
+    document.getElementById('rEmpty').classList.toggle('on',s==='empty');
+    document.getElementById('vtList').classList.toggle('on',s==='list');
+    document.getElementById('vtMap').classList.toggle('on',s==='map');
+    sc.scrollTop=0;
+  }
+</script>
+</body>
+</html>

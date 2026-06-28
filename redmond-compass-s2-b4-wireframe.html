@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S2 Home + B4 Edit Profile — Wireframe · Redmond Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16242E; --paper:#E8EBE9; --surface:#FBFCFB;
+    --navy:#213D50; --teal:#0F6E64; --teal-bright:#127C71; --brass:#B07D2A; --brass-deep:#8A5E16;
+    --muted:#5C6B66; --faint:#909994; --line:#D5DAD6;
+    --wire:#E0E4E1; --wire2:#D2D7D3;
+    --display:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:30px 18px 70px}
+  header.head{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:22px}
+  .kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal)}
+  h1{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:clamp(23px,4.4vw,33px);margin:.3em 0 .15em}
+  .lede{color:var(--muted);max-width:68ch;margin:0;font-size:15px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin:18px 0 0;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .chip{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;letter-spacing:.03em;font-weight:600}
+  .chip.t1{background:var(--wire2);color:#41504a}
+  .chip.t2{background:#E4F0ED;color:var(--teal);border:1px solid #BCD9D2}
+  .chip.t3{background:#F4ECDC;color:var(--brass-deep);border:1px solid #E4D2AC}
+
+  .duo{display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+  .col{flex:1;min-width:300px;max-width:380px}
+  .col-h{font-family:var(--display);font-weight:600;font-size:15px;margin:0 0 3px}
+  .col-s{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+  .toggle{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px;margin-bottom:14px;flex-wrap:wrap}
+  .toggle button{font-family:var(--display);font-weight:600;font-size:12px;border:0;background:transparent;color:var(--muted);padding:7px 12px;border-radius:99px;cursor:pointer;transition:.15s}
+  .toggle button.on{background:var(--ink);color:#fff}
+  .toggle button:focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+
+  .phone{width:340px;max-width:88vw;border:10px solid #11181E;border-radius:36px;background:#11181E;box-shadow:0 18px 44px -20px rgba(16,24,30,.5);overflow:hidden}
+  .statusbar{height:28px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-family:var(--mono);font-size:10px;color:var(--ink)}
+  .screen{height:min(68vh,600px);overflow-y:auto;background:var(--paper)}
+  .screen::-webkit-scrollbar{width:0}
+  .blk{position:relative;background:var(--surface);border-bottom:1px solid var(--line);padding:13px 15px}
+  .anno{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:6}
+  .anno.b{background:var(--teal)}
+
+  /* S2 home top */
+  .htop{position:sticky;top:0;background:var(--surface);z-index:5;padding:11px 15px 12px;border-bottom:1px solid var(--line)}
+  .sbar{display:flex;align-items:center;gap:9px;background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:0 12px;height:42px}
+  .sbar .mag{font-family:var(--mono);color:var(--faint);font-size:14px}
+  .sbar .txt{flex:1;font-size:13px;color:var(--muted)}
+  .loc{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:11.5px;color:var(--teal);background:#E4F0ED;border:1px solid #BCD9D2;padding:5px 11px;border-radius:99px;font-weight:600}
+  .loc.cold{color:var(--brass-deep);background:#F4ECDC;border-color:#E4D2AC}
+
+  .modhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .modhead .mt{font-family:var(--display);font-weight:600;font-size:13.5px}
+  .modhead .all{font-size:11px;color:var(--teal);font-weight:600}
+  .hscroll{display:flex;gap:9px;overflow-x:auto;padding-bottom:2px;margin:0 -2px}
+  .hscroll::-webkit-scrollbar{height:0}
+  .bizcard{flex:none;width:120px}
+  .bizcard .img{height:74px;border-radius:9px;background:var(--wire2)}
+  .bizcard .bn{font-family:var(--display);font-weight:600;font-size:12px;margin-top:6px;line-height:1.1}
+  .bizcard .bm{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .bizcard .bm .o{color:var(--teal);font-weight:600}
+
+  .bulletin{display:flex;gap:10px;border:1px solid var(--line);border-radius:9px;padding:9px;background:#fff;margin-bottom:8px}
+  .bulletin .th{width:42px;height:42px;border-radius:7px;background:var(--wire2);flex:none}
+  .bulletin .bt{font-family:var(--display);font-weight:600;font-size:12px;line-height:1.15}
+  .bulletin .bs{font-size:11px;color:var(--muted);margin-top:3px}
+  .nudge{border:1.5px dashed var(--teal);border-radius:9px;background:#EDF5F2;padding:11px 12px;font-size:11.5px;color:var(--teal);margin-top:2px}
+  .nudge b{font-weight:600}
+
+  .evt{display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0}
+  .evt:last-child{border-bottom:0}
+  .evt .ed{width:42px;height:42px;border-radius:8px;background:var(--wire);flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--display);line-height:1}
+  .evt .ed .d{font-weight:700;font-size:15px} .evt .ed .mo{font-size:8px;color:var(--muted);text-transform:uppercase}
+  .evt .et{font-family:var(--display);font-weight:600;font-size:12.5px}
+  .evt .em{font-size:11px;color:var(--muted);margin-top:1px}
+
+  .news{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .news:last-child{border-bottom:0}
+  .news .nth{width:54px;height:42px;border-radius:7px;background:var(--wire2);flex:none}
+  .news .nh{font-family:var(--display);font-weight:600;font-size:12px;line-height:1.2}
+  .news .nm{font-size:10.5px;color:var(--muted);margin-top:3px}
+
+  .catchips{display:flex;flex-wrap:wrap;gap:7px}
+  .catchips i{font-style:normal;font-size:11.5px;background:var(--wire);color:#42504a;padding:6px 12px;border-radius:99px}
+
+  /* B4 edit profile */
+  .navrow{display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+  .ic{width:28px;height:28px;border-radius:50%;background:var(--wire);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;color:#46524c}
+  .navttl{font-family:var(--display);font-weight:600;font-size:14px}
+  .savechip{font-family:var(--display);font-size:12px;font-weight:600;color:var(--teal)}
+
+  .meter .mt{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+  .meter .mt b{font-family:var(--display)}
+  .track{height:8px;border-radius:6px;background:var(--wire);overflow:hidden}
+  .track i{display:block;height:100%;width:70%;background:var(--teal);border-radius:6px}
+  .meter .next{font-size:11px;color:var(--brass-deep);margin-top:7px}
+
+  .photos{display:flex;gap:8px;flex-wrap:wrap}
+  .photos .p{width:58px;height:58px;border-radius:9px;background:var(--wire2)}
+  .photos .add{width:58px;height:58px;border-radius:9px;border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--faint);background:#fff}
+  .photos .cap{font-family:var(--mono);font-size:9px;color:var(--faint);align-self:flex-end;margin-bottom:4px}
+
+  .field{margin-bottom:13px}
+  .lbl{font-family:var(--display);font-weight:600;font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .lbl .req{font-family:var(--mono);font-size:9px;color:var(--teal)}
+  .inp{min-height:38px;border:1.5px solid var(--line);border-radius:8px;background:#fff;display:flex;align-items:center;padding:9px 11px;font-size:12.5px;color:var(--ink)}
+  .inp.muted{color:var(--muted)} .inp.area{min-height:58px;align-items:flex-start}
+  .row2{display:flex;gap:9px} .row2 .field{flex:1}
+  .hours-row{display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .hours-row:last-child{border-bottom:0}
+  .hours-row .day{color:var(--muted)} .hours-row .hr{font-family:var(--mono);font-size:11px}
+  .hours-row.today .day{color:var(--teal);font-weight:600}
+  .selchips{display:flex;flex-wrap:wrap;gap:6px}
+  .selchips i{font-style:normal;font-size:11.5px;border:1.5px solid var(--line);background:#fff;color:#46524c;padding:5px 11px;border-radius:99px}
+  .selchips i.sel{border-color:var(--teal);background:#E4F0ED;color:var(--teal);font-weight:600}
+
+  .preview-link{font-size:12px;color:var(--teal);font-weight:600;display:flex;align-items:center;gap:6px}
+
+  /* locked enhanced (post-mvp) */
+  .enhanced{display:none;border:1.5px dashed var(--brass);border-radius:11px;background:#FBF6EC;padding:14px;margin-top:4px}
+  .state-full .enhanced{display:block}
+  .enhanced .eh{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:600;font-size:13px;color:var(--brass-deep)}
+  .enhanced .mbadge{font-family:var(--mono);font-size:9px;font-weight:600;color:#fff;background:var(--brass);padding:2px 8px;border-radius:99px}
+  .enhanced .em2{font-size:11.5px;color:var(--muted);margin:7px 0 10px;line-height:1.4}
+  .enhanced .lockfield{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E4D2AC;border-radius:8px;padding:9px 11px;margin-bottom:7px;font-size:12px;color:var(--brass-deep)}
+  .enhanced .lockfield .lk{font-family:var(--mono)}
+  .enhanced .upg{margin-top:6px;height:38px;border-radius:9px;background:var(--brass);color:#fff;font-family:var(--display);font-weight:600;font-size:12.5px;display:flex;align-items:center;justify-content:center}
+
+  .savebar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:11px 14px;display:flex;gap:9px}
+  .btn{flex:1;height:42px;border-radius:10px;font-family:var(--display);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .btn.primary{background:var(--ink);color:#fff} .btn.ghost{flex:none;width:44%;background:#fff;border:1.5px solid var(--line);color:#46524c}
+
+  /* state visibility */
+  .state-perso .if-cold,.state-cold .if-perso{display:none}
+  .state-perso .if-cold-inline,.state-cold .if-perso-inline{display:none}
+
+  .cap-t{font-size:11.5px;color:var(--muted);max-width:340px;margin:11px auto 0;text-align:center;line-height:1.4}
+
+  .notes-wrap{margin-top:40px;display:flex;gap:30px;flex-wrap:wrap}
+  .ncol{flex:1;min-width:280px}
+  .ncol h2{font-family:var(--display);font-weight:600;font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:9px}
+  .ncol h2 .pin2{font-family:var(--mono);font-size:10px;color:#fff;padding:3px 8px;border-radius:4px}
+  .pin2.a{background:var(--ink)} .pin2.b{background:var(--teal)}
+  ol.notes{list-style:none;counter-reset:n;margin:0;padding:0}
+  ol.notes li{counter-increment:n;position:relative;padding:0 0 13px 34px;margin-bottom:13px;border-bottom:1px solid var(--line)}
+  ol.notes li::before{content:counter(n);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  ol.notes.a li::before{background:var(--ink)} ol.notes.b li::before{background:var(--teal)}
+  ol.notes li:last-child{border-bottom:0}
+  ol.notes .t{font-family:var(--display);font-weight:600;font-size:13.5px}
+  ol.notes p{margin:5px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;font-size:12.5px;color:var(--faint);line-height:1.55}
+  footer b{color:var(--muted)}
+  :focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="kick">Wireframe · Screens S2 + B4 · the MVP feel</div>
+    <h1>Home &amp; Edit Listing</h1>
+    <p class="lede">The two screens that most define the MVP. Home is the personalized feed (and how it degrades gracefully for a brand-new user). Edit Listing is the free business form at current-site parity — lean now, with room to grow when Member fields switch on. Toggle each to see it.</p>
+    <div class="legend" aria-label="Legend">
+      <span><i class="chip t1">ORGANIC</i> feed — no featured slots</span>
+      <span><i class="chip t2">GRACEFUL</i> never empty for new users</span>
+      <span><i class="chip t3">GROWS LATER</i> Member fields switch on</span>
+    </div>
+  </header>
+
+  <div class="duo">
+
+    <!-- ============ S2 HOME ============ -->
+    <div class="col">
+      <h3 class="col-h">S2 · Home</h3>
+      <p class="col-s">Personalized feed — and the cold-start a skipped-onboarding user sees.</p>
+      <div class="toggle" role="group" aria-label="Home state">
+        <button id="hPerso" class="on" onclick="setA('perso')">Personalized</button>
+        <button id="hCold" onclick="setA('cold')">Cold start</button>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen state-perso" id="screenA">
+
+          <div class="htop"><span class="anno">1</span>
+            <div class="sbar"><span class="mag">&#9906;</span><span class="txt">Search Redmond&hellip;</span></div>
+            <span class="loc if-perso">&#9678; Redmond, OR · Near you &#9662;</span>
+            <span class="loc cold if-cold">&#9678; Set your location for nearby &#9662;</span>
+          </div>
+
+          <div class="blk"><span class="anno">2</span>
+            <div class="modhead"><span class="mt"><span class="if-perso">Open now near you</span><span class="if-cold">Open now in Redmond</span></span><span class="all">See all</span></div>
+            <div class="hscroll">
+              <div class="bizcard"><div class="img"></div><div class="bn">Juniper &amp; Sage</div><div class="bm"><span class="o">Open</span> · <span class="if-perso">0.4 mi</span><span class="if-cold">Cafe</span></div></div>
+              <div class="bizcard"><div class="img"></div><div class="bn">Basalt Coffee</div><div class="bm"><span class="o">Open</span> · <span class="if-perso">0.9 mi</span><span class="if-cold">Coffee</span></div></div>
+              <div class="bizcard"><div class="img"></div><div class="bn">Cascade Hardware</div><div class="bm"><span class="o">Open</span> · <span class="if-perso">1.2 mi</span><span class="if-cold">Retail</span></div></div>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno">3</span>
+            <div class="modhead"><span class="mt"><span class="if-perso">From places you follow</span><span class="if-cold">Popular this week</span></span><span class="all">See all</span></div>
+            <!-- perso: follow bulletins -->
+            <div class="if-perso">
+              <div class="bulletin"><div class="th"></div><div><div class="bt">Fresh sourdough — Saturdays</div><div class="bs">Juniper &amp; Sage · 2 days ago</div></div></div>
+              <div class="bulletin"><div class="th"></div><div><div class="bt">New fall roast just dropped</div><div class="bs">Basalt Coffee · 4 days ago</div></div></div>
+            </div>
+            <!-- cold: popular + nudge -->
+            <div class="if-cold">
+              <div class="bulletin"><div class="th"></div><div><div class="bt">Most-followed cafe in Redmond</div><div class="bs">Juniper &amp; Sage · 312 follow</div></div></div>
+              <div class="nudge"><b>Follow places</b> you like to make this feed yours.</div>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno">4</span>
+            <div class="modhead"><span class="mt">Upcoming events</span><span class="all">See all</span></div>
+            <div class="evt"><div class="ed"><span class="d">12</span><span class="mo">Jul</span></div><div><div class="et">Live acoustic at Juniper &amp; Sage</div><div class="em">Fri 7 PM · 0.4 mi</div></div></div>
+            <div class="evt"><div class="ed"><span class="d">13</span><span class="mo">Jul</span></div><div><div class="et">Saturday Farmers Market</div><div class="em">Sat 9 AM · Centennial Park</div></div></div>
+          </div>
+
+          <div class="blk">
+            <div class="modhead"><span class="mt">Local news</span><span class="all">See all</span></div>
+            <div class="news"><div class="nth"></div><div><div class="nh">Downtown plaza project breaks ground</div><div class="nm">Redmond Spokesman · 1 day ago</div></div></div>
+          </div>
+
+          <div class="blk"><span class="anno">5</span>
+            <div class="modhead"><span class="mt">Browse by category</span></div>
+            <div class="catchips"><i>Food &amp; Drink</i><i>Services</i><i>Retail</i><i>Health</i><i>Home</i><i>Outdoors</i></div>
+          </div>
+
+          <div class="blk if-perso" style="border-bottom:0">
+            <div class="modhead"><span class="mt">Recently viewed</span></div>
+            <div class="hscroll">
+              <div class="bizcard"><div class="img"></div><div class="bn">The Daily Grind</div><div class="bm">Cafe</div></div>
+              <div class="bizcard"><div class="img"></div><div class="bn">High Desert Bakery</div><div class="bm">Bakery</div></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <p class="cap-t">Switch to <b>Cold start</b>: location softens to a prompt, follows become &ldquo;popular this week&rdquo; + a gentle nudge, recently-viewed drops. Still full, never a blank screen.</p>
+    </div>
+
+    <!-- ============ B4 EDIT PROFILE ============ -->
+    <div class="col">
+      <h3 class="col-h">B4 · Edit Listing</h3>
+      <p class="col-s">The free form at current-site parity — and how it grows post-MVP.</p>
+      <div class="toggle" role="group" aria-label="Form scope">
+        <button id="eMvp" class="on" onclick="setB('mvp')">MVP · basic</button>
+        <button id="eFull" onclick="setB('full')">Post-MVP · + Member fields</button>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC · Business</span></div>
+        <div class="screen state-mvp" id="screenB">
+
+          <div class="blk navrow" style="border-bottom:1px solid var(--line)">
+            <div class="ic">&larr;</div>
+            <div class="navttl">Edit listing</div>
+            <span class="savechip">Done</span>
+          </div>
+
+          <div class="blk"><span class="anno b">1</span>
+            <div class="meter">
+              <div class="mt"><span>Listing completeness</span><b>70%</b></div>
+              <div class="track"><i></i></div>
+              <div class="next">Next: add 2 photos · add holiday hours</div>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno b">2</span>
+            <div class="lbl">Photos</div>
+            <div class="photos"><div class="p"></div><div class="p"></div><div class="p"></div><div class="add">+</div><span class="cap">3 / 5</span></div>
+          </div>
+
+          <div class="blk"><span class="anno b">3</span>
+            <div class="field"><div class="lbl">Business name <span class="req">required</span></div><div class="inp">Juniper &amp; Sage Cafe</div></div>
+            <div class="row2">
+              <div class="field"><div class="lbl">Category</div><div class="inp">Cafe</div></div>
+              <div class="field"><div class="lbl">Subcategory</div><div class="inp muted">Breakfast</div></div>
+            </div>
+            <div class="field"><div class="lbl">Short description</div><div class="inp area muted">Neighborhood cafe serving coffee, breakfast &amp; fresh-baked goods. Dog-friendly patio.</div></div>
+            <div class="field"><div class="lbl">Address <span class="req">map pin</span></div><div class="inp">512 SW Evergreen Ave, Redmond OR</div></div>
+            <div class="row2">
+              <div class="field"><div class="lbl">Phone</div><div class="inp">(541) 555-0142</div></div>
+              <div class="field"><div class="lbl">Website</div><div class="inp muted">juniperandsage.com</div></div>
+            </div>
+          </div>
+
+          <div class="blk"><span class="anno b">3</span>
+            <div class="lbl">Hours</div>
+            <div class="hours-row today"><span class="day">Today · Tue</span><span class="hr">7:00 AM – 6:00 PM</span></div>
+            <div class="hours-row"><span class="day">Wed–Fri</span><span class="hr">7:00 AM – 6:00 PM</span></div>
+            <div class="hours-row"><span class="day">Sat–Sun</span><span class="hr">8:00 AM – 3:00 PM</span></div>
+            <div class="hours-row"><span class="day">Mon</span><span class="hr">Closed</span></div>
+          </div>
+
+          <div class="blk"><span class="anno b">4</span>
+            <div class="lbl">Amenity tags</div>
+            <div class="selchips"><i class="sel">Outdoor seating</i><i class="sel">Kid-friendly</i><i class="sel">Wi-Fi</i><i>Dog-friendly</i><i>Parking</i></div>
+          </div>
+
+          <div class="blk"><span class="anno b">5</span>
+            <a class="preview-link">&#9678; Preview your public profile (S5) &rarr;</a>
+            <!-- post-MVP locked enhanced -->
+            <div class="enhanced">
+              <div class="eh"><span class="mbadge">MEMBER</span> Enhanced profile</div>
+              <div class="em2">Switches on with Member — designed now, hidden at MVP. Preview what it adds:</div>
+              <div class="lockfield"><span class="lk">&#9826;</span> &ldquo;Our story&rdquo; &amp; owner spotlight</div>
+              <div class="lockfield"><span class="lk">&#9826;</span> Menu / services list</div>
+              <div class="lockfield"><span class="lk">&#9826;</span> Photo gallery (beyond 5) &amp; link CTAs</div>
+              <div class="upg">Unlock with Member</div>
+            </div>
+          </div>
+
+          <div class="savebar">
+            <div class="btn ghost">Save draft</div>
+            <div class="btn primary">Save &amp; publish</div>
+          </div>
+
+        </div>
+      </div>
+      <p class="cap-t">MVP is just the essentials — same fields the current site collects. Switch to <b>Post-MVP</b>: the locked Member section appears, previewable but off. Same form, gated later.</p>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="notes-wrap">
+    <div class="ncol">
+      <h2><span class="pin2 a">S2</span> Home</h2>
+      <ol class="notes a">
+        <li><div class="t">Pinned search + location</div><p>Search stays one tap away even on Home. The location chip is editable; in cold start it softens to a &ldquo;set your location&rdquo; prompt rather than assuming. No featured slot anywhere — the feed is fully organic.</p></li>
+        <li><div class="t">Open now near you</div><p>Location-driven in the personalized state (distances shown); town-wide in cold start (category labels instead of distance). Horizontal scroll keeps it glanceable.</p></li>
+        <li><div class="t">Follow feed &rarr; popular fallback</div><p>The personalization core: bulletins from places you follow. With no follows yet, it becomes &ldquo;Popular this week&rdquo; plus a gentle nudge to follow — never an empty module.</p></li>
+        <li><div class="t">Events + news</div><p>The content types that bring residents back between searches. Events are interest/saved-weighted when personalized, popular when cold. News is a light 1&ndash;2 item strip.</p></li>
+        <li><div class="t">Categories + recently viewed</div><p>Category chips are a reliable doorway for everyone. Recently-viewed appears only for a returning user — so cold start simply doesn&rsquo;t show it, rather than showing an empty row.</p></li>
+      </ol>
+    </div>
+    <div class="ncol">
+      <h2><span class="pin2 b">B4</span> Edit Listing</h2>
+      <ol class="notes b">
+        <li><div class="t">Completeness meter</div><p>The best free-tier engagement driver — completeness lifts discoverability, helping owner and directory alike. Surfaces the single next best action up top.</p></li>
+        <li><div class="t">Photos (MVP cap 5)</div><p>A simple add-tile grid with a visible count. Five is plenty for a complete-looking free listing; the gallery beyond that is a Member field.</p></li>
+        <li><div class="t">Core fields — current-site parity</div><p>Name, category, description, address+pin, phone, website, hours. Exactly what the current Redmond Compass collects — nothing heavier. This is the whole MVP business form.</p></li>
+        <li><div class="t">Amenity tags</div><p>Selectable chips that map one-to-one to the S4 search facets — so what an owner sets here is what residents filter on. Profile and search speak the same vocabulary.</p></li>
+        <li><div class="t">Preview + grows later</div><p>Live preview shows exactly the public S5 profile. Toggle Post-MVP: the locked Member section (story, menu, gallery) appears — previewable but off. It&rsquo;s the same form component; MVP just doesn&rsquo;t render the gated part.</p></li>
+      </ol>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Open questions.</b> Home: default module order, and whether news sits above or below events · how aggressively cold-start nudges location vs respecting a skip. Edit Listing: which fields are truly required vs optional for a valid MVP listing · whether hours use a day-by-day editor or simple presets · photo cap at MVP (5 placeholder). <b>Status:</b> with these two, every MVP screen is now wireframed — the v1 build set is visually complete. Remaining unscoped screens (content: News/Community, Resources; plus S6 Events, S7 Saved, S8 Account) reuse patterns already drawn.</p>
+  </footer>
+</div>
+
+<script>
+  function setA(s){
+    var sc=document.getElementById('screenA');
+    sc.className='screen state-'+s;
+    document.getElementById('hPerso').classList.toggle('on',s==='perso');
+    document.getElementById('hCold').classList.toggle('on',s==='cold');
+    sc.scrollTop=0;
+  }
+  function setB(s){
+    var sc=document.getElementById('screenB');
+    sc.className='screen state-'+s;
+    document.getElementById('eMvp').classList.toggle('on',s==='mvp');
+    document.getElementById('eFull').classList.toggle('on',s==='full');
+    sc.scrollTop=0;
+  }
+</script>
+</body>
+</html>

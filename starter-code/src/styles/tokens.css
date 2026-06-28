@@ -1,0 +1,127 @@
+/* ============================================================
+   Redmond Compass — Design Tokens  (v2 · brand-matched)
+   TRANSLATED FROM THE LIVE SITE (redmondcompass.com).
+   Convention: shadcn/Tailwind HSL channels — use as hsl(var(--token)).
+   The app inherits the existing brand: warm cream + deep navy, amber
+   primary, terracotta accent, pine-green positive. Playfair + DM Sans.
+
+   NOTE: the earlier wireframes used placeholder styling (Space Grotesk /
+   teal / brass). THIS file supersedes that — it is the real brand.
+   Wireframe → brand mapping is at the bottom.
+   ============================================================ */
+
+/* ---- Fonts (add to <head>) ----
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+*/
+
+:root {
+
+  /* ---- Typography ---- */
+  --font-heading: "Playfair Display", Georgia, serif; /* HEADINGS / DISPLAY ONLY */
+  --font-body:    "DM Sans", system-ui, sans-serif;    /* body, UI, buttons, labels, metadata */
+  /* No mono in the brand — metadata uses DM Sans (small, muted). */
+
+  /* ---- Color (verbatim from the live site · "H S% L%") ---- */
+  --background:            36 33% 97%;   /* #FAF8F5  warm cream — app background        */
+  --foreground:           214 82% 18%;   /* #082954  deep navy — primary text           */
+  --card:                   0  0% 100%;  /* #FFFFFF  cards, sheets                       */
+  --card-foreground:      223 20% 12%;   /* #181C25  near-black blue                     */
+  --popover:                0  0% 100%;  /* #FFFFFF                                      */
+  --popover-foreground:   214 83% 18%;   /* #082954                                      */
+
+  --primary:               30 96% 40%;   /* #C86604  amber — PRIMARY CTAs (Call, etc.)   */
+  --primary-foreground:    36 33% 97%;   /* #FAF8F5  cream text on amber                 */
+
+  --secondary:             30 40% 92%;   /* #F3EBE2  warm light — secondary surfaces     */
+  --secondary-foreground: 150 20% 12%;   /* #18251F  dark green                          */
+
+  --muted:                 30 20% 93%;   /* #F1EDEA  muted surface                       */
+  --muted-foreground:     150 10% 45%;   /* #677E73  green-gray — secondary text         */
+
+  --accent:                16 65% 55%;   /* #D76942  terracotta — accent / highlights    */
+  --accent-foreground:      0  0% 100%;  /* #FFFFFF                                       */
+
+  --destructive:          241 55% 23%;   /* #1B1A5B  deep indigo                          */
+  --destructive-foreground: 0 0% 98%;    /* #FAFAFA                                       */
+
+  --border:                30 15% 87%;   /* #E3DED9  warm hairline                        */
+  --input:                 30 15% 87%;   /* #E3DED9                                       */
+  --ring:                 152 35% 28%;   /* #2E6049  pine green — focus + POSITIVE/open   */
+
+  /* Data viz */
+  --chart-1: 152 35% 28%;  /* #2E6049 pine    */
+  --chart-2:  16 65% 55%;  /* #D76942 terra   */
+  --chart-3: 197 37% 24%;  /* #274754 teal-ink*/
+  --chart-4:  43 74% 66%;  /* #E8C468 gold    */
+  --chart-5:  30 40% 70%;  /* #D1B394 tan     */
+
+  /* ---- Shape ---- */
+  --radius: .75rem;        /* 12px — site base. Derive: sm .5rem · lg 1rem · pill 999px  */
+
+  /* ---- App-level scale (not in site dump; keep consistent) ---- */
+  --rc-space-1:4px; --rc-space-2:8px; --rc-space-3:12px; --rc-space-4:16px;
+  --rc-space-5:20px; --rc-space-6:24px; --rc-space-8:32px; --rc-space-10:40px;
+
+  --rc-text-xs:11px; --rc-text-sm:12.5px; --rc-text-base:15px; --rc-text-md:17px;
+  --rc-text-lg:20px; --rc-text-xl:24px; --rc-text-2xl:30px; --rc-text-3xl:40px;
+
+  --rc-shadow-card:   0 6px 16px -10px rgba(8,41,84,.22);
+  --rc-shadow-sticky: 0 4px 12px -8px  rgba(8,41,84,.18);
+  --rc-shadow-modal:  0 18px 44px -20px rgba(8,41,84,.40);
+
+  --rc-tap-min:44px; --rc-content-max:480px; --rc-tabbar-h:58px;
+}
+
+/* Usage with shadcn/Tailwind: bg-background, text-foreground, bg-primary,
+   text-primary-foreground, border-border, ring-ring, etc. (all wired through
+   hsl(var(--token)) in tailwind.config). */
+
+/* ---- App semantic roles (how the brand maps to our components) ----
+   Primary button (Call, Directions, Save→active, key CTAs) ... --primary  (amber)
+   Accent / badges / highlights / promoted-NOTHING just emphasis ... --accent (terracotta)
+   Positive · "Open now" · links · Recommend · focus ring ......... --ring   (pine green)
+   Text ......................................................... --foreground (navy)
+   Secondary text / metadata (distance, "2 days ago") ........... --muted-foreground
+   Background / cards ........................................... --background / --card
+   Headings (screen titles, section heads, hero) ................ --font-heading (Playfair)
+   Everything functional (nav, buttons, labels, body, meta) ..... --font-body (DM Sans)
+   PWA manifest: theme_color #082954 (navy), background_color #FAF8F5 (cream)
+*/
+
+/* ---- Wireframe → brand translation (for anyone reading the lo-fi files) ----
+   wireframe teal  (#0F6E64)  →  pine green --ring   (positive / open / links / recommend)
+   wireframe brass (#B07D2A)  →  amber --primary + terracotta --accent  (CTAs / highlights)
+   wireframe ink/navy         →  --foreground navy
+   wireframe cool paper       →  --background warm cream
+   Space Grotesk / Inter / mono → Playfair Display (headings) / DM Sans (all else)
+   The --wire-* grays in the wireframes are scaffolding — never ship them.
+*/
+
+/* Motion: @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}} */
+
+/* ============================================================
+   Extended palette — DERIVED FROM THE FINISHED HI-FI (v3 reconcile).
+   Core tokens above stay verbatim (brand parity). These are the UI shades
+   the hi-fi added to complete the scale — hovers, tints, borders, faint text.
+   Plain hex (used directly via var() or as Tailwind hex colors).
+   (n) = approx. occurrences in the exported design.
+   ============================================================ */
+:root {
+  --primary-hover:   #A35408; /* darker amber — primary hover / active        (17) */
+  --positive:        #2E6049; /* = --ring (pine) — DOMINANT interactive accent (179) */
+  --positive-strong: #357A5E; /* pine hover / brighter green                   (13) */
+  --positive-tint:   #E7EFE9; /* positive / selected backgrounds              (66) */
+  --positive-line:   #C4D9CC; /* green borders                                (20) */
+  --surface-raised:  #FCFAF7; /* warm raised white — cards on cream           (57) */
+  --surface-sunken:  #EBE6E0; /* subtle warm gray surface / hover             (67) */
+  --border-strong:   #DDD6CC; /* heavier warm border                          (11) */
+  --text-secondary:  #455852; /* secondary text / icons (darker than muted)   (76) */
+  --text-faint:      #9A958B; /* faint / placeholder text (warm variant #A49C90)(51) */
+  --navy-soft:       #11385F; /* secondary navy / pressed                     (14) */
+  --accent-tint:     #E6D7BF; /* warm gold/amber tint background               (7) */
+  --danger:          #B23A3A; /* NOTE: hi-fi used a warm red family (#FF8A80 / #5C2B2E)
+                                 for errors, NOT the original indigo --destructive.
+                                 Confirm the intended error color. */
+}

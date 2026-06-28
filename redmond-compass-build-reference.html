@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redmond Compass — App Build Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16242E; --paper:#ECEFEC; --surface:#FBFCFB;
+    --navy:#213D50; --navy-tint:#E7EDF1;
+    --teal:#0F6E64; --teal-bright:#127C71; --teal-tint:#E4F0ED; --teal-line:#BCD9D2;
+    --brass:#B07D2A; --brass-deep:#8A5E16; --brass-tint:#F4ECDC; --brass-line:#E4D2AC;
+    --muted:#5C6B66; --faint:#8B968F; --line:#D5DAD6; --na:#A9B2AD;
+    --display:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;font-feature-settings:"cv05","ss01"}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px 72px}
+
+  .mast{padding:40px 0 28px;border-bottom:2px solid var(--ink)}
+  .mast-top{display:flex;align-items:center;gap:14px}
+  .rose{width:38px;height:38px;flex:none}
+  .rose .needle-n{fill:var(--brass)} .rose .needle-s{fill:var(--navy)}
+  .rose .ring{stroke:var(--ink);stroke-width:1.4;fill:none}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass-deep)}
+  h1{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:clamp(26px,5vw,40px);line-height:1.04;margin:.32em 0 .14em}
+  .lede{max-width:60ch;color:var(--muted);font-size:16px;margin:0}
+  .mast-meta{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}
+  .tag{font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:4px 9px;border:1px solid var(--line);border-radius:2px;background:var(--surface);color:var(--muted)}
+  .tag b{color:var(--ink);font-weight:600}
+  .tag.hl{border-color:var(--brass-line);background:var(--brass-tint);color:var(--brass-deep)} .tag.hl b{color:var(--brass-deep)}
+  .tag.ok{border-color:var(--teal-line);background:var(--teal-tint);color:var(--teal)} .tag.ok b{color:var(--teal)}
+
+  section{margin-top:48px}
+  .eyebrow{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+  .eyebrow .n{font-family:var(--mono);font-size:12px;color:var(--brass-deep);font-weight:600;letter-spacing:.05em}
+  h2{font-family:var(--display);font-weight:600;letter-spacing:-.01em;font-size:clamp(20px,3.4vw,27px);margin:0}
+  .sub{color:var(--muted);max-width:74ch;margin:8px 0 0}
+
+  .principles{margin-top:30px;display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .pr{background:var(--surface);padding:15px 16px}
+  .pr .num{font-family:var(--mono);font-size:11px;color:var(--brass-deep);font-weight:600}
+  .pr p{margin:5px 0 0;font-size:13.5px;line-height:1.42} .pr b{font-weight:600}
+  .pr.flag{background:var(--brass-tint)}
+
+  .legend-zones{display:flex;flex-wrap:wrap;gap:14px;margin:22px 0 24px;font-family:var(--mono);font-size:11.5px;letter-spacing:.03em;color:var(--muted)}
+  .legend-zones span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+  .sw.csm{background:var(--teal-tint);border:1.5px solid var(--teal)} .sw.biz{background:var(--brass-tint);border:1.5px solid var(--brass)}
+
+  .band{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:16px 16px 18px;margin-bottom:14px;position:relative}
+  .band.csm{border-left:4px solid var(--teal)} .band.biz{border-left:4px solid var(--brass)}
+  .band-label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:13px;display:flex;align-items:center;gap:8px}
+  .band.csm .band-label .dot{color:var(--teal)} .band.biz .band-label .dot{color:var(--brass)}
+
+  .chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px}
+  .node{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:10px 12px;min-width:148px;flex:1 1 148px;max-width:230px;transition:transform .15s ease,box-shadow .15s ease}
+  .node:hover{transform:translateY(-2px);box-shadow:0 6px 16px -10px rgba(22,36,46,.4)}
+  .node .id{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.04em}
+  .node .nm{font-family:var(--display);font-weight:600;font-size:14.5px;margin:3px 0 2px;line-height:1.12}
+  .node .ds{font-size:12px;color:var(--muted);line-height:1.34}
+  .csm .node .id{color:var(--teal)} .biz .node .id{color:var(--brass-deep)}
+  .node.key{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass-line)}
+  .node.later{border-style:dashed;opacity:.66}
+  .node .done{font-family:var(--mono);font-size:8px;font-weight:600;color:#fff;background:var(--teal);padding:1px 5px;border-radius:99px;margin-left:6px;letter-spacing:.02em;vertical-align:1.5px}
+  .node .v2{font-family:var(--mono);font-size:8px;font-weight:600;color:var(--brass-deep);background:var(--brass-tint);border:1px solid var(--brass-line);padding:1px 5px;border-radius:99px;margin-left:6px;letter-spacing:.02em;vertical-align:1.5px}
+
+  .conn{align-self:center;font-family:var(--mono);color:var(--faint);font-size:15px;flex:none;padding:0 1px;user-select:none}
+  .conn.lbl{display:flex;flex-direction:column;align-items:center;line-height:1}
+  .conn.lbl small{font-size:9px;letter-spacing:.04em;color:var(--brass-deep);margin-top:2px}
+
+  .divider{display:flex;align-items:center;gap:14px;margin:22px 2px 16px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass-deep)}
+  .divider::before,.divider::after{content:"";height:1px;background:var(--brass-line);flex:1}
+
+  .funnel-note{margin-top:11px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .funnel-note .pay{font-family:var(--mono);font-size:10px;color:#fff;background:var(--brass);padding:2px 7px;border-radius:2px;letter-spacing:.04em}
+
+  .tabs{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+  .tabchip{font-family:var(--display);font-weight:500;font-size:13px;background:var(--teal-tint);color:var(--teal);border:1px solid var(--teal-line);padding:6px 13px;border-radius:99px}
+  .tabchip .ti{font-family:var(--mono);font-size:10px;color:var(--teal-bright);margin-left:6px;opacity:.8}
+
+  .auth-callout{margin-top:14px;border:1px dashed var(--line);border-radius:6px;padding:13px 15px;background:var(--navy-tint);display:flex;gap:12px;align-items:flex-start}
+  .auth-callout .ic{font-family:var(--mono);color:var(--navy);font-weight:600;font-size:13px;flex:none}
+  .auth-callout p{margin:0;font-size:13px;color:var(--muted)} .auth-callout b{color:var(--ink);font-weight:600}
+
+  .csm-banner{background:var(--teal);color:#fff;border-radius:6px;padding:18px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .csm-banner .big{font-family:var(--display);font-weight:600;font-size:18px;line-height:1.15}
+  .csm-banner p{margin:0;font-size:13.5px;color:#DCEEEA;max-width:64ch}
+
+  .cell-legend{display:flex;flex-wrap:wrap;gap:7px 16px;margin:18px 0 14px;font-size:12.5px;color:var(--muted)}
+  .cell-legend span{display:inline-flex;align-items:center;gap:7px}
+  .yes{color:var(--teal-bright);font-weight:700} .no{color:var(--na);font-weight:600}
+  .equal{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:500}
+  .ph{font-family:var(--mono);font-size:11.5px;color:var(--brass-deep);border-bottom:1.5px dotted var(--brass);padding-bottom:1px;white-space:nowrap}
+
+  .table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;min-width:620px}
+  thead th{font-family:var(--display);font-weight:600;font-size:13px;text-align:center;padding:13px 12px;background:var(--navy);color:#fff;position:sticky;top:0;border-right:1px solid #34546b}
+  thead th:first-child{text-align:left}
+  thead th.col-free{background:#2c4a5e} thead th.col-mem{background:#7a5413} thead th.col-pro{background:var(--brass-deep)}
+  thead th small{display:block;font-family:var(--mono);font-weight:400;font-size:9.5px;opacity:.82;letter-spacing:.03em;margin-top:2px}
+  tbody .grp th{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass-deep);background:var(--brass-tint);text-align:left;padding:8px 12px;border-top:1px solid var(--brass-line);border-bottom:1px solid var(--brass-line)}
+  tbody td,tbody th[scope=row]{padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+  tbody th[scope=row]{text-align:left;font-weight:500;color:var(--ink);width:40%}
+  tbody td{text-align:center;color:var(--muted)}
+  tbody tr:hover td,tbody tr:hover th[scope=row]{background:#F3F6F4}
+  td .note,th .note{display:block;font-size:11px;color:var(--faint);margin-top:2px;line-height:1.3;font-weight:400}
+
+  .trust{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px;margin-top:18px}
+  .tcard{border:1px solid var(--teal-line);border-left:4px solid var(--teal);border-radius:6px;background:var(--surface);padding:15px 16px}
+  .tcard .lab{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--teal);text-transform:uppercase;font-weight:600}
+  .tcard h3{font-family:var(--display);font-weight:600;font-size:15px;margin:6px 0 4px}
+  .tcard p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.42}
+  .nostars{margin-top:16px;background:var(--ink);color:#fff;border-radius:6px;padding:16px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .nostars .big{font-family:var(--display);font-weight:600;font-size:17px}
+  .nostars p{margin:0;font-size:13px;color:#C8D2CE;max-width:62ch}
+
+  .numgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:12px;margin-top:22px}
+  .numcard{border:1px solid var(--line);border-left:4px solid var(--brass);border-radius:6px;background:var(--surface);padding:15px 16px}
+  .numcard.pro{border-left-color:var(--brass-deep);background:var(--brass-tint)} .numcard.rule{border-left-color:var(--teal)}
+  .numcard .lab{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+  .numcard .val{font-family:var(--display);font-weight:700;font-size:22px;color:var(--ink);margin:5px 0 1px}
+  .numcard .val span{font-size:13px;color:var(--brass-deep);font-weight:500}
+  .numcard .rng{font-family:var(--mono);font-size:11.5px;color:var(--brass-deep);margin-bottom:7px}
+  .numcard p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.42}
+
+  footer{margin-top:48px;border-top:1px solid var(--line);padding-top:18px;font-size:12.5px;color:var(--faint);line-height:1.55}
+  footer b{color:var(--muted);font-weight:600}
+  a{color:var(--teal)}
+  :focus-visible{outline:2.5px solid var(--brass);outline-offset:2px;border-radius:2px}
+  @media (max-width:560px){body{font-size:14px}.node{max-width:none}tbody th[scope=row]{width:auto}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media print{body{background:#fff}.node:hover{transform:none;box-shadow:none}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <div class="mast-top">
+      <svg class="rose" viewBox="0 0 40 40" aria-hidden="true">
+        <circle class="ring" cx="20" cy="20" r="18"/><circle class="ring" cx="20" cy="20" r="2.4"/>
+        <polygon class="needle-n" points="20,3 23.4,20 20,17"/><polygon class="needle-n" points="20,3 16.6,20 20,17"/>
+        <polygon class="needle-s" points="20,37 23.4,20 20,23"/><polygon class="needle-s" points="20,37 16.6,20 20,23"/>
+      </svg>
+      <div class="kicker">App Build Reference · single source of truth</div>
+    </div>
+    <h1>Redmond Compass — Flow Map &amp; Entitlements</h1>
+    <p class="lede">One chart for the whole build: how every screen connects, and exactly what each business tier unlocks. Keep it open while wireframing so no two screens disagree.</p>
+    <div class="mast-meta">
+      <span class="tag">v <b>0.5 draft</b></span>
+      <span class="tag ok">MVP <b>free directory first</b></span>
+      <span class="tag ok">Consumer <b>free, no login to browse</b></span>
+      <span class="tag">Model <b>Free · Member · Pro &middot; $0 / 15 / 29</b></span>
+      <span class="tag ok">Ranking <b>equal — no paid placement</b></span>
+      <span class="tag ok">Reputation <b>earned — no star ratings</b></span>
+      <span class="tag hl">All <b>$ numbers = placeholders</b></span>
+    </div>
+  </header>
+
+  <!-- GUARDRAILS -->
+  <section aria-labelledby="pr-h">
+    <div class="eyebrow"><span class="n">00</span><h2 id="pr-h">Guardrails</h2></div>
+    <p class="sub">Every monetization &amp; reputation moment must pass these. If a screen breaks one, the screen is wrong.</p>
+    <div class="principles">
+      <div class="pr"><div class="num">01</div><p><b>Browse &amp; search are free, always.</b> No login to explore. Accounts only unlock save, follow, notify, post, recommend.</p></div>
+      <div class="pr"><div class="num">02</div><p><b>Free listing is complete, not crippled.</b> You sell a fuller profile, exposure &amp; tools — never relief from a broken free tier.</p></div>
+      <div class="pr flag"><div class="num">core</div><p><b>Capability &amp; connection, not attention.</b> No featured slots, no promoted posts. Search ranking is identical for every business.</p></div>
+      <div class="pr flag"><div class="num">core</div><p><b>Reputation is earned, not scored.</b> No star ratings. Positive recommendations + factual activity signals are public; criticism is routed privately to the owner.</p></div>
+      <div class="pr"><div class="num">03</div><p><b>Paywall appears after value is delivered.</b> Show the numbers first; ask against a limit the owner actually felt.</p></div>
+      <div class="pr"><div class="num">04</div><p><b>A limit never destroys work.</b> Hit the bulletin cap? The draft is kept and can schedule free for the reset date.</p></div>
+      <div class="pr"><div class="num">05</div><p><b>Lapse is graceful.</b> Revert to free, data intact, listing stays live. Cancel anytime, in-app.</p></div>
+    </div>
+  </section>
+
+  <!-- FLOW MAP -->
+  <section aria-labelledby="fm-h">
+    <div class="eyebrow"><span class="n">01</span><h2 id="fm-h">Flow map</h2></div>
+    <p class="sub">Two zones. The consumer spine is free end-to-end; business mode is reached by a deliberate switch and is where membership lives. No screen sells placement; no screen scores a business.</p>
+    <div class="legend-zones">
+      <span><i class="sw csm"></i> Consumer / public · free</span>
+      <span><i class="sw biz"></i> Business mode · membership</span>
+      <span><span class="ph" style="border:none;color:var(--brass-deep)">$&rarr; B6</span> a capability gate funnels to membership</span>
+      <span style="color:var(--faint)">solid = MVP &middot; dashed = later &middot; <span style="color:var(--teal);font-weight:600">&#10003;</span> = wireframed</span>
+    </div>
+
+    <div class="band csm">
+      <div class="band-label"><span class="dot">&#9670;</span> Entry</div>
+      <div class="chain">
+        <div class="node"><div class="id">S1</div><div class="nm">Onboarding (lite)</div><div class="ds">Location + interests, all skippable. Seeds personalization.</div></div>
+        <div class="conn">&rarr;</div>
+        <div class="node"><div class="id">S2</div><div class="nm">Home</div><div class="ds">Personalized feed. Returning-user landing.</div></div>
+      </div>
+    </div>
+
+    <div class="band csm">
+      <div class="band-label"><span class="dot">&#9670;</span> Discovery spine</div>
+      <div class="chain">
+        <div class="node"><div class="id">S3 <span class="done">&#10003; drawn</span></div><div class="nm">Search / Explore</div><div class="ds">Unified bar, categories, recents, quick filters.</div></div>
+        <div class="conn">&rarr;</div>
+        <div class="node"><div class="id">S4 <span class="done">&#10003; drawn</span></div><div class="nm">Results &amp; filters</div><div class="ds">List &#8646; map, facets, sort. Ranking equal for all.</div></div>
+        <div class="conn">&rarr;</div>
+        <div class="node"><div class="id">S5 <span class="done">&#10003; drawn</span></div><div class="nm">Business Profile</div><div class="ds">Call · Directions · Save · Follow · Recommend — plus Book / Quote / Rewards when offered.</div></div>
+      </div>
+    </div>
+
+    <div class="band csm">
+      <div class="band-label"><span class="dot">&#9670;</span> Persistent bottom tabs</div>
+      <div class="tabs">
+        <span class="tabchip">Home<span class="ti">S2</span></span>
+        <span class="tabchip">Search<span class="ti">S3</span></span>
+        <span class="tabchip">Events<span class="ti">S6</span></span>
+        <span class="tabchip">Saved<span class="ti">S7</span></span>
+        <span class="tabchip">Account<span class="ti">S8</span></span>
+      </div>
+      <div class="funnel-note" style="margin-top:10px"><span class="pay" style="background:var(--teal)">+ wallet</span> Saved (S7) gains a <b>Rewards</b> tab once a resident joins a loyalty program; progress also shows on the business profile (S5) and as an optional Home nudge.</div>
+      <div class="auth-callout">
+        <span class="ic">AUTH</span>
+        <p><b>Login / Register / Reset are not gates.</b> They surface just-in-time at the moment of intent — Save, Follow, Recommend, or post — and are always dismissible back into browsing. Content screens (News/Community, Resources, About, Contact) reuse the feed &amp; list patterns.</p>
+      </div>
+    </div>
+
+    <div class="divider">enter business mode · from S5 &ldquo;Claim this&rdquo; or S8 &ldquo;List your business&rdquo;</div>
+
+    <div class="band biz">
+      <div class="band-label"><span class="dot">&#9670;</span> Funnel in &amp; hub</div>
+      <div class="chain">
+        <div class="node"><div class="id">B0</div><div class="nm">Claim / List</div><div class="ds">Free to list. Verify ownership. No paywall, ever.</div></div>
+        <div class="conn">&rarr;</div>
+        <div class="node key"><div class="id">B1 <span class="done">&#10003; drawn</span></div><div class="nm">Owner Dashboard</div><div class="ds">Quick actions + completeness + value snapshot.</div></div>
+      </div>
+    </div>
+
+    <div class="band biz">
+      <div class="band-label"><span class="dot">&#9670;</span> Actions, intelligence &amp; connection</div>
+      <div class="chain">
+        <div class="node"><div class="id">B2</div><div class="nm">Post Bulletin</div><div class="ds">Fast compose. Cap &amp; scheduling unlock with Member.</div></div>
+        <div class="conn lbl">&rarr;<small>$&rarr;B6</small></div>
+        <div class="node"><div class="id">B3</div><div class="nm">Submit Event</div><div class="ds">Free for all. No promotion mechanic.</div></div>
+        <div class="conn">&rarr;</div>
+        <div class="node"><div class="id">B4</div><div class="nm">Edit Profile</div><div class="ds">Free fields complete; storytelling fields = Member.</div></div>
+        <div class="conn lbl">&rarr;<small>$&rarr;B6</small></div>
+        <div class="node later"><div class="id">B5 <span class="v2">later</span></div><div class="nm">Analytics &amp; demand signals</div><div class="ds">Snapshot free; full insight is the Member hook.</div></div>
+      </div>
+      <div class="funnel-note"><span class="pay">$&rarr; B6</span> Capability gates (bulletin cap, storytelling profile, full analytics, tools) funnel to one place &darr;</div>
+      <div class="chain" style="margin-top:10px">
+        <div class="node key later" style="max-width:none;flex-basis:100%"><div class="id">B6 <span class="v2">later · turns on monetization</span></div><div class="nm">Membership &amp; plan management</div><div class="ds">Free / Member / Pro. Manage / cancel. One source of truth for entitlements — read by every gated screen.</div></div>
+      </div>
+    </div>
+
+    <div class="band biz">
+      <div class="band-label"><span class="dot">&#9670;</span> Pro tools &middot; included in Pro, manage from B1</div>
+      <div class="chain">
+        <div class="node later"><div class="id">B7 <span class="done">&#10003;</span><span class="v2">v2</span></div><div class="nm">Bookings</div><div class="ds">Setup &rarr; calendar &rarr; &ldquo;Book&rdquo; on S5.</div></div>
+        <div class="conn">&middot;</div>
+        <div class="node later"><div class="id">B8 <span class="done">&#10003;</span><span class="v2">v2</span></div><div class="nm">Inquiry Inbox</div><div class="ds">Form &rarr; inbox &rarr; &ldquo;Request a quote&rdquo; on S5. Also receives private feedback.</div></div>
+        <div class="conn">&middot;</div>
+        <div class="node later"><div class="id">B9 <span class="done">&#10003;</span><span class="v2">v2</span></div><div class="nm">Loyalty</div><div class="ds">Program &rarr; ledger &rarr; &ldquo;Join rewards&rdquo; on S5.</div></div>
+      </div>
+      <div class="funnel-note" style="margin-top:11px"><span class="pay" style="background:var(--teal)">&#8617; consumer</span> Loyalty (B9) is the one tool that adds a resident surface — the Rewards wallet in Saved (S7). Each tool renders nothing on a non-Pro profile and pauses without data loss.</div>
+    </div>
+  </section>
+
+  <!-- CONSUMER BANNER -->
+  <section aria-label="Consumer pricing">
+    <div class="csm-banner">
+      <div class="big">Residents pay nothing.</div>
+      <p>Browse, search, view profiles, read news &amp; bulletins, recommend places — no account required to browse. No paid placement and no star ratings: ranking is the same for every business and reputation is positive-only, so what residents see is honest. The matrix below is entirely the business side.</p>
+    </div>
+  </section>
+
+  <!-- ENTITLEMENT MATRIX -->
+  <section aria-labelledby="em-h">
+    <div class="eyebrow"><span class="n">02</span><h2 id="em-h">Business entitlements</h2></div>
+    <p class="sub"><b>Free</b> keeps the directory complete and gets you genuine exposure. <b>Member</b> is the fuller profile + exposure bucket. <b>Pro</b> adds the operating tools. Two prices to communicate, no à la carte. Dotted values are placeholders — see &sect;04.</p>
+    <div class="csm-banner" style="background:var(--navy);margin-top:16px;padding:14px 18px">
+      <div class="big" style="font-size:15px">MVP ships the Free column only.</div>
+      <p style="color:#C4D2DC">At launch, the free listing is <b style="color:#fff">current-site parity</b> — name, category, description, address, hours, contact, a photo. Member, Pro, and the tools are the post-MVP monetization layer. This matrix is the <b style="color:#fff">target state</b>, not the v1 cut — build the data model so tiers switch on without rework. See &sect;05.</p>
+    </div>
+    <div class="cell-legend">
+      <span><i class="yes">&#10003;</i> included</span>
+      <span><i class="no">&mdash;</i> not included</span>
+      <span><i class="equal">equal</i> same for everyone, no paid boost</span>
+      <span><i class="ph">3 / mo</i> placeholder — set locally</span>
+    </div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Capability</th>
+            <th scope="col" class="col-free">Free<small>claimed · $0</small></th>
+            <th scope="col" class="col-mem">Member<small><span class="ph" style="color:#fff;border-bottom-color:rgba(255,255,255,.6)">$15 / mo</span></small></th>
+            <th scope="col" class="col-pro">Pro<small><span class="ph" style="color:#fff;border-bottom-color:rgba(255,255,255,.6)">$29 · all tools</span></small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><th colspan="4" scope="colgroup">Listing &amp; visibility</th></tr>
+          <tr><th scope="row">Appears in directory &amp; search results</th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Appears in relevant category pages</th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Search ranking &amp; placement<span class="note">no paid boosts — this is the mission</span></th><td><span class="equal">equal</span></td><td><span class="equal">equal</span></td><td><span class="equal">equal</span></td></tr>
+
+          <tr class="grp"><th colspan="4" scope="colgroup">Trust &amp; reputation — earned, positive-only (replaces ratings)</th></tr>
+          <tr><th scope="row">Presence &amp; activity signals<span class="note">claimed/verified · posts weekly · follower count · &ldquo;usually replies in a day&rdquo; — automatic, factual</span></th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Local recommendations (positive-only, login required, verified-customer weighting)</th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Resident can &ldquo;share feedback privately&rdquo; with owner<span class="note">the anti-Yelp default — criticism never goes public</span></th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Managed feedback inbox + service-recovery workflow<span class="note">= the Inquiry Inbox tool doing double duty</span></th><td><span class="no">&mdash;</span></td><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Public star rating / score</th><td><span class="equal">none — by design</span></td><td><span class="equal">none — by design</span></td><td><span class="equal">none — by design</span></td></tr>
+
+          <tr class="grp"><th colspan="4" scope="colgroup">Profile (Screen B4 &rarr; S5)</th></tr>
+          <tr><th scope="row">Core profile — name, category, hours, contact, location</th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Photos</th><td><span class="ph">up to 5</span></td><td><span class="ph">unlimited</span></td><td><span class="ph">unlimited</span></td></tr>
+          <tr><th scope="row">Enhanced &amp; storytelling profile<span class="note">menu/services, &ldquo;our story&rdquo;, owner spotlight, CTAs, links</span></th><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Amenity tags (feed search facets)</th><td><span class="yes">&#10003; basic</span></td><td><span class="yes">&#10003; full</span></td><td><span class="yes">&#10003; full</span></td></tr>
+
+          <tr class="grp"><th colspan="4" scope="colgroup">Bulletins (Screen B2)</th></tr>
+          <tr><th scope="row">Post bulletins</th><td><span class="ph">3 / mo</span></td><td><span class="ph">unlimited</span></td><td><span class="ph">unlimited</span></td></tr>
+          <tr><th scope="row">Schedule a capped post free for the reset date<span class="note">the free path forward — never lose the draft</span></th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Scheduled &amp; recurring bulletins (queue ahead, templates)</th><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+
+          <tr class="grp"><th colspan="4" scope="colgroup">Events (Screen B3) — free for all</th></tr>
+          <tr><th scope="row">Submit events<span class="note">never capped, never promoted — pure consumer value</span></th><td><span class="yes">&#10003; unlimited</span></td><td><span class="yes">&#10003; unlimited</span></td><td><span class="yes">&#10003; unlimited</span></td></tr>
+
+          <tr class="grp"><th colspan="4" scope="colgroup">Analytics &amp; insight (Screen B5)</th></tr>
+          <tr><th scope="row">Snapshot — totals, last 7 days (views, calls, directions, follows)</th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Full analytics — trends, ranges, post-level breakdown, peak times</th><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Local demand signals<span class="note">top &amp; unmet searches near you — meet real local demand</span></th><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Listing-improvement guidance</th><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+
+          <tr class="grp"><th colspan="4" scope="colgroup">Connection &amp; reach — earned, never bought</th></tr>
+          <tr><th scope="row">Residents can follow &amp; get updates<span class="note">a resident action — always free</span></th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Opt-in announcements to followers</th><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Follower perks — standing offer / early access</th><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+
+          <tr class="grp"><th colspan="4" scope="colgroup">Business tools — all included in Pro</th></tr>
+          <tr><th scope="row">Bookings / appointments (B7)</th><td><span class="no">&mdash;</span></td><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Inquiry / quote inbox + private-feedback routing (B8)</th><td><span class="no">&mdash;</span></td><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Digital loyalty / rewards (B9)</th><td><span class="no">&mdash;</span></td><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td></tr>
+
+          <tr class="grp"><th colspan="4" scope="colgroup">Account &amp; billing (Screen B6)</th></tr>
+          <tr><th scope="row">Claim listing</th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Team &amp; multi-location access</th><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Graceful lapse — revert to free, data intact, listing live</th><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+          <tr><th scope="row">Cancel anytime, in-app</th><td><span class="no">&mdash;</span></td><td><span class="yes">&#10003;</span></td><td><span class="yes">&#10003;</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TRUST MODEL -->
+  <section aria-labelledby="tr-h">
+    <div class="eyebrow"><span class="n">03</span><h2 id="tr-h">Trust &amp; reputation — no stars, by design</h2></div>
+    <p class="sub">The deliberate anti-Yelp stance: residents still get honest signal, but a business can never be saddled with a permanent public score it can&rsquo;t address. Reputation is built by showing up and being responsive — not by dodging a bad star.</p>
+    <div class="trust">
+      <div class="tcard">
+        <div class="lab">Signal 1 · automatic</div>
+        <h3>Presence &amp; activity</h3>
+        <p>Factual, earned badges: claimed &amp; verified, posts weekly, follower count, member-since, &ldquo;usually replies within a day.&rdquo; No judgment — just whether the business shows up. Free-tier exposure that actually means something.</p>
+      </div>
+      <div class="tcard">
+        <div class="lab">Signal 2 · positive-only</div>
+        <h3>Recommendations</h3>
+        <p>Residents recommend a place — a count that only goes up, so it can&rsquo;t be review-bombed. Login required (no anonymous drive-bys); people who booked or earned loyalty are badged &ldquo;verified customer&rdquo; for weight. A new business reads &ldquo;New to Compass,&rdquo; never damned.</p>
+      </div>
+      <div class="tcard">
+        <div class="lab">Signal 3 · private</div>
+        <h3>Feedback &amp; recovery</h3>
+        <p>An unhappy customer is routed to &ldquo;share feedback privately&rdquo; with the owner — not &ldquo;post a 1-star to the world.&rdquo; The business gets to fix it; the resident feels heard. The managed version is the Inquiry Inbox (Pro) doing double duty — complaints become resolution.</p>
+      </div>
+    </div>
+    <div class="nostars">
+      <div class="big">No 1&ndash;5 average. Anywhere.</div>
+      <p>The star average is the element that gets weaponized, that&rsquo;s lossy and unfair, and that rating-apps sell ads against. Removing it removes most of the trap in one move. This replaces the old &ldquo;Reviews v2&rdquo; slot on S5.</p>
+    </div>
+  </section>
+
+  <!-- NUMBERS TO SET -->
+  <section aria-labelledby="ns-h">
+    <div class="eyebrow"><span class="n">04</span><h2 id="ns-h">Numbers to set locally</h2></div>
+    <p class="sub">Illustrative starting points to gut-check against the Redmond market — what local businesses will actually pay, and what these tools would otherwise cost standalone. Placeholders to validate, not pricing advice to follow blindly.</p>
+    <div class="numgrid">
+      <div class="numcard">
+        <div class="lab">Member · profile + exposure</div>
+        <div class="val">$15 <span>/ mo</span></div>
+        <div class="rng">range $12–19 · annual &asymp; $150 (~2 mo free)</div>
+        <p>For the shop that just wants a complete, standout listing: full gallery, storytelling profile, unlimited/scheduled bulletins, full analytics + demand signals, follower tools, team access.</p>
+      </div>
+      <div class="numcard pro">
+        <div class="lab">Pro · everything + tools</div>
+        <div class="val">$29 <span>/ mo</span></div>
+        <div class="rng">range $25–35 · annual &asymp; $290</div>
+        <p>Member + all operating tools: Bookings, Inquiry/Quote Inbox (with private-feedback recovery), Loyalty. A standalone booking tool alone often costs this much — so &ldquo;all tools at $29&rdquo; reads as the deal it is.</p>
+      </div>
+      <div class="numcard rule">
+        <div class="lab">Free-tier limits</div>
+        <div class="val">3 <span>bulletins/mo · 5 photos</span></div>
+        <div class="rng">events unlimited · recommendations &amp; presence signals included</div>
+        <p>Free stays generous enough to feel complete and earns real exposure — the reason every business lists, which is what keeps the directory whole.</p>
+      </div>
+      <div class="numcard rule">
+        <div class="lab">Tier-count decision</div>
+        <div class="val">2 <span>paid tiers</span></div>
+        <div class="rng">alt: collapse to 1 (~$25, everything)</div>
+        <p>Two matches the &ldquo;profile vs tools&rdquo; split and gives a $15 on-ramp instead of forcing $29-or-nothing. Collapse to one only if the market finds two confusing. À la carte is gone — that&rsquo;s the consolidation.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUILD PHASING -->
+  <section aria-labelledby="ph-h">
+    <div class="eyebrow"><span class="n">05</span><h2 id="ph-h">Build phasing — MVP first</h2></div>
+    <p class="sub">Populate the directory and earn consumer usage <em>before</em> monetizing — you can&rsquo;t sell exposure until residents are using the app. So v1 is the free directory + consumer app; the paid apparatus is a switch-on layer. <span style="color:var(--teal);font-weight:600">&#10003;</span> marks screens already wireframed.</p>
+    <div class="trust">
+      <div class="tcard">
+        <div class="lab">MVP · v1 · ship this</div>
+        <h3>Free directory + consumer app</h3>
+        <p><b>Consumer:</b> onboarding S1 · home S2 · search S3 &#10003; · results S4 &#10003; (list + filters; map fast-follow) · basic profile S5 &#10003; · events S6 · news/community · resources · saved S7 (no rewards) · account S8.<br><br><b>Business (free):</b> claim/list B0 · light dashboard B1 &#10003; (&ldquo;manage my listing&rdquo;) · edit profile B4 at current-site parity · post bulletin B2 · submit event B3.<br><br><b>Reputation:</b> automatic &ldquo;claimed &amp; verified&rdquo; only — no recommend button yet. <b>No tiers, no paywall.</b></p>
+      </div>
+      <div class="tcard" style="border-left-color:var(--brass);border-color:var(--brass-line)">
+        <div class="lab" style="color:var(--brass-deep)">Fast-follow · v1.x</div>
+        <h3>First revenue, after traction</h3>
+        <p>Map search (S4 map &#10003;) · recommendations + verified-customer (S5 &#10003;) · saved searches.<br><br>Then turn on monetization: the <b>Member</b> tier + the B6 paywall &#10003; · full analytics + local demand signals B5. Revenue starts deliberately <em>after</em> there&rsquo;s an audience to sell access to.</p>
+      </div>
+      <div class="tcard" style="border-left-color:var(--brass-deep);border-color:var(--brass-line)">
+        <div class="lab" style="color:var(--brass-deep)">Later · v2</div>
+        <h3>Pro tools &amp; depth</h3>
+        <p>The Pro tools — Bookings B7 &#10003; · Inquiry Inbox B8 &#10003; · Loyalty B9 &#10003; — plus the Rewards wallet in Saved (S7).<br><br>Storytelling profiles · follower announcements &amp; perks · voice / semantic search · deeper notifications. All designed-ahead, so each is a config switch, not a rebuild.</p>
+      </div>
+    </div>
+    <div class="nostars" style="background:var(--teal)">
+      <div class="big">Design ahead, ship lean.</div>
+      <p style="color:#DCEEEA">We wireframed B6&ndash;B9 even though they&rsquo;re post-MVP on purpose — the entitlement model is locked, so flipping Member/Pro/tools on later costs a config change, not a redesign. MVP just doesn&rsquo;t render them yet.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>How to use this.</b> This is the entitlement source of truth — when a screen gates a feature, it must match the matrix exactly. Build the data model so tier state (Free / Member / Pro) is read from one place (B6) and respected everywhere: caps in B1/B2, storytelling fields in B4, full analytics &amp; demand signals in B5, the three tools (B7–B9) and their S5 surfaces. There is no placement, promotion, or star-rating logic to build — ranking is identical for every business and reputation is positive-only.</p>
+    <p style="margin-top:10px"><b>Open decisions before wireframing.</b> Confirm the MVP cut in &sect;05 (free directory + consumer app, monetization deferred) · confirm the 5 data types (Businesses · Bulletins · Events · News · Resources) with <b>Recommendations</b> as a lightweight new type · lock the placeholder prices in &sect;04 · confirm two paid tiers vs one. Everything dotted is unresolved on purpose.</p>
+    <p style="margin-top:10px;color:var(--faint)">Placeholder figures are illustrative and depend on the local market; they are not financial or pricing advice. Built from the site&rsquo;s information architecture (the live app is client-rendered, so listings weren&rsquo;t scrapeable) — correct the data-type assumption if it&rsquo;s off and the rest follows.</p>
+  </footer>
+
+</div>
+</body>
+</html>

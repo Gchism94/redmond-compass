@@ -1,0 +1,72 @@
+@import "./tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Respect iOS safe areas in standalone PWA mode */
+    min-height: 100dvh;
+  }
+
+  /* Headings use Playfair Display ONLY (screen titles, section heads, hero). */
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
+  }
+
+  /* Visible, brand-consistent focus — pine-green ring (token --ring). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Reduced-motion: kill transitions/animations app-wide (BUILD-BRIEF §9, §10). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* The mobile content column — caps width and centers (~360–390px primary canvas). */
+  .app-frame {
+    @apply mx-auto w-full max-w-content;
+  }
+
+  /* Hide scrollbars on horizontal rails while keeping scroll. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer utilities {
+  /* Safe-area helpers for standalone PWA (notch + home indicator). */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

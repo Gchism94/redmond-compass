@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pattern-Reuse Screens — Wireframe · Redmond Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16242E; --paper:#E8EBE9; --surface:#FBFCFB;
+    --navy:#213D50; --teal:#0F6E64; --teal-bright:#127C71; --brass:#B07D2A; --brass-deep:#8A5E16;
+    --muted:#5C6B66; --faint:#909994; --line:#D5DAD6;
+    --wire:#E0E4E1; --wire2:#D2D7D3;
+    --display:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1120px;margin:0 auto;padding:30px 18px 70px}
+  header.head{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:26px}
+  .kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal)}
+  h1{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:clamp(23px,4.4vw,33px);margin:.3em 0 .15em}
+  .lede{color:var(--muted);max-width:70ch;margin:0;font-size:15px}
+
+  .gallery{display:flex;flex-wrap:wrap;gap:34px 26px;justify-content:center}
+  .unit{width:296px;flex:none}
+  .unit-h{font-family:var(--display);font-weight:600;font-size:14px;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+  .unit-h .id{font-family:var(--mono);font-size:10px;font-weight:600;color:#fff;background:var(--ink);padding:2px 7px;border-radius:4px}
+  .reuse{font-size:11px;color:var(--brass-deep);font-family:var(--mono);margin:0 0 11px}
+
+  .phone{width:296px;border:9px solid #11181E;border-radius:32px;background:#11181E;box-shadow:0 16px 38px -20px rgba(16,24,30,.5);overflow:hidden}
+  .statusbar{height:26px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 15px;font-family:var(--mono);font-size:9.5px;color:var(--ink)}
+  .screen{height:498px;overflow-y:auto;background:var(--surface)}
+  .screen::-webkit-scrollbar{width:0}
+  .blk{border-bottom:1px solid var(--line);padding:11px 13px}
+  .stitle{font-family:var(--display);font-weight:700;font-size:17px;padding:11px 13px 0}
+
+  .sbar{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:0 11px;height:38px;font-size:12px;color:var(--muted)}
+  .sbar .mag{font-family:var(--mono);color:var(--faint)}
+
+  .pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .pill{font-size:10.5px;border:1.5px solid var(--line);background:#fff;color:#46524c;padding:4px 10px;border-radius:99px}
+  .pill.on{border-color:var(--teal);background:#E4F0ED;color:var(--teal);font-weight:600}
+
+  .tabs{display:flex;gap:4px;padding:9px 11px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tab{font-family:var(--display);font-weight:500;font-size:11px;color:var(--muted);padding:7px 9px;white-space:nowrap;border-bottom:2px solid transparent}
+  .tab.on{color:var(--teal);border-bottom-color:var(--teal);font-weight:600}
+
+  .grouph{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 8px}
+
+  /* event card */
+  .evt{display:flex;gap:9px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+  .evt:last-child{border-bottom:0}
+  .evt .ed{width:40px;height:40px;border-radius:8px;background:var(--wire);flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;font-family:var(--display)}
+  .evt .ed .d{font-weight:700;font-size:14px} .evt .ed .mo{font-size:7.5px;color:var(--muted);text-transform:uppercase}
+  .evt .et{font-family:var(--display);font-weight:600;font-size:12px;line-height:1.1}
+  .evt .em{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .evt .sv{margin-left:auto;font-size:14px;color:var(--teal)}
+
+  /* saved/biz row */
+  .row{display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:0}
+  .row .th{width:44px;height:44px;border-radius:8px;background:var(--wire2);flex:none}
+  .row .rn{font-family:var(--display);font-weight:600;font-size:12.5px;line-height:1.1}
+  .row .rm{font-size:10.5px;margin-top:3px}
+  .row .rm .o{color:var(--teal);font-weight:600}
+  .row .rm .rec{color:var(--teal);font-weight:600}
+  .miniacts{display:flex;gap:5px;margin-top:6px}
+  .miniacts .a{height:24px;border-radius:6px;font-family:var(--display);font-weight:600;font-size:9.5px;display:flex;align-items:center;justify-content:center;flex:1;background:var(--teal);color:#fff}
+  .miniacts .a.g{flex:none;width:28px;background:#fff;border:1.5px solid var(--line);color:#46524c}
+
+  /* account */
+  .acc-status{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 11px}
+  .acc-status .av{width:34px;height:34px;border-radius:50%;background:var(--wire2);flex:none}
+  .acc-status .nm{font-family:var(--display);font-weight:600;font-size:12.5px}
+  .acc-status .sm{font-size:10.5px;color:var(--muted)}
+  .sech{font-family:var(--display);font-weight:600;font-size:12px;margin:0 0 9px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips i{font-style:normal;font-size:10.5px;border:1.5px solid var(--teal);background:#E4F0ED;color:var(--teal);padding:4px 10px;border-radius:99px;font-weight:600}
+  .chips i.off{border-color:var(--line);background:#fff;color:#46524c;font-weight:400}
+  .togrow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .togrow:last-child{border-bottom:0}
+  .sw{width:34px;height:20px;border-radius:99px;background:var(--teal);position:relative;flex:none}
+  .sw::after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;right:3px}
+  .sw.off{background:var(--wire2)} .sw.off::after{right:auto;left:3px}
+  .bizbtn{height:40px;border-radius:10px;background:var(--ink);color:#fff;font-family:var(--display);font-weight:600;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:7px}
+  .linkrow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .linkrow:last-child{border-bottom:0}
+  .linkrow .ar{color:var(--faint);font-family:var(--mono)}
+
+  /* community */
+  .article{display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .article:last-child{border-bottom:0}
+  .article .nth{width:50px;height:40px;border-radius:7px;background:var(--wire2);flex:none}
+  .article .ah{font-family:var(--display);font-weight:600;font-size:12px;line-height:1.2}
+  .article .am{font-size:10px;color:var(--muted);margin-top:3px}
+  .typetag{font-family:var(--mono);font-size:8px;font-weight:600;padding:1px 5px;border-radius:99px;letter-spacing:.03em}
+  .typetag.news{background:#E7EDF1;color:var(--navy);border:1px solid #C4D2DC}
+  .typetag.bull{background:#E4F0ED;color:var(--teal);border:1px solid #BCD9D2}
+
+  /* resources */
+  .resrow{display:flex;gap:9px;padding:9px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+  .resrow:last-child{border-bottom:0}
+  .resrow .ri{width:30px;height:30px;border-radius:7px;background:var(--wire);flex:none}
+  .resrow .rt{font-family:var(--display);font-weight:600;font-size:12px}
+  .resrow .rd{font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.3}
+  .resrow .rl{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--teal);flex:none}
+
+  /* shared bottom tabs (context) */
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px 3px 8px}
+  .bt{display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--display);font-size:8px;color:var(--faint)}
+  .bt .d{width:16px;height:16px;border-radius:5px;background:var(--wire2)}
+  .bt.on .d{background:var(--teal)} .bt.on{color:var(--teal)}
+
+  .reuse-map{margin-top:42px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:8px;padding:18px 20px}
+  .reuse-map h2{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 4px}
+  .reuse-map p.s{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .reuse-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:13px}
+  .rcell .rh{font-family:var(--display);font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px}
+  .rcell .rh .id{font-family:var(--mono);font-size:9px;font-weight:600;color:#fff;background:var(--ink);padding:2px 6px;border-radius:4px}
+  .rcell p{margin:5px 0 0;font-size:12px;color:var(--muted);line-height:1.42}
+
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;font-size:12.5px;color:var(--faint);line-height:1.55}
+  footer b{color:var(--muted)}
+  :focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="kick">Wireframe · S6 · S7 · S8 + content · pattern-reuse set</div>
+    <h1>Events, Saved, Account &amp; content</h1>
+    <p class="lede">The screens that round out the app by reusing patterns already drawn — result cards, the feed, settings rows, time grouping. Shown at canonical MVP layout (no state toggles needed). The reuse map at the bottom traces each back to its source pattern, so these are build-by-assembly, not new design.</p>
+  </header>
+
+  <div class="gallery">
+
+    <!-- S6 EVENTS -->
+    <div class="unit">
+      <div class="unit-h"><span class="id">S6</span> Events</div>
+      <p class="reuse">reuses: S4 result card · time grouping</p>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen">
+          <div class="stitle">Events</div>
+          <div class="blk">
+            <div class="sbar"><span class="mag">&#9906;</span> Search events</div>
+            <div class="pills"><span class="pill on">This weekend</span><span class="pill">Today</span><span class="pill">Free</span><span class="pill">Near me</span></div>
+          </div>
+          <div class="blk">
+            <div class="grouph">This weekend</div>
+            <div class="evt"><div class="ed"><span class="d">12</span><span class="mo">Jul</span></div><div><div class="et">Live acoustic night</div><div class="em">Fri 7 PM · Juniper &amp; Sage · 0.4 mi</div></div><span class="sv">&#9825;</span></div>
+            <div class="evt"><div class="ed"><span class="d">13</span><span class="mo">Jul</span></div><div><div class="et">Saturday Farmers Market</div><div class="em">Sat 9 AM · Centennial Park</div></div><span class="sv">&#9829;</span></div>
+            <div class="evt"><div class="ed"><span class="d">13</span><span class="mo">Jul</span></div><div><div class="et">Kids&rsquo; craft hour</div><div class="em">Sat 11 AM · Library · 1.1 mi</div></div><span class="sv">&#9825;</span></div>
+          </div>
+          <div class="blk" style="border-bottom:0">
+            <div class="grouph">Later</div>
+            <div class="evt"><div class="ed"><span class="d">19</span><span class="mo">Jul</span></div><div><div class="et">High Desert Brewfest</div><div class="em">Fri 4 PM · Downtown</div></div><span class="sv">&#9825;</span></div>
+          </div>
+          <div class="tabbar"><div class="bt"><div class="d"></div>Home</div><div class="bt"><div class="d"></div>Search</div><div class="bt on"><div class="d"></div>Events</div><div class="bt"><div class="d"></div>Saved</div><div class="bt"><div class="d"></div>Account</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S7 SAVED -->
+    <div class="unit">
+      <div class="unit-h"><span class="id">S7</span> Saved</div>
+      <p class="reuse">reuses: S4 result card · S5 verbs · Rewards tab</p>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen">
+          <div class="stitle">Saved</div>
+          <div class="tabs"><span class="tab on">Businesses</span><span class="tab">Following</span><span class="tab">Events</span><span class="tab">Rewards</span></div>
+          <div class="blk" style="border-bottom:0">
+            <div class="row">
+              <div class="th"></div>
+              <div><div class="rn">Juniper &amp; Sage Cafe</div><div class="rm"><span class="o">Open</span> · 0.4 mi · <span class="rec">&#9829; 43</span></div>
+                <div class="miniacts"><div class="a">Call</div><div class="a">Directions</div><div class="a g">&#9829;</div></div></div>
+            </div>
+            <div class="row">
+              <div class="th"></div>
+              <div><div class="rn">Basalt Coffee Roasters</div><div class="rm"><span class="o">Open</span> · 0.9 mi · <span class="rec">&#9829; 67</span></div>
+                <div class="miniacts"><div class="a">Call</div><div class="a">Directions</div><div class="a g">&#9829;</div></div></div>
+            </div>
+            <div class="row">
+              <div class="th"></div>
+              <div><div class="rn">Cascade Hardware</div><div class="rm"><span class="o">Open</span> · 1.2 mi · <span class="rec">&#9829; 29</span></div>
+                <div class="miniacts"><div class="a">Call</div><div class="a">Directions</div><div class="a g">&#9829;</div></div></div>
+            </div>
+          </div>
+          <div class="tabbar"><div class="bt"><div class="d"></div>Home</div><div class="bt"><div class="d"></div>Search</div><div class="bt"><div class="d"></div>Events</div><div class="bt on"><div class="d"></div>Saved</div><div class="bt"><div class="d"></div>Account</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S8 ACCOUNT -->
+    <div class="unit">
+      <div class="unit-h"><span class="id">S8</span> Account</div>
+      <p class="reuse">reuses: settings rows · interest chips · mode switch</p>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen">
+          <div class="stitle">Account</div>
+          <div class="blk">
+            <div class="acc-status"><div class="av"></div><div><div class="nm">Dana M.</div><div class="sm">Signed in · syncing saves</div></div></div>
+          </div>
+          <div class="blk">
+            <div class="sech">Your interests</div>
+            <div class="chips"><i>Food &amp; Drink</i><i>Outdoors</i><i>Live music</i><i class="off">+ Add</i></div>
+          </div>
+          <div class="blk">
+            <div class="sech">Notifications</div>
+            <div class="togrow"><span>Bulletins from places you follow</span><span class="sw"></span></div>
+            <div class="togrow"><span>Saved-event reminders</span><span class="sw"></span></div>
+            <div class="togrow"><span>Local news</span><span class="sw off"></span></div>
+          </div>
+          <div class="blk">
+            <div class="bizbtn">&#8644; Switch to Business</div>
+          </div>
+          <div class="blk" style="border-bottom:0">
+            <div class="linkrow"><span>Location</span><span class="ar">Redmond, OR &rsaquo;</span></div>
+            <div class="linkrow"><span>About &amp; Contact</span><span class="ar">&rsaquo;</span></div>
+            <div class="linkrow"><span>Help</span><span class="ar">&rsaquo;</span></div>
+            <div class="linkrow"><span>Privacy &amp; terms</span><span class="ar">&rsaquo;</span></div>
+          </div>
+          <div class="tabbar"><div class="bt"><div class="d"></div>Home</div><div class="bt"><div class="d"></div>Search</div><div class="bt"><div class="d"></div>Events</div><div class="bt"><div class="d"></div>Saved</div><div class="bt on"><div class="d"></div>Account</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMMUNITY / NEWS -->
+    <div class="unit">
+      <div class="unit-h"><span class="id">C</span> Community / News</div>
+      <p class="reuse">reuses: Home feed pattern · type tags</p>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen">
+          <div class="stitle">Community</div>
+          <div class="tabs"><span class="tab on">All</span><span class="tab">News</span><span class="tab">Bulletins</span></div>
+          <div class="blk" style="border-bottom:0">
+            <div class="article"><div class="nth"></div><div><div class="ah">Downtown plaza project breaks ground <span class="typetag news">NEWS</span></div><div class="am">Redmond Spokesman · 1 day ago</div></div></div>
+            <div class="article"><div class="nth"></div><div><div class="ah">Fresh sourdough — Saturdays only <span class="typetag bull">BULLETIN</span></div><div class="am">Juniper &amp; Sage · 2 days ago</div></div></div>
+            <div class="article"><div class="nth"></div><div><div class="ah">City council approves bike lanes <span class="typetag news">NEWS</span></div><div class="am">Central OR Daily · 3 days ago</div></div></div>
+            <div class="article"><div class="nth"></div><div><div class="ah">New fall roast just dropped <span class="typetag bull">BULLETIN</span></div><div class="am">Basalt Coffee · 4 days ago</div></div></div>
+          </div>
+          <div class="tabbar"><div class="bt on"><div class="d"></div>Home</div><div class="bt"><div class="d"></div>Search</div><div class="bt"><div class="d"></div>Events</div><div class="bt"><div class="d"></div>Saved</div><div class="bt"><div class="d"></div>Account</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESOURCES -->
+    <div class="unit">
+      <div class="unit-h"><span class="id">R</span> Resources</div>
+      <p class="reuse">reuses: categorized list · search</p>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC</span></div>
+        <div class="screen">
+          <div class="stitle">Resources</div>
+          <div class="blk"><div class="sbar"><span class="mag">&#9906;</span> Search resources</div></div>
+          <div class="blk">
+            <div class="grouph">Emergency &amp; safety</div>
+            <div class="resrow"><div class="ri"></div><div><div class="rt">Redmond Police (non-emergency)</div><div class="rd">Report &amp; general inquiries</div></div><span class="rl">Call</span></div>
+            <div class="resrow"><div class="ri"></div><div><div class="rt">Fire &amp; Rescue</div><div class="rd">Burn permits, safety info</div></div><span class="rl">Open</span></div>
+          </div>
+          <div class="blk">
+            <div class="grouph">Government</div>
+            <div class="resrow"><div class="ri"></div><div><div class="rt">City of Redmond</div><div class="rd">Permits, utilities, council</div></div><span class="rl">Open</span></div>
+            <div class="resrow"><div class="ri"></div><div><div class="rt">DMV &mdash; Redmond</div><div class="rd">Licenses &amp; registration</div></div><span class="rl">Open</span></div>
+          </div>
+          <div class="blk" style="border-bottom:0">
+            <div class="grouph">Community</div>
+            <div class="resrow"><div class="ri"></div><div><div class="rt">Public Library</div><div class="rd">Hours, programs, cards</div></div><span class="rl">Open</span></div>
+          </div>
+          <div class="tabbar"><div class="bt on"><div class="d"></div>Home</div><div class="bt"><div class="d"></div>Search</div><div class="bt"><div class="d"></div>Events</div><div class="bt"><div class="d"></div>Saved</div><div class="bt"><div class="d"></div>Account</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- REUSE MAP -->
+  <div class="reuse-map">
+    <h2>Pattern-reuse map</h2>
+    <p class="s">None of these need bespoke design — each is assembled from components already specified. This is what makes them light to build.</p>
+    <div class="reuse-grid">
+      <div class="rcell"><div class="rh"><span class="id">S6</span> Events</div><p>The S4 result card with a date badge, grouped by time (Today / This weekend / Later). Quick date pills mirror S4&rsquo;s quick filters. Save reuses the heart action.</p></div>
+      <div class="rcell"><div class="rh"><span class="id">S7</span> Saved</div><p>Tabbed list of S4 result cards with the S5 Call · Directions · Save verbs. The Rewards tab is the already-drawn loyalty wallet. Each tab&rsquo;s empty state routes to discovery.</p></div>
+      <div class="rcell"><div class="rh"><span class="id">S8</span> Account</div><p>Standard settings rows + the interest chips from onboarding (S1) + notification toggles + the Switch-to-Business mode control. Links out to content/legal.</p></div>
+      <div class="rcell"><div class="rh"><span class="id">C</span> Community</div><p>The Home feed pattern, filtered to articles + bulletins with type tags (the All / News / Bulletins blend). News is admin-published; bulletins come from businesses.</p></div>
+      <div class="rcell"><div class="rh"><span class="id">R</span> Resources</div><p>A searchable, categorized list (Emergency · Government · Community). Mostly static civic data — the simplest screen, pure utility.</p></div>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Screen set complete.</b> With these five, every screen in the app is now specified or wireframed — consumer S1&ndash;S8, content (Community, Resources), and business B0&ndash;B9. <b>Open questions are minor:</b> whether Community defaults to All or News · Events list vs calendar default view · how Resources data is sourced/maintained (admin vs imported). <b>Ready for:</b> packaging starter files, design handoff to Claude Design, and build in Claude Code.</p>
+  </footer>
+</div>
+</body>
+</html>

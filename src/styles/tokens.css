@@ -1,0 +1,103 @@
+/* ============================================================
+   Redmond Compass — Design Tokens  (v2 · brand-matched)
+   TRANSLATED FROM THE LIVE SITE (redmondcompass.com).
+   Convention: shadcn/Tailwind HSL channels — use as hsl(var(--token)).
+   The app inherits the existing brand: warm cream + deep navy, amber
+   primary, terracotta accent, pine-green positive. Playfair + DM Sans.
+
+   This file is the authoritative copy of design-tokens.css, wired into
+   Tailwind via tailwind.config.ts. Do NOT introduce new tokens without
+   noting it (BUILD-BRIEF §9).
+   ============================================================ */
+
+:root {
+  /* ---- Typography ---- */
+  --font-heading: "Playfair Display", Georgia, serif; /* HEADINGS / DISPLAY ONLY */
+  --font-body: "DM Sans", system-ui, sans-serif; /* body, UI, buttons, labels, metadata */
+
+  /* ---- Color (verbatim from the live site · "H S% L%") ---- */
+  --background: 36 33% 97%; /* #FAF8F5  warm cream — app background        */
+  --foreground: 214 82% 18%; /* #082954  deep navy — primary text           */
+  --card: 0 0% 100%; /* #FFFFFF  cards, sheets                       */
+  --card-foreground: 223 20% 12%; /* #181C25  near-black blue                     */
+  --popover: 0 0% 100%; /* #FFFFFF                                      */
+  --popover-foreground: 214 83% 18%; /* #082954                                      */
+
+  --primary: 30 96% 40%; /* #C86604  amber — PRIMARY CTAs (Call, etc.)   */
+  --primary-foreground: 36 33% 97%; /* #FAF8F5  cream text on amber                 */
+
+  --secondary: 30 40% 92%; /* #F3EBE2  warm light — secondary surfaces     */
+  --secondary-foreground: 150 20% 12%; /* #18251F  dark green                          */
+
+  --muted: 30 20% 93%; /* #F1EDEA  muted surface                       */
+  --muted-foreground: 150 10% 45%; /* #677E73  green-gray — secondary text         */
+
+  --accent: 16 65% 55%; /* #D76942  terracotta — accent / highlights    */
+  --accent-foreground: 0 0% 100%; /* #FFFFFF                                       */
+
+  --destructive: 241 55% 23%; /* #1B1A5B  deep indigo                          */
+  --destructive-foreground: 0 0% 98%; /* #FAFAFA                                       */
+
+  --border: 30 15% 87%; /* #E3DED9  warm hairline                        */
+  --input: 30 15% 87%; /* #E3DED9                                       */
+  --ring: 152 35% 28%; /* #2E6049  pine green — focus + POSITIVE/open   */
+
+  /* Data viz */
+  --chart-1: 152 35% 28%; /* #2E6049 pine    */
+  --chart-2: 16 65% 55%; /* #D76942 terra   */
+  --chart-3: 197 37% 24%; /* #274754 teal-ink*/
+  --chart-4: 43 74% 66%; /* #E8C468 gold    */
+  --chart-5: 30 40% 70%; /* #D1B394 tan     */
+
+  /* ---- Shape ---- */
+  --radius: 0.75rem; /* 12px — site base. Derive: sm .5rem · lg 1rem · pill 999px  */
+
+  /* ---- App-level scale (not in site dump; keep consistent) ---- */
+  --rc-space-1: 4px;
+  --rc-space-2: 8px;
+  --rc-space-3: 12px;
+  --rc-space-4: 16px;
+  --rc-space-5: 20px;
+  --rc-space-6: 24px;
+  --rc-space-8: 32px;
+  --rc-space-10: 40px;
+
+  --rc-text-xs: 11px;
+  --rc-text-sm: 12.5px;
+  --rc-text-base: 15px;
+  --rc-text-md: 17px;
+  --rc-text-lg: 20px;
+  --rc-text-xl: 24px;
+  --rc-text-2xl: 30px;
+  --rc-text-3xl: 40px;
+
+  --rc-shadow-card: 0 6px 16px -10px rgba(8, 41, 84, 0.22);
+  --rc-shadow-sticky: 0 4px 12px -8px rgba(8, 41, 84, 0.18);
+  --rc-shadow-modal: 0 18px 44px -20px rgba(8, 41, 84, 0.4);
+
+  --rc-tap-min: 44px;
+  --rc-content-max: 480px;
+  --rc-tabbar-h: 58px;
+}
+
+/* ============================================================
+   Extended palette — DERIVED FROM THE FINISHED HI-FI (v3 reconcile).
+   Mirrors design-tokens.css. Core tokens above stay verbatim (brand parity);
+   these are the UI shades the hi-fi added — hovers, tints, borders, faint text.
+   Plain hex (used directly via var() or as Tailwind hex colors).
+   ============================================================ */
+:root {
+  --primary-hover: #a35408; /* darker amber — primary hover / active */
+  --positive: #2e6049; /* = --ring (pine) — DOMINANT interactive accent */
+  --positive-strong: #357a5e; /* pine hover / brighter green */
+  --positive-tint: #e7efe9; /* positive / selected backgrounds */
+  --positive-line: #c4d9cc; /* green borders */
+  --surface-raised: #fcfaf7; /* warm raised white — cards on cream */
+  --surface-sunken: #ebe6e0; /* subtle warm gray surface / hover */
+  --border-strong: #ddd6cc; /* heavier warm border */
+  --text-secondary: #455852; /* secondary text / icons (darker than muted) */
+  --text-faint: #9a958b; /* faint / placeholder text */
+  --navy-soft: #11385f; /* secondary navy / pressed */
+  --accent-tint: #e6d7bf; /* warm gold/amber tint background */
+  --danger: #b23a3a; /* hi-fi error family — confirm intended error color */
+}

@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B7–B9 Module Setup — Wireframe · Redmond Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16242E; --paper:#E8EBE9; --surface:#FBFCFB;
+    --navy:#213D50; --teal:#0F6E64; --brass:#B07D2A; --brass-deep:#8A5E16;
+    --muted:#5C6B66; --faint:#909994; --line:#D5DAD6;
+    --wire:#E0E4E1; --wire2:#D2D7D3;
+    --display:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:30px 18px 70px}
+
+  header.head{border-bottom:2px solid var(--ink);padding-bottom:20px;margin-bottom:22px}
+  .kick{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass-deep)}
+  h1{font-family:var(--display);font-weight:700;letter-spacing:-.02em;font-size:clamp(23px,4.4vw,33px);margin:.3em 0 .15em}
+  .lede{color:var(--muted);max-width:66ch;margin:0;font-size:15px}
+
+  .controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin:20px 0 6px}
+  .toggle{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:3px}
+  .toggle button{font-family:var(--display);font-weight:600;font-size:13px;border:0;background:transparent;color:var(--muted);padding:8px 15px;border-radius:99px;cursor:pointer;transition:.15s}
+  .toggle button.on{background:var(--ink);color:#fff}
+  .toggle button:focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  .ctrl-hint{font-size:12.5px;color:var(--muted);max-width:38ch}
+
+  .progate{background:var(--brass-tint);border:1px solid #E4D2AC;border-radius:8px;padding:11px 14px;margin:14px 0 24px;font-size:12.5px;color:var(--brass-deep);display:flex;gap:10px;align-items:center}
+  .progate b{font-weight:600}
+  .progate .badge{font-family:var(--mono);font-size:10px;background:var(--brass);color:#fff;padding:3px 8px;border-radius:99px;flex:none}
+
+  .stage{display:flex;gap:30px;align-items:flex-start}
+  .phone-col{flex:none}
+  .phone{width:360px;max-width:90vw;border:10px solid #11181E;border-radius:38px;background:#11181E;box-shadow:0 20px 50px -20px rgba(16,24,30,.5);overflow:hidden}
+  .statusbar{height:30px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-family:var(--mono);font-size:10px;color:var(--ink)}
+  .screen{height:min(72vh,690px);overflow-y:auto;background:var(--surface)}
+  .screen::-webkit-scrollbar{width:0}
+
+  .blk{position:relative;border-bottom:1px solid var(--line);padding:14px 16px}
+  .anno{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:5}
+
+  .navrow{display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+  .ic{width:30px;height:30px;border-radius:50%;background:var(--wire);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;color:#46524c}
+  .navttl{font-family:var(--display);font-weight:600;font-size:14px}
+
+  /* wizard header */
+  .wiz{padding:14px 16px;border-bottom:1px solid var(--line)}
+  .modname{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em}
+  .modsub{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .steps{display:flex;gap:6px;margin-top:12px}
+  .steps i{height:5px;border-radius:4px;background:var(--wire2);flex:1}
+  .steps i.on{background:var(--teal)}
+  .steplab{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:6px;text-transform:uppercase;letter-spacing:.06em}
+
+  /* form fields */
+  .field{margin-bottom:14px}
+  .lbl{font-family:var(--display);font-weight:600;font-size:12.5px;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .lbl .opt{font-family:var(--mono);font-size:9.5px;color:var(--faint);font-weight:400;text-transform:uppercase;letter-spacing:.04em}
+  .inp{height:38px;border:1.5px solid var(--line);border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;font-size:12.5px;color:var(--muted)}
+  .inp.area{height:64px;align-items:flex-start;padding-top:9px}
+  .row2{display:flex;gap:9px} .row2 .field{flex:1}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips i{font-style:normal;font-size:11.5px;border:1.5px solid var(--line);background:#fff;color:#46524c;padding:5px 11px;border-radius:99px}
+  .chips i.sel{border-color:var(--teal);background:#E4F0ED;color:var(--teal);font-weight:600}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;margin-bottom:9px}
+  .toggle-row .tr-t{font-size:12.5px;font-weight:500}
+  .toggle-row .tr-m{font-size:11px;color:var(--faint);margin-top:2px}
+  .sw{width:38px;height:22px;border-radius:99px;background:var(--teal);position:relative;flex:none}
+  .sw::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;right:3px}
+  .sw.off{background:var(--wire2)} .sw.off::after{right:auto;left:3px}
+
+  /* preview peek */
+  .peek{margin-top:6px;border:1.5px dashed var(--brass);border-radius:9px;padding:11px;background:#FBF6EC}
+  .peek .pl{font-family:var(--mono);font-size:9.5px;color:var(--brass-deep);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .peekbtn{height:38px;border-radius:9px;background:var(--brass);color:#fff;font-family:var(--display);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
+
+  /* sticky save */
+  .savebar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:11px 14px;display:flex;gap:9px}
+  .btn{flex:1;height:42px;border-radius:10px;font-family:var(--display);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .btn.primary{background:var(--ink);color:#fff} .btn.ghost{flex:none;width:46%;background:#fff;border:1.5px solid var(--line);color:#46524c}
+
+  .cap{font-size:12px;color:var(--muted);max-width:360px;margin:12px auto 0;text-align:center;line-height:1.4}
+
+  .notes-col{flex:1;min-width:0}
+  .notes-col h2{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 4px}
+  .notes-col .nh{color:var(--muted);font-size:13px;margin:0 0 16px}
+  ol.notes{list-style:none;counter-reset:n;margin:0;padding:0}
+  ol.notes li{counter-increment:n;position:relative;padding:0 0 14px 38px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+  ol.notes li::before{content:counter(n);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;font-family:var(--mono);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  ol.notes li:last-child{border-bottom:0}
+  ol.notes .t{font-family:var(--display);font-weight:600;font-size:14px}
+  ol.notes p{margin:5px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+  .shared{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:6px;padding:14px 16px;margin-top:18px}
+  .shared h3{font-family:var(--display);font-weight:600;font-size:14px;margin:0 0 6px}
+  .shared ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--muted);line-height:1.5}
+
+  footer{margin-top:36px;border-top:1px solid var(--line);padding-top:16px;font-size:12.5px;color:var(--faint);line-height:1.55}
+  footer b{color:var(--muted)}
+  :focus-visible{outline:2.5px solid var(--brass);outline-offset:2px}
+  @media (max-width:840px){.stage{flex-direction:column;align-items:center}.notes-col{width:100%;max-width:520px}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  /* module visibility */
+  .m-book,.m-inq,.m-loy{display:none}
+  .mod-book .m-book{display:block} .mod-inq .m-inq{display:block} .mod-loy .m-loy{display:block}
+  .mod-book .m-book.flex,.mod-inq .m-inq.flex,.mod-loy .m-loy.flex{display:flex}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="kick">Wireframe · Screens B7 / B8 / B9 · shared framework</div>
+    <h1>Module setup</h1>
+    <p class="lede">The three Pro tools share one setup framework — same shell, same steps, same save pattern — with module-specific fields swapped in. That&rsquo;s exactly how it&rsquo;s built: one component, three configs. Switch modules below to see each config; the structure never moves.</p>
+
+    <div class="controls">
+      <div class="toggle" role="group" aria-label="Module">
+        <button id="bBook" class="on" onclick="setMod('book')">Bookings · B7</button>
+        <button id="bInq" onclick="setMod('inq')">Inquiry Inbox · B8</button>
+        <button id="bLoy" onclick="setMod('loy')">Loyalty · B9</button>
+      </div>
+      <p class="ctrl-hint">Same shell, swapped fields. Note what stays identical.</p>
+    </div>
+
+    <div class="progate"><span class="badge">PRO</span><span>All three tools are included in <b>Pro</b>. A Free or Member owner tapping &ldquo;Set up&rdquo; lands on B6 first, not here — this screen assumes the tool is already unlocked.</span></div>
+  </header>
+
+  <div class="stage">
+    <div class="phone-col">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>RC · Business</span></div>
+        <div class="screen mod-book" id="screen">
+
+          <div class="blk navrow" style="border-bottom:1px solid var(--line)">
+            <div class="ic">&larr;</div>
+            <div class="navttl">Set up <span id="navmod">Bookings</span></div>
+            <div class="ic">?</div>
+          </div>
+
+          <div class="wiz"><span class="anno">1</span>
+            <div class="modname" id="modname">Bookings</div>
+            <div class="modsub" id="modsub">Let residents book you straight from your profile.</div>
+            <div class="steps"><i class="on"></i><i class="on"></i><i></i></div>
+            <div class="steplab">Step 2 of 3 · the essentials</div>
+          </div>
+
+          <div class="blk"><span class="anno">2</span>
+
+            <!-- BOOKINGS fields -->
+            <div class="m-book">
+              <div class="field"><div class="lbl">Services &amp; durations</div>
+                <div class="inp">Haircut · 45 min</div></div>
+              <div class="row2">
+                <div class="field"><div class="lbl">Slot length</div><div class="inp">30 min</div></div>
+                <div class="field"><div class="lbl">Buffer</div><div class="inp">10 min</div></div>
+              </div>
+              <div class="field"><div class="lbl">Availability windows</div><div class="inp">Tue–Sat · 9–5</div></div>
+              <div class="row2">
+                <div class="field"><div class="lbl">Lead time</div><div class="inp">2 hrs</div></div>
+                <div class="field"><div class="lbl">Capacity / slot</div><div class="inp">1</div></div>
+              </div>
+              <div class="toggle-row"><div><div class="tr-t">Require manual approval</div><div class="tr-m">Off = instant booking</div></div><div class="sw off"></div></div>
+              <div class="field"><div class="lbl">Cancellation policy <span class="opt">optional</span></div><div class="inp">24 hrs notice</div></div>
+            </div>
+
+            <!-- INQUIRY fields -->
+            <div class="m-inq">
+              <div class="field"><div class="lbl">Request form fields</div>
+                <div class="chips"><i class="sel">Service type</i><i class="sel">Date needed</i><i class="sel">Description</i><i>Photo upload</i><i class="sel">Contact</i></div></div>
+              <div class="field"><div class="lbl">Where requests go</div><div class="inp">Inbox + email to dana@&hellip;</div></div>
+              <div class="toggle-row"><div><div class="tr-t">Auto-reply on new request</div><div class="tr-m">&ldquo;Thanks — we reply within a day&rdquo;</div></div><div class="sw"></div></div>
+              <div class="toggle-row"><div><div class="tr-t">Receive private feedback here</div><div class="tr-m">Routes &ldquo;share feedback&rdquo; from your profile</div></div><div class="sw"></div></div>
+              <div class="field"><div class="lbl">Reply templates <span class="opt">optional</span></div><div class="inp area">Quote · Booked · Not available&hellip;</div></div>
+            </div>
+
+            <!-- LOYALTY fields -->
+            <div class="m-loy">
+              <div class="field"><div class="lbl">Program type</div>
+                <div class="chips"><i class="sel">Punch card</i><i>Points</i></div></div>
+              <div class="field"><div class="lbl">Earn rule</div><div class="inp">1 punch per visit</div></div>
+              <div class="field"><div class="lbl">Reward</div><div class="inp">10th coffee free</div></div>
+              <div class="row2">
+                <div class="field"><div class="lbl">Reward expiry</div><div class="inp">90 days</div></div>
+                <div class="field"><div class="lbl">Redeem by</div><div class="inp">Staff scan</div></div>
+              </div>
+              <div class="toggle-row"><div><div class="tr-t">Show progress to residents</div><div class="tr-m">Powers the Rewards wallet in Saved (S7)</div></div><div class="sw"></div></div>
+            </div>
+
+          </div>
+
+          <div class="blk"><span class="anno">3</span>
+            <div class="peek">
+              <div class="pl">Live preview · how it looks on your profile (S5)</div>
+              <div class="peekbtn m-book">Book</div>
+              <div class="peekbtn m-inq">Request a quote</div>
+              <div class="peekbtn m-loy">Join rewards</div>
+            </div>
+          </div>
+
+          <div class="blk" style="border-bottom:0"><span class="anno">4</span>
+            <div class="lbl" style="margin-bottom:8px">After setup, manage from</div>
+            <div class="inp m-book">Dashboard &rarr; Bookings calendar</div>
+            <div class="inp m-inq">Dashboard &rarr; Inquiry inbox</div>
+            <div class="inp m-loy">Dashboard &rarr; Rewards ledger + counter redeem</div>
+          </div>
+
+          <div class="savebar"><span class="anno" style="top:-10px">5</span>
+            <div class="btn ghost">Save draft</div>
+            <div class="btn primary">Go live</div>
+          </div>
+
+        </div>
+      </div>
+      <p class="cap">One framework, three configs. The shell, steps, preview, and save bar are identical — only the middle fields change per tool.</p>
+    </div>
+
+    <div class="notes-col">
+      <h2>Annotations</h2>
+      <p class="nh">The numbered shell is shared by all three; field sets differ.</p>
+      <ol class="notes">
+        <li><div class="t">Wizard header + step rail</div><p>Short, skippable wizard — 3 steps max (identity → essentials → preview/go-live). Sensible defaults so a tool can go live in one pass; advanced settings collapse out of the way.</p></li>
+        <li><div class="t">Module-specific fields</div><p>The only part that changes. Bookings = services, availability, buffers, approval. Inquiry = form fields, routing, auto-reply, and the private-feedback toggle (the anti-Yelp routing). Loyalty = program type, earn rule, reward, and the &ldquo;show progress&rdquo; toggle that powers the consumer wallet.</p></li>
+        <li><div class="t">Live preview</div><p>Shows the exact button (Book / Request a quote / Join rewards) as it&rsquo;ll render on S5, so setup and result stay tied. Same preview slot for every module.</p></li>
+        <li><div class="t">Manage destination</div><p>Setup is one-time; day-to-day lives in the Dashboard (B1) — calendar, inbox, or ledger. The active-modules strip on B1 surfaces counts and deep-links here.</p></li>
+        <li><div class="t">Sticky save bar</div><p>Save draft / Go live, always reachable. Shared rules: a module can be paused later without losing data, and renders nothing on the public profile until it&rsquo;s live.</p></li>
+      </ol>
+
+      <div class="shared">
+        <h3>Shared module contract</h3>
+        <ul>
+          <li>Pro-gated — Free/Member tapping &ldquo;set up&rdquo; routes to B6 first.</li>
+          <li>Three surfaces each: setup (here) · manage (B1) · public face (S5).</li>
+          <li>Pause without data loss; renders nothing on a non-live profile.</li>
+          <li>Pushes a count to the B1 active-modules strip + notifies on new activity.</li>
+          <li>Loyalty alone adds a consumer surface — the Rewards wallet in Saved (S7).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p><b>Open questions.</b> Whether Bookings needs calendar-sync in v1 or can launch as in-app-only · how much of the Inquiry form is fixed vs owner-editable · whether Loyalty redeem is staff-scan, owner-tap, or both · default on/off for the private-feedback routing toggle. <b>Next candidates:</b> the B1 Dashboard wireframe (where these are managed and where membership is pitched), or the consumer-side module surfaces on S5 and the Rewards wallet in S7.</p>
+  </footer>
+</div>
+
+<script>
+  var MOD={book:{n:'Bookings',sub:'Let residents book you straight from your profile.'},
+           inq:{n:'Inquiry Inbox',sub:'Capture quote requests — and route private feedback here.'},
+           loy:{n:'Loyalty',sub:'Reward repeat customers and keep spending local.'}};
+  function setMod(m){
+    var s=document.getElementById('screen');
+    s.className='screen mod-'+m;
+    ['book','inq','loy'].forEach(function(k){
+      document.getElementById('b'+k.charAt(0).toUpperCase()+k.slice(1)).classList.toggle('on',k===m);
+    });
+    document.getElementById('modname').textContent=MOD[m].n;
+    document.getElementById('modsub').textContent=MOD[m].sub;
+    document.getElementById('navmod').textContent=MOD[m].n;
+    s.scrollTop=0;
+  }
+</script>
+</body>
+</html>
