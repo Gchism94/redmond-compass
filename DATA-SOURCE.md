@@ -32,15 +32,16 @@ Snake_case columns; the DataSource maps them to the camelCase shapes in
 | `news_articles` | id, title, slug ⊥, excerpt, body, image, source, author, published_at | admin-published |
 | `resources` | id, name, category (emergency/government/community/utilities), description, phone, url, address | civic |
 | `recommendations` | id, business_id→businesses, user_id→auth.users, note, verified_customer, created_at, **unique(business_id,user_id)** | positive-only seam |
+| `profiles` | id→auth.users, saved/followed/saved-event/recently-viewed/interests (text[]), notification_prefs(jsonb), location(jsonb), onboarded, owner_business_id→businesses, created_at, updated_at | per-user personalization; auto-created on signup; merges guest local prefs on first sign-in |
 
 **No-stars / equal-ranking guarantee (enforced at the schema):** there is **no
 rating/score/value/stars column anywhere**, and **no boost/featured/rank/priority/
 sponsored column anywhere**. (Verified by a test that probes for them and by an
 `information_schema` scan — both return nothing.)
 
-## RLS + entitlements (`…_20260628000001_rls.sql`)
+## RLS + entitlements (`…_20260628000001_rls.sql`, `…_20260628000002_profiles.sql`)
 
-RLS on all six tables. Policies (16) + triggers mirror `src/lib/entitlements.ts`:
+RLS on all seven tables. Policies + triggers mirror `src/lib/entitlements.ts`:
 
 - **Public read** on businesses, events, news_articles, resources, recommendations.
   Bulletins: public reads `live`; the owner also sees own drafts/scheduled.
@@ -58,8 +59,12 @@ RLS on all six tables. Policies (16) + triggers mirror `src/lib/entitlements.ts`
   increments the cached `businesses.recommend_count` (count can only rise).
 - `claim_business(b_id)` — `security definer` RPC to claim an **unclaimed** listing
   (the owner-update policy can't match a null owner), only when truly unowned.
-- Grants: `anon` = select; `authenticated` = select + insert/update/delete (RLS restricts);
-  `service_role` = all (server-side seed / GHL sync / admin).
+- **`profiles`**: a user may read/write **only their own row** (`auth.uid() = id`); **no
+  anon access** (private). Trigger `handle_new_user` auto-creates the row on signup;
+  `touch_updated_at` keeps `updated_at` fresh. On first sign-in the app merges the guest's
+  localStorage prefs into this row (union of saved/followed/etc.) so nothing is lost.
+- Grants: `anon` = select (content tables only); `authenticated` = select + insert/update/delete
+  (RLS restricts); `service_role` = all (server-side seed / GHL sync / admin).
 
 ## `createSupabaseSource()` (`src/data/supabase/`)
 
@@ -69,6 +74,24 @@ category/amenity filters run in Postgres; **open-now / distance / sort run clien
 — and because no boost column exists, ordering is structurally **relevance (verified,
 then nearer) / distance / name / recency only, never a paid boost.** Event `start_at`/
 `end_at` round-trip Pacific⇄UTC via `lib/calendar.ts`.
+
+It also implements the **auth + profile** seam: `startEmailAuth`/`verifyEmailOtp`
+(passwordless email OTP — `signInWithOtp` → `verifyOtp`, no redirect), `signOut`,
+`getAuthUser`, `onAuthChange` (live session), and `getProfile`/`saveProfile` (the
+`profiles` row). The single memoized client (`client.ts`, `persistSession`+`pkce`) holds
+the JWT, so once the AuthSheet verifies the code **every owner read/write carries it**.
+
+## Auth (wired — BUILD-BRIEF §1, §12 step 6)
+
+Real Supabase Auth, JIT-only. `SessionProvider` delegates to the DataSource: the
+`AuthSheet` (the only sign-in surface) does a two-step email → 6-digit-code flow; the
+session reflects `onAuthChange` and carries the JWT. Browsing/search are never gated; the
+"Keep browsing without an account" escape and the pending-action-completes-after-sign-in
+flow are preserved. The owner path (Claim via `claim_business` → Edit → Bulletin → Event)
+now persists through the app under RLS + the entitlement triggers. **Mock keeps an instant
+sign-in for dev** (`VITE_DATA_SOURCE=mock`). URL config (Site URL + redirects for
+`http://localhost:5173` and `https://app.redmondcompass.com`) is in `config.toml`; set the
+same in the hosted dashboard. OTP email templates (`supabase/templates/`) surface the code.
 
 ## Seeding (`supabase/seed.sql`, generated)
 
@@ -88,13 +111,34 @@ calls GHL directly.
 
 ```bash
 supabase start                 # Postgres + Auth + PostgREST + Studio (Docker)
-supabase status                # copy API URL + anon key → .env (see .env.example)
+supabase status                # local API URL + keys (already in .env / .env.development.local)
 supabase db reset              # re-apply migrations + seed.sql
 node scripts/gen-supabase-seed.mjs   # regenerate seed.sql from the mock
-node scripts/rls-test.mjs      # 18 RLS assertions (guest read / cross-owner write denied / …)
-npm run dev                    # VITE_DATA_SOURCE=supabase in .env → app reads from Supabase
+node scripts/rls-test.mjs      # 18 RLS/schema assertions (guest read / cross-owner write / no-stars…)
+node scripts/auth-test.mjs     # 22 auth + owner-path assertions (OTP sign-in → claim/edit/bulletin/event)
+npm run dev                    # dev → local Supabase (see env layout below)
 ```
 
-> Note: app owner-write UI currently uses the local mock session (step 6). Wiring
-> Supabase Auth into the session is the next step so owner writes carry a real JWT;
-> the write methods + RLS are already in place and verified via `scripts/rls-test.mjs`.
+### Env layout (which Supabase a build talks to)
+
+Vite precedence means the *most specific* file wins. The app is wired so:
+
+| File | Used by | Points at |
+|---|---|---|
+| `.env` | fallback | local |
+| `.env.development.local` | `npm run dev` | **local** (`127.0.0.1:54421`) |
+| `.env.production.local` | `npm run build` | **hosted** (`…supabase.co`, publishable key) |
+
+All are gitignored; `.env.example` is the committed template. **Only the anon/publishable
+key is ever in the browser — never the service_role/secret key.** (`.env.local`, if present,
+sits between `.env` and the mode-specific files; the mode-specific files above take
+precedence, so dev stays local and prod stays hosted regardless of what `.env.local` holds.)
+
+### Deploy artifact
+
+The two SQL files in `supabase/migrations/` (+ the new `…_profiles.sql`) **are** the deploy
+artifact. The hosted project (`jdrhcmkqtewlzlojixpd`) is `supabase link`-ed; `supabase db
+push` applies them (the read-schema set is already up to date — `db push --dry-run` reports
+"Remote database is up to date"). `db push` does **not** carry seed; author News/Resources
+on hosted or run the seed there explicitly. Mirror Auth URL config + email templates in the
+hosted dashboard.
