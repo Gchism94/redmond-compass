@@ -16,6 +16,9 @@ export interface AddToCalendarProps {
   variant?: "primary" | "ghost";
   /** open menu upward for cards near the bottom of the viewport */
   menuPlacement?: "down" | "up";
+  /** horizontal anchor: "right" for right-aligned triggers (card icons),
+   *  "left" for left-aligned triggers (the detail button) */
+  align?: "left" | "right";
   /** icon-only trigger (compact card actions) */
   iconOnly?: boolean;
   className?: string;
@@ -30,6 +33,7 @@ export function AddToCalendar({
   event,
   variant = "primary",
   menuPlacement = "down",
+  align = "right",
   iconOnly = false,
   className,
 }: AddToCalendarProps) {
@@ -102,7 +106,8 @@ export function AddToCalendar({
           role="menu"
           aria-label="Add to calendar"
           className={cn(
-            "absolute right-0 z-40 w-52 overflow-hidden rounded-lg border border-border bg-popover shadow-modal animate-fade-in",
+            "absolute z-40 w-52 overflow-hidden rounded-lg border border-border bg-popover shadow-modal animate-fade-in",
+            align === "right" ? "right-0" : "left-0",
             menuPlacement === "up" ? "bottom-full mb-2" : "top-full mt-2",
           )}
         >

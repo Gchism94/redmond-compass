@@ -4,6 +4,7 @@ import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Toggle, ResultCard, EventCard, EmptyState, Skeleton, Button } from "@/components";
 import { useBusinesses, useEvents } from "@/data/queries";
 import { useSession } from "@/features/account/session";
+import { eventsToICS, downloadICS } from "@/lib/calendar";
 import type { Business } from "@/lib/types";
 
 type Tab = "businesses" | "following" | "events";
@@ -110,17 +111,27 @@ export function SavedScreen() {
             />
           )
         ) : savedEvents.length ? (
-          <div className="divide-y divide-border">
-            {savedEvents.map((e) => (
-              <EventCard
-                key={e.id}
-                event={e}
-                origin={session.location ?? undefined}
-                saved
-                onSave={() => session.toggleSaveEvent(e.id)}
-              />
-            ))}
-          </div>
+          <>
+            <button
+              type="button"
+              onClick={() => downloadICS("redmond-compass-events", eventsToICS(savedEvents))}
+              className="mb-1 inline-flex min-h-tap items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none"
+            >
+              <CalendarPlus size={16} strokeWidth={1.75} /> Add all to calendar (.ics)
+            </button>
+            <div className="divide-y divide-border">
+              {savedEvents.map((e) => (
+                <EventCard
+                  key={e.id}
+                  event={e}
+                  origin={session.location ?? undefined}
+                  saved
+                  onSave={() => session.toggleSaveEvent(e.id)}
+                  addToCalendar
+                />
+              ))}
+            </div>
+          </>
         ) : (
           <EmptyState
             icon={<CalendarPlus size={20} />}

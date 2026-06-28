@@ -1,7 +1,16 @@
 import { useMemo, useState } from "react";
-import { Calendar } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Calendar, List, CalendarDays } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { SearchField, Chip, EventCard, EmptyState, Skeleton } from "@/components";
+import {
+  SearchField,
+  Chip,
+  EventCard,
+  EmptyState,
+  Skeleton,
+  SegmentedToggle,
+  EventCalendar,
+} from "@/components";
 import { useEvents } from "@/data/queries";
 import { eventGroup, EVENT_GROUP_LABEL, type EventGroup } from "@/lib/format";
 import { useSession } from "@/features/account/session";
@@ -16,10 +25,12 @@ const QUICK: { value: Quick; label: string }[] = [
 ];
 const ORDER: EventGroup[] = ["today", "weekend", "later"];
 
-/** Events (S6). Time-grouped list with quick date filters. Reuses EventCard. */
+/** Events (S6). List (default) ⇄ calendar view; time-grouped list with quick filters. */
 export function EventsScreen() {
+  const navigate = useNavigate();
   const [text, setText] = useState("");
   const [quick, setQuick] = useState<Quick>("all");
+  const [view, setView] = useState<"list" | "calendar">("list");
   const session = useSession();
   const { data, isLoading } = useEvents({ text: text || undefined });
 
@@ -39,19 +50,36 @@ export function EventsScreen() {
 
   return (
     <div className="pb-4">
-      <ScreenHeader title="Events" />
+      <ScreenHeader
+        title="Events"
+        action={
+          <SegmentedToggle
+            ariaLabel="Events view"
+            value={view}
+            onChange={setView}
+            options={[
+              { value: "list", label: "List", icon: <List size={15} strokeWidth={1.75} /> },
+              { value: "calendar", label: "Calendar", icon: <CalendarDays size={15} strokeWidth={1.75} /> },
+            ]}
+          />
+        }
+      />
       <div className="px-4 pt-1">
         <SearchField value={text} onChange={setText} placeholder="Search events" />
-        <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1">
-          {QUICK.map((q) => (
-            <Chip key={q.value} active={quick === q.value} onClick={() => setQuick(q.value)}>
-              {q.label}
-            </Chip>
-          ))}
-        </div>
+        {view === "list" && (
+          <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1">
+            {QUICK.map((q) => (
+              <Chip key={q.value} active={quick === q.value} onClick={() => setQuick(q.value)}>
+                {q.label}
+              </Chip>
+            ))}
+          </div>
+        )}
       </div>
 
-      {isLoading ? (
+      {view === "calendar" ? (
+        <EventCalendar events={data ?? []} onSelectEvent={(id) => navigate(`/events/${id}`)} />
+      ) : isLoading ? (
         <div className="space-y-3 px-4 pt-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-14 w-full" />
@@ -78,6 +106,7 @@ export function EventsScreen() {
                   origin={session.location ?? undefined}
                   saved={session.isSavedEvent(e.id)}
                   onSave={() => session.toggleSaveEvent(e.id)}
+                  addToCalendar
                 />
               ))}
             </div>

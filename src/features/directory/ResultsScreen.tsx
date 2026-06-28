@@ -250,6 +250,7 @@ export function ResultsScreen() {
                     origin={session.location ?? undefined}
                     saved={session.isSavedEvent(e.id)}
                     onSave={() => session.toggleSaveEvent(e.id)}
+                    addToCalendar
                   />
                 ))
               ) : (

@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { MapPin, Clock, Bookmark, Navigation } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { Button, Thumb, StatusBadge, EmptyState, Skeleton } from "@/components";
+import { Button, Thumb, StatusBadge, EmptyState, Skeleton, AddToCalendar } from "@/components";
 import { useEvent, useBusinessById } from "@/data/queries";
 import { eventDateBadge, eventTimeShort } from "@/lib/format";
 import { directionsHref } from "@/lib/links";
@@ -82,6 +82,10 @@ export function EventDetailScreen() {
               </span>
             </div>
           )}
+        </div>
+
+        <div className="mt-4">
+          <AddToCalendar event={event} align="left" />
         </div>
 
         {event.description && (
