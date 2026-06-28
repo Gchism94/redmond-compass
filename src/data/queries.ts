@@ -1,8 +1,9 @@
 /**
  * TanStack Query hooks — the read API the consumer screens use.
- * Each hook pulls the DataSource from context (useDataSource) and wraps a method,
- * so screens never touch a concrete source. Query keys are structured for easy
- * invalidation once writes (saved/follow, owner path) land in steps 6–7.
+ * Each hook pulls the DataSource getter from context (useDataSource) and awaits it in
+ * the query/mutation fn, so screens never touch a concrete source AND stay in their
+ * loading state until the (lazily-loaded) source resolves. Query keys are structured
+ * for easy cache invalidation by the owner-path + recommend mutations.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDataSource } from "./DataProvider";
@@ -32,103 +33,103 @@ export const qk = {
 };
 
 export function useBusinesses(query?: BusinessQuery) {
-  const ds = useDataSource();
-  return useQuery({ queryKey: qk.businesses(query), queryFn: () => ds.listBusinesses(query) });
+  const getDS = useDataSource();
+  return useQuery({ queryKey: qk.businesses(query), queryFn: async () => (await getDS()).listBusinesses(query) });
 }
 
 export function useBusiness(slug: string | undefined) {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   return useQuery({
     queryKey: qk.business(slug ?? ""),
-    queryFn: () => ds.getBusinessBySlug(slug!),
+    queryFn: async () => (await getDS()).getBusinessBySlug(slug!),
     enabled: !!slug,
   });
 }
 
 export function useBusinessById(id: string | undefined) {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   return useQuery({
     queryKey: ["business-by-id", id ?? ""] as const,
-    queryFn: () => ds.getBusinessById(id!),
+    queryFn: async () => (await getDS()).getBusinessById(id!),
     enabled: !!id,
   });
 }
 
 export function useCategories() {
-  const ds = useDataSource();
-  return useQuery({ queryKey: qk.categories(), queryFn: () => ds.listCategories() });
+  const getDS = useDataSource();
+  return useQuery({ queryKey: qk.categories(), queryFn: async () => (await getDS()).listCategories() });
 }
 
 export function useBulletins(params?: { businessId?: ID; limit?: number }) {
-  const ds = useDataSource();
-  return useQuery({ queryKey: qk.bulletins(params), queryFn: () => ds.listBulletins(params) });
+  const getDS = useDataSource();
+  return useQuery({ queryKey: qk.bulletins(params), queryFn: async () => (await getDS()).listBulletins(params) });
 }
 
 export function useEvents(query?: EventQuery) {
-  const ds = useDataSource();
-  return useQuery({ queryKey: qk.events(query), queryFn: () => ds.listEvents(query) });
+  const getDS = useDataSource();
+  return useQuery({ queryKey: qk.events(query), queryFn: async () => (await getDS()).listEvents(query) });
 }
 
 export function useEvent(id: string | undefined) {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   return useQuery({
     queryKey: qk.event(id ?? ""),
-    queryFn: () => ds.getEventById(id!),
+    queryFn: async () => (await getDS()).getEventById(id!),
     enabled: !!id,
   });
 }
 
 export function useNews(params?: { limit?: number }) {
-  const ds = useDataSource();
-  return useQuery({ queryKey: qk.news(params), queryFn: () => ds.listNews(params) });
+  const getDS = useDataSource();
+  return useQuery({ queryKey: qk.news(params), queryFn: async () => (await getDS()).listNews(params) });
 }
 
 export function useNewsArticle(slug: string | undefined) {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   return useQuery({
     queryKey: qk.newsArticle(slug ?? ""),
-    queryFn: () => ds.getNewsBySlug(slug!),
+    queryFn: async () => (await getDS()).getNewsBySlug(slug!),
     enabled: !!slug,
   });
 }
 
 export function useResources(params?: { category?: ResourceCategory; text?: string }) {
-  const ds = useDataSource();
-  return useQuery({ queryKey: qk.resources(params), queryFn: () => ds.listResources(params) });
+  const getDS = useDataSource();
+  return useQuery({ queryKey: qk.resources(params), queryFn: async () => (await getDS()).listResources(params) });
 }
 
 export function useSearch(text: string, query?: SearchQuery) {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   return useQuery({
     queryKey: qk.search(text, query),
-    queryFn: () => ds.search(text, query),
+    queryFn: async () => (await getDS()).search(text, query),
     enabled: text.trim().length > 0,
   });
 }
 
 export function useRecommendations(businessId: string | undefined) {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   return useQuery({
     queryKey: qk.recommendations(businessId ?? ""),
-    queryFn: () => ds.getRecommendations(businessId!),
+    queryFn: async () => (await getDS()).getRecommendations(businessId!),
     enabled: !!businessId,
   });
 }
 
 export function useHasRecommended(businessId: string | undefined) {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   return useQuery({
     queryKey: ["has-recommended", businessId ?? ""] as const,
-    queryFn: () => ds.hasRecommended(businessId!),
+    queryFn: async () => (await getDS()).hasRecommended(businessId!),
     enabled: !!businessId,
   });
 }
 
 export function useRecommend() {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (businessId: ID) => ds.recommend(businessId),
+    mutationFn: async (businessId: ID) => (await getDS()).recommend(businessId),
     onSuccess: (_d, businessId) => {
       qc.invalidateQueries({ queryKey: qk.recommendations(businessId) });
       qc.invalidateQueries({ queryKey: ["has-recommended", businessId] });
@@ -137,15 +138,15 @@ export function useRecommend() {
 }
 
 export function useCurrentUser() {
-  const ds = useDataSource();
-  return useQuery({ queryKey: qk.currentUser(), queryFn: () => ds.getCurrentUser() });
+  const getDS = useDataSource();
+  return useQuery({ queryKey: qk.currentUser(), queryFn: async () => (await getDS()).getCurrentUser() });
 }
 
 export function useBulletinCount(businessId: string | undefined) {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   return useQuery({
     queryKey: ["bulletin-count", businessId ?? ""] as const,
-    queryFn: () => ds.countBulletinsThisMonth(businessId!),
+    queryFn: async () => (await getDS()).countBulletinsThisMonth(businessId!),
     enabled: !!businessId,
   });
 }
@@ -163,37 +164,39 @@ function useInvalidateBusiness() {
 }
 
 export function useCreateBusiness() {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   const invalidate = useInvalidateBusiness();
   return useMutation({
-    mutationFn: (input: NewBusinessInput) => ds.createBusiness(input),
+    mutationFn: async (input: NewBusinessInput) => (await getDS()).createBusiness(input),
     onSuccess: invalidate,
   });
 }
 
 export function useUpdateBusiness() {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   const invalidate = useInvalidateBusiness();
   return useMutation({
-    mutationFn: ({ id, patch }: { id: ID; patch: Partial<Business> }) => ds.updateBusiness(id, patch),
+    mutationFn: async ({ id, patch }: { id: ID; patch: Partial<Business> }) =>
+      (await getDS()).updateBusiness(id, patch),
     onSuccess: invalidate,
   });
 }
 
 export function useClaimBusiness() {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   const invalidate = useInvalidateBusiness();
   return useMutation({
-    mutationFn: ({ id, ownerId }: { id: ID; ownerId: ID }) => ds.claimBusiness(id, ownerId),
+    mutationFn: async ({ id, ownerId }: { id: ID; ownerId: ID }) =>
+      (await getDS()).claimBusiness(id, ownerId),
     onSuccess: invalidate,
   });
 }
 
 export function useCreateBulletin() {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: NewBulletinInput) => ds.createBulletin(input),
+    mutationFn: async (input: NewBulletinInput) => (await getDS()).createBulletin(input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bulletins"] });
       qc.invalidateQueries({ queryKey: ["bulletin-count"] });
@@ -203,10 +206,10 @@ export function useCreateBulletin() {
 }
 
 export function useCreateEvent() {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: NewEventInput) => ds.createEvent(input),
+    mutationFn: async (input: NewEventInput) => (await getDS()).createEvent(input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["events"] });
       qc.invalidateQueries({ queryKey: ["search"] });

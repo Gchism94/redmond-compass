@@ -17,7 +17,9 @@ GoHighLevel ──sync (later)──▶ Supabase (canonical read store, RLS) ─
 
 The app depends on the `DataSource` interface (`src/data/DataSource.ts`), never on
 Supabase directly. Backend swap = one line in `src/data/source.ts` + env:
-`VITE_DATA_SOURCE = mock (dev) | supabase | base44`.
+`VITE_DATA_SOURCE = mock (dev) | supabase | base44`. The source is **loaded on demand**
+(`getDataSource()` dynamic-imports the chosen impl), so `@supabase/supabase-js` stays out
+of the entry chunk — the shell paints first, then the data lib loads in parallel.
 
 ## Schema (`supabase/migrations/20260628000000_init.sql`)
 

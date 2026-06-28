@@ -170,7 +170,7 @@ function mergeProfiles(local: Profile, server: Partial<PersistedProfile> | null)
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const ds = useDataSource();
+  const getDS = useDataSource();
   const qc = useQueryClient();
   const [profile, setProfile] = useState<Profile>(() => load(PROFILE_KEY, DEFAULT_PROFILE));
   const [user, setUser] = useState<SessionUser | null>(null);
@@ -193,12 +193,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   // ---- auth wiring: reflect the DataSource session + merge prefs on sign-in ----
   const syncProfileOnSignIn = useCallback(async () => {
+    const ds = await getDS();
     const server = await ds.getProfile();
     const merged = mergeProfiles(profileRef.current, server);
     setProfile(merged);
     await ds.saveProfile(toPersisted(merged));
     syncedRef.current = true;
-  }, [ds]);
+  }, [getDS]);
 
   // Replay a gated action that was stashed before an OAuth redirect (so a save/follow
   // started as a guest completes once they land back signed-in). Add-only = idempotent.
@@ -214,8 +215,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (!intent?.id) return;
     if (intent.type === "recommend") {
       // recommend is a server write (positive-only) — fire it, then refresh the count
-      void ds
-        .recommend(intent.id)
+      void getDS()
+        .then((ds) => ds.recommend(intent!.id))
         .then(() => {
           qc.invalidateQueries({ queryKey: ["recommendations"] });
           qc.invalidateQueries({ queryKey: ["has-recommended"] });
@@ -229,10 +230,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setProfile((p) =>
       p[key].includes(intent!.id) ? p : { ...p, [key]: [...p[key], intent!.id] },
     );
-  }, [ds, qc]);
+  }, [getDS, qc]);
 
   useEffect(() => {
     let active = true;
+    let unsub = () => {};
     const apply = (u: SessionUser | null) => {
       if (!active) return;
       setUser(u);
@@ -246,19 +248,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         syncedRef.current = false;
       }
     };
-    // initial (mock onAuthChange doesn't replay; Supabase fires INITIAL_SESSION — dedup'd by id)
-    void ds.getAuthUser().then(apply);
-    const unsub = ds.onAuthChange(apply);
+    // resolve the (lazily-loaded) source, then reflect its session
+    // (mock onAuthChange doesn't replay; Supabase fires INITIAL_SESSION — dedup'd by id)
+    void getDS().then((ds) => {
+      if (!active) return;
+      void ds.getAuthUser().then(apply);
+      unsub = ds.onAuthChange(apply);
+    });
     return () => {
       active = false;
       unsub();
     };
-  }, [ds, syncProfileOnSignIn, replayIntent]);
+  }, [getDS, syncProfileOnSignIn, replayIntent]);
 
   // once signed in (and merged), push later pref changes to the server row
   useEffect(() => {
-    if (user && syncedRef.current) void ds.saveProfile(toPersisted(profile));
-  }, [profile, user, ds]);
+    if (user && syncedRef.current) void getDS().then((ds) => ds.saveProfile(toPersisted(profile)));
+  }, [profile, user, getDS]);
 
   const isAuthed = !!user;
   const authedRef = useRef(isAuthed);
@@ -325,18 +331,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const startSignIn = useCallback(
     async (email: string, name?: string) => {
-      const res = await ds.startEmailAuth(email, name);
+      const res = await (await getDS()).startEmailAuth(email, name);
       return { needsOtp: res.otpSent };
     },
-    [ds],
+    [getDS],
   );
 
   const verifyOtp = useCallback(
     async (email: string, token: string) => {
-      await ds.verifyEmailOtp(email, token);
+      await (await getDS()).verifyEmailOtp(email, token);
       // onAuthChange fires → user + prefs sync; the Supabase client is already authed.
     },
-    [ds],
+    [getDS],
   );
 
   const signInWithProvider = useCallback(
@@ -353,14 +359,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         typeof window !== "undefined"
           ? window.location.origin + window.location.pathname
           : undefined;
-      return ds.signInWithOAuth(provider, redirectTo);
+      return (await getDS()).signInWithOAuth(provider, redirectTo);
     },
-    [ds],
+    [getDS],
   );
 
   const signOut = useCallback(() => {
-    void ds.signOut();
-  }, [ds]);
+    void getDS().then((ds) => ds.signOut());
+  }, [getDS]);
 
   const value = useMemo<SessionValue>(
     () => ({
