@@ -34,6 +34,7 @@ import type {
   AuthUser,
   StartAuthResult,
   PersistedProfile,
+  OAuthProvider,
 } from "../DataSource";
 import {
   businesses as baseBusinesses,
@@ -363,6 +364,18 @@ export class MockDataSource implements DataSource {
     void _token;
     const res = await this.startEmailAuth(email);
     return res.user!;
+  }
+
+  async signInWithOAuth(provider: OAuthProvider, _redirectTo?: string): Promise<{ redirected: boolean }> {
+    // mock has no real OAuth — sign in instantly (no redirect) so dev keeps flowing.
+    void _redirectTo;
+    const user: AuthUser = {
+      id: `u_${provider}_demo`,
+      email: `demo@${provider}.dev`,
+      name: provider === "google" ? "Google User" : "Demo User",
+    };
+    this.setAuthUser(user);
+    return { redirected: false };
   }
 
   async signOut(): Promise<void> {

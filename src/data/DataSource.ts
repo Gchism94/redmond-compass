@@ -100,6 +100,9 @@ export interface StartAuthResult {
   user?: AuthUser;
 }
 
+/** OAuth providers we offer (extend as more are enabled in Supabase). */
+export type OAuthProvider = "google";
+
 export type BusinessSort = "relevance" | "distance" | "recommend" | "openNow" | "name";
 
 export interface BusinessQuery {
@@ -197,6 +200,13 @@ export interface DataSource {
   startEmailAuth(email: string, name?: string): Promise<StartAuthResult>;
   /** Complete email sign-in with the emailed code (Supabase). */
   verifyEmailOtp(email: string, token: string): Promise<AuthUser>;
+  /**
+   * Begin OAuth sign-in. Supabase redirects the browser to the provider and back to
+   * `redirectTo` (→ `redirected: true`, the page is navigating away); mock signs in
+   * instantly (→ `redirected: false`). The session persists a pending intent first so a
+   * save/follow completes after the round-trip.
+   */
+  signInWithOAuth(provider: OAuthProvider, redirectTo?: string): Promise<{ redirected: boolean }>;
   signOut(): Promise<void>;
   /** The current authed user from the live session (restored on reload), or null. */
   getAuthUser(): Promise<AuthUser | null>;

@@ -3,6 +3,7 @@ import { Bookmark, UserPlus, CalendarPlus, Compass } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components";
 import { useSession, type AuthReason } from "./session";
+import { GoogleButton } from "./GoogleButton";
 
 const COPY: Record<AuthReason, { icon: React.ReactNode; title: string; sub: string }> = {
   save: {
@@ -37,7 +38,7 @@ const inputClass =
  * completes right here); the mock signs in instantly.
  */
 export function AuthSheet() {
-  const { authPrompt, closeAuth, startSignIn, verifyOtp } = useSession();
+  const { authPrompt, closeAuth, startSignIn, verifyOtp, signInWithProvider } = useSession();
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -81,6 +82,24 @@ export function AuthSheet() {
     }
   };
 
+  const continueWithGoogle = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { redirected } = await signInWithProvider("google");
+      // mock signs in instantly (no redirect) — the stashed intent replays the action
+      if (!redirected) {
+        closeAuth();
+        return;
+      }
+      // redirected: the browser is navigating to Google; nothing more to do here
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't start Google sign-in.");
+      setBusy(false);
+    }
+  };
+
   const submitCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!code.trim() || busy) return;
@@ -117,7 +136,16 @@ export function AuthSheet() {
       </div>
 
       {step === "email" ? (
-        <form onSubmit={submitEmail} className="mt-5 space-y-3">
+        <>
+        <div className="mt-5">
+          <GoogleButton onClick={continueWithGoogle} disabled={busy} />
+          <div className="my-3 flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+        </div>
+        <form onSubmit={submitEmail} className="space-y-3">
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-foreground">Email</span>
             <input
@@ -148,6 +176,7 @@ export function AuthSheet() {
             {busy ? "Sending…" : "Continue"}
           </Button>
         </form>
+        </>
       ) : (
         <form onSubmit={submitCode} className="mt-5 space-y-3">
           <label className="block">

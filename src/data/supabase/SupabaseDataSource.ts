@@ -34,6 +34,7 @@ import type {
   AuthUser,
   StartAuthResult,
   PersistedProfile,
+  OAuthProvider,
 } from "../DataSource";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 import { getSupabaseClient } from "./client";
@@ -316,6 +317,14 @@ class SupabaseDataSource implements DataSource {
     if (error) throw error;
     if (!data.user) throw new Error("Verification failed");
     return this.mapAuthUser(data.user);
+  }
+
+  async signInWithOAuth(provider: OAuthProvider, redirectTo?: string): Promise<{ redirected: boolean }> {
+    // supabase-js navigates the browser to the provider; PKCE + detectSessionInUrl
+    // (client.ts) complete the session on return to `redirectTo`.
+    const { error } = await this.sb.auth.signInWithOAuth({ provider, options: { redirectTo } });
+    if (error) throw error;
+    return { redirected: true };
   }
 
   async signOut(): Promise<void> {

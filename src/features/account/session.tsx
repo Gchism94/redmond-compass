@@ -23,7 +23,7 @@ import {
 } from "react";
 import type { GeoPoint } from "@/lib/types";
 import { useDataSource } from "@/data/DataProvider";
-import type { AuthUser, PersistedProfile } from "@/data/DataSource";
+import type { AuthUser, PersistedProfile, OAuthProvider } from "@/data/DataSource";
 
 export type SessionUser = AuthUser;
 
@@ -59,15 +59,24 @@ const DEFAULT_PROFILE: Profile = {
 };
 
 const PROFILE_KEY = "rc.profile";
+const PENDING_INTENT_KEY = "rc.pendingIntent";
 const MAX_RECENT = 10;
 
 /** The reason a JIT auth prompt was raised — tunes the AuthSheet copy. */
 export type AuthReason = "save" | "follow" | "saveEvent" | "account";
 
+/**
+ * A gated action serialized so it can complete AFTER an OAuth redirect round-trip
+ * (the in-memory `pending` closure can't survive the full-page navigation). Only the
+ * simple add-to-list toggles are replayable; owner flows just land signed-in.
+ */
+export type PendingIntent = { type: "save" | "follow" | "saveEvent"; id: string };
+
 interface AuthPrompt {
   open: boolean;
   reason: AuthReason;
   pending?: () => void;
+  intent?: PendingIntent;
 }
 
 interface SessionValue extends Profile {
@@ -96,12 +105,15 @@ interface SessionValue extends Profile {
   startSignIn: (email: string, name?: string) => Promise<{ needsOtp: boolean }>;
   /** Complete OTP sign-in with the emailed code. */
   verifyOtp: (email: string, token: string) => Promise<void>;
+  /** OAuth sign-in (e.g. Google). Persists the pending intent so a save/follow completes
+   *  after the redirect. Returns whether the browser is navigating away. */
+  signInWithProvider: (provider: OAuthProvider) => Promise<{ redirected: boolean }>;
   signOut: () => void;
-  requireAuth: (action: () => void, reason?: AuthReason) => void;
+  requireAuth: (action: () => void, reason?: AuthReason, intent?: PendingIntent) => void;
 
   // JIT auth sheet
   authPrompt: AuthPrompt;
-  openAuth: (reason: AuthReason, pending?: () => void) => void;
+  openAuth: (reason: AuthReason, pending?: () => void, intent?: PendingIntent) => void;
   closeAuth: () => void;
 }
 
@@ -186,6 +198,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     syncedRef.current = true;
   }, [ds]);
 
+  // Replay a gated action that was stashed before an OAuth redirect (so a save/follow
+  // started as a guest completes once they land back signed-in). Add-only = idempotent.
+  const replayIntent = useCallback(() => {
+    let intent: PendingIntent | null = null;
+    try {
+      const raw = localStorage.getItem(PENDING_INTENT_KEY);
+      if (raw) intent = JSON.parse(raw) as PendingIntent;
+      localStorage.removeItem(PENDING_INTENT_KEY);
+    } catch {
+      return;
+    }
+    if (!intent?.id) return;
+    const key = (
+      { save: "savedBusinessIds", follow: "followedBusinessIds", saveEvent: "savedEventIds" } as const
+    )[intent.type];
+    setProfile((p) =>
+      p[key].includes(intent!.id) ? p : { ...p, [key]: [...p[key], intent!.id] },
+    );
+  }, []);
+
   useEffect(() => {
     let active = true;
     const apply = (u: SessionUser | null) => {
@@ -194,7 +226,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (u) {
         if (lastUserIdRef.current !== u.id) {
           lastUserIdRef.current = u.id;
-          void syncProfileOnSignIn();
+          void syncProfileOnSignIn().then(replayIntent);
         }
       } else {
         lastUserIdRef.current = null;
@@ -208,7 +240,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       active = false;
       unsub();
     };
-  }, [ds, syncProfileOnSignIn]);
+  }, [ds, syncProfileOnSignIn, replayIntent]);
 
   // once signed in (and merged), push later pref changes to the server row
   useEffect(() => {
@@ -219,18 +251,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const authedRef = useRef(isAuthed);
   authedRef.current = isAuthed;
 
-  const openAuth = useCallback((reason: AuthReason, pending?: () => void) => {
-    setAuthPrompt({ open: true, reason, pending });
+  // live snapshot of the prompt so signInWithProvider can read the pending intent
+  const authPromptRef = useRef(authPrompt);
+  authPromptRef.current = authPrompt;
+
+  const openAuth = useCallback((reason: AuthReason, pending?: () => void, intent?: PendingIntent) => {
+    setAuthPrompt({ open: true, reason, pending, intent });
   }, []);
   const closeAuth = useCallback(
-    () => setAuthPrompt((p) => ({ ...p, open: false, pending: undefined })),
+    () => setAuthPrompt((p) => ({ ...p, open: false, pending: undefined, intent: undefined })),
     [],
   );
 
   const requireAuth = useCallback(
-    (action: () => void, reason: AuthReason = "save") => {
+    (action: () => void, reason: AuthReason = "save", intent?: PendingIntent) => {
       if (authedRef.current) action();
-      else openAuth(reason, action);
+      else openAuth(reason, action, intent);
     },
     [openAuth],
   );
@@ -245,15 +281,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleSaveBusiness = useCallback(
-    (id: string) => requireAuth(() => toggleId("savedBusinessIds", id), "save"),
+    (id: string) => requireAuth(() => toggleId("savedBusinessIds", id), "save", { type: "save", id }),
     [requireAuth, toggleId],
   );
   const toggleFollow = useCallback(
-    (id: string) => requireAuth(() => toggleId("followedBusinessIds", id), "follow"),
+    (id: string) => requireAuth(() => toggleId("followedBusinessIds", id), "follow", { type: "follow", id }),
     [requireAuth, toggleId],
   );
   const toggleSaveEvent = useCallback(
-    (id: string) => requireAuth(() => toggleId("savedEventIds", id), "saveEvent"),
+    (id: string) => requireAuth(() => toggleId("savedEventIds", id), "saveEvent", { type: "saveEvent", id }),
     [requireAuth, toggleId],
   );
 
@@ -290,6 +326,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [ds],
   );
 
+  const signInWithProvider = useCallback(
+    async (provider: OAuthProvider) => {
+      // stash the gated action so it replays after the OAuth round-trip (see replayIntent)
+      const intent = authPromptRef.current.intent;
+      try {
+        if (intent) localStorage.setItem(PENDING_INTENT_KEY, JSON.stringify(intent));
+        else localStorage.removeItem(PENDING_INTENT_KEY);
+      } catch {
+        /* ignore */
+      }
+      const redirectTo =
+        typeof window !== "undefined"
+          ? window.location.origin + window.location.pathname
+          : undefined;
+      return ds.signInWithOAuth(provider, redirectTo);
+    },
+    [ds],
+  );
+
   const signOut = useCallback(() => {
     void ds.signOut();
   }, [ds]);
@@ -315,6 +370,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setOwnerBusinessId: (id) => setProfile((p) => ({ ...p, ownerBusinessId: id })),
       startSignIn,
       verifyOtp,
+      signInWithProvider,
       signOut,
       requireAuth,
       authPrompt,
@@ -332,6 +388,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       toggleInterest,
       startSignIn,
       verifyOtp,
+      signInWithProvider,
       signOut,
       requireAuth,
       authPrompt,

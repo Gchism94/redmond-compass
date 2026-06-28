@@ -4,6 +4,7 @@ import { Compass } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Button } from "@/components";
 import { useSession } from "./session";
+import { GoogleButton } from "./GoogleButton";
 
 const inputClass =
   "min-h-tap w-full rounded-lg border border-border bg-card px-3 text-base outline-none focus:border-positive focus:ring-2 focus:ring-positive/20";
@@ -15,7 +16,7 @@ const inputClass =
  */
 export function LoginScreen() {
   const navigate = useNavigate();
-  const { startSignIn, verifyOtp } = useSession();
+  const { startSignIn, verifyOtp, signInWithProvider } = useSession();
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -35,6 +36,19 @@ export function LoginScreen() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't send your code. Try again.");
     } finally {
+      setBusy(false);
+    }
+  };
+
+  const continueWithGoogle = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { redirected } = await signInWithProvider("google");
+      if (!redirected) navigate("/account", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't start Google sign-in.");
       setBusy(false);
     }
   };
@@ -72,7 +86,16 @@ export function LoginScreen() {
         </p>
 
         {step === "email" ? (
-          <form onSubmit={submitEmail} className="mt-6 space-y-3">
+          <>
+          <div className="mt-6">
+            <GoogleButton onClick={continueWithGoogle} disabled={busy} />
+            <div className="my-3 flex items-center gap-3">
+              <span className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">or</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+          </div>
+          <form onSubmit={submitEmail} className="space-y-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-foreground">Email</span>
               <input
@@ -103,6 +126,7 @@ export function LoginScreen() {
               {busy ? "Sending…" : "Continue"}
             </Button>
           </form>
+          </>
         ) : (
           <form onSubmit={submitCode} className="mt-6 space-y-3">
             <label className="block">
