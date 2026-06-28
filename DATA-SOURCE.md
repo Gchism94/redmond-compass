@@ -93,6 +93,14 @@ sign-in for dev** (`VITE_DATA_SOURCE=mock`). URL config (Site URL + redirects fo
 `http://localhost:5173` and `https://app.redmondcompass.com`) is in `config.toml`; set the
 same in the hosted dashboard. OTP email templates (`supabase/templates/`) surface the code.
 
+**Google OAuth** is offered alongside email OTP ("Continue with Google" in the AuthSheet
++ `/login`). Because OAuth redirects, the gated action is serialized to a **pending intent**
+(`rc.pendingIntent`) before the redirect and **replayed** on return (the session picks up
+`detectSessionInUrl`+PKCE), so a save/follow still completes — same JIT guarantee as OTP.
+The provider is scaffolded in `config.toml` (`[auth.external.google]`, **disabled until a
+Google client id/secret is set**); on hosted, enable Google in dashboard → Authentication →
+Providers. Mock signs in instantly (no real OAuth) so dev keeps flowing.
+
 ## Seeding (`supabase/seed.sql`, generated)
 
 `scripts/gen-supabase-seed.mjs` bundles `src/data/mock/seed.ts` and emits `seed.sql`
