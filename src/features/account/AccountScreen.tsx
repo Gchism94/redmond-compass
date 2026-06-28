@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   LogIn,
@@ -17,8 +18,13 @@ import { useSession } from "./session";
 /** Account (S8). Status, interests, notification prefs, location, switch-to-business. */
 export function AccountScreen() {
   const s = useSession();
+  const navigate = useNavigate();
   const [editInterests, setEditInterests] = useState(false);
-  const [bizNote, setBizNote] = useState(false);
+
+  // Switch to Business → dashboard if they manage a listing, else claim/list (B0).
+  // Owning a listing needs an account, so prompt JIT sign-in first when a guest.
+  const switchToBusiness = () =>
+    s.requireAuth(() => navigate(s.ownerBusinessId ? "/manage" : "/claim"), "account");
 
   return (
     <div className="pb-6">
@@ -104,16 +110,11 @@ export function AccountScreen() {
       <section className="px-4 py-3">
         <button
           type="button"
-          onClick={() => setBizNote((v) => !v)}
+          onClick={switchToBusiness}
           className="flex min-h-tap w-full items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-semibold text-background"
         >
-          <Store size={16} /> Switch to Business
+          <Store size={16} /> {s.ownerBusinessId ? "Go to your dashboard" : "Switch to Business"}
         </button>
-        {bizNote && (
-          <p className="mt-2 rounded-lg bg-secondary/60 px-3 py-2 text-xs text-muted-foreground">
-            Business tools — claim your listing, dashboard, edit, post bulletins & events — arrive in the next update (owner path).
-          </p>
-        )}
       </section>
 
       {/* Location + links */}

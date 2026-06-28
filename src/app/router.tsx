@@ -13,6 +13,11 @@ import { ResourcesScreen } from "@/features/resources/ResourcesScreen";
 import { SavedScreen } from "@/features/saved/SavedScreen";
 import { AccountScreen } from "@/features/account/AccountScreen";
 import { LoginScreen } from "@/features/account/LoginScreen";
+import { ClaimScreen } from "@/features/owner/ClaimScreen";
+import { OwnerDashboard } from "@/features/owner/OwnerDashboard";
+import { EditListingScreen } from "@/features/owner/EditListingScreen";
+import { PostBulletinScreen } from "@/features/owner/PostBulletinScreen";
+import { SubmitEventScreen } from "@/features/owner/SubmitEventScreen";
 import { NotFoundPage } from "./pages";
 
 /**
@@ -36,6 +41,12 @@ export const router = createBrowserRouter([
       { path: "/saved", element: <SavedScreen /> },
       { path: "/account", element: <AccountScreen /> },
       { path: "/login", element: <LoginScreen /> },
+      // Owner path (B0–B4). Free tier only at MVP; entitlement helper stubbed to Free.
+      { path: "/claim", element: <ClaimScreen /> },
+      { path: "/manage", element: <OwnerDashboard /> },
+      { path: "/manage/edit", element: <EditListingScreen /> },
+      { path: "/manage/bulletin/new", element: <PostBulletinScreen /> },
+      { path: "/manage/event/new", element: <SubmitEventScreen /> },
       { path: "/gallery", element: <GalleryPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
