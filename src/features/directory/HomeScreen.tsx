@@ -14,6 +14,7 @@ import {
 import { useBusinesses, useBulletins, useEvents, useNews } from "@/data/queries";
 import { relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
+import { InstallBanner } from "@/pwa/InstallPrompt";
 import type { Business } from "@/lib/types";
 
 /**
@@ -81,6 +82,8 @@ export function HomeScreen() {
           <MapPin size={13} /> Redmond, OR · Near you
         </button>
       </header>
+
+      <InstallBanner />
 
       {/* Open now near you — degrades to "Nearby" when nothing is open */}
       <Rail title={railTitle} seeAllHref={hasOpen ? "/search/results?openNow=1" : "/search/results?sort=distance"}>

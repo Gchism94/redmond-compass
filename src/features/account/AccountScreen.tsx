@@ -13,6 +13,7 @@ import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Switch, Chip, Button } from "@/components";
 import { Sheet } from "@/components/ui/Sheet";
 import { INTERESTS } from "@/lib/taxonomy";
+import { InstallRow } from "@/pwa/InstallPrompt";
 import { useSession } from "./session";
 
 /** Account (S8). Status, interests, notification prefs, location, switch-to-business. */
@@ -125,6 +126,7 @@ export function AccountScreen() {
           </span>
           <LocationControl />
         </div>
+        <InstallRow />
         <LinkRow label="About & Contact" href="https://redmondcompass.com" external />
         <LinkRow label="Help" href="https://redmondcompass.com" external />
         <LinkRow label="Privacy & terms" href="https://redmondcompass.com" external />

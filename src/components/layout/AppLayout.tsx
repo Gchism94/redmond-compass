@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { BottomTabNav } from "../BottomTabNav";
+import { OfflineBanner } from "@/pwa/OfflineBanner";
 
 /**
  * App shell: the mobile content column + persistent bottom tab nav.
@@ -32,6 +33,7 @@ export function AppLayout() {
       >
         <Outlet />
       </main>
+      <OfflineBanner />
       <BottomTabNav />
     </div>
   );
