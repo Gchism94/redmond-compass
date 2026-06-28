@@ -55,11 +55,17 @@ export function ResultCard({
           className="h-20 w-full"
           rounded="rounded-lg"
         />
-        <div className="mt-1.5 font-heading text-sm font-semibold leading-tight text-foreground line-clamp-2">
+        {/* Fixed name (2 lines) + single-line status so rail-card height is stable
+            (skeleton ⇄ content swap doesn't shift the page — CLS). */}
+        <div className="mt-1.5 line-clamp-2 min-h-[2.4em] font-heading text-sm font-semibold leading-tight text-foreground">
           {business.name}
         </div>
-        <div className="mt-0.5 text-xs">
-          <OpenStatusLabel hours={business.hours} trailing={dist} className="text-xs" />
+        <div className="mt-0.5 h-4 overflow-hidden">
+          <OpenStatusLabel
+            hours={business.hours}
+            trailing={dist}
+            className="flex-nowrap whitespace-nowrap text-xs"
+          />
         </div>
       </Link>
     );

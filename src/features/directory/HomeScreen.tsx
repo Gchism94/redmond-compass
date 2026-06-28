@@ -91,8 +91,9 @@ export function HomeScreen() {
           ? Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="w-32 shrink-0">
                 <Skeleton className="h-20 w-full rounded-lg" />
-                <Skeleton className="mt-2 h-4 w-3/4" />
-                <Skeleton className="mt-1 h-3 w-1/2" />
+                <Skeleton className="mt-1.5 h-3.5 w-3/4" />
+                <Skeleton className="mt-1 h-3.5 w-1/2" />
+                <Skeleton className="mt-1 h-3 w-2/3" />
               </div>
             ))
           : railItems.map((b) => (
@@ -105,7 +106,7 @@ export function HomeScreen() {
         <SectionHeader title={feedTitle} seeAllHref="/community" />
         <div className="-my-1 divide-y divide-border">
           {bulletins.isLoading
-            ? Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="my-3 h-12 w-full" />)
+            ? Array.from({ length: 4 }).map((_, i) => <FeedRowSkeleton key={i} />)
             : feedBulletins.map((bl) => {
                 const biz = bizById.get(bl.businessId);
                 return (
@@ -134,7 +135,7 @@ export function HomeScreen() {
         <SectionHeader title="Upcoming events" seeAllHref="/events" />
         <div className="-my-1 divide-y divide-border">
           {events.isLoading
-            ? Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="my-3 h-12 w-full" />)
+            ? Array.from({ length: 3 }).map((_, i) => <FeedRowSkeleton key={i} />)
             : events.data?.map((e) => <EventCard key={e.id} event={e} />)}
         </div>
       </section>
@@ -143,6 +144,9 @@ export function HomeScreen() {
       <section className="px-4 py-2">
         <SectionHeader title="Local news" seeAllHref="/community" />
         <div className="-my-1 divide-y divide-border">
+          {news.isLoading
+            ? Array.from({ length: 2 }).map((_, i) => <FeedRowSkeleton key={i} />)
+            : null}
           {news.data?.map((n) => (
             <FeedItem
               key={n.id}
@@ -189,6 +193,19 @@ export function HomeScreen() {
           Local resources
         </Link>
       </section>
+    </div>
+  );
+}
+
+/** Skeleton sized to a FeedItem/EventCard row so loading→loaded doesn't shift layout (CLS). */
+function FeedRowSkeleton() {
+  return (
+    <div className="flex gap-3 py-3">
+      <Skeleton className="h-11 w-[54px] shrink-0 rounded-md" />
+      <div className="flex-1 space-y-2 py-1">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-1/3" />
+      </div>
     </div>
   );
 }
