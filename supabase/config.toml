@@ -268,16 +268,18 @@ content_path = "./supabase/templates/confirmation.html"
 # subject = "Your password has been changed"
 # content_path = "./templates/password_changed_notification.html"
 
-# OAuth providers — Google sign-in (offered alongside email OTP in the AuthSheet).
-# Disabled until creds exist: set a Google OAuth client id/secret (export the env vars
-# below, or put them in a gitignored .env that `supabase start` reads) and flip enabled.
-# On the HOSTED project, configure Google in dashboard → Authentication → Providers, and
-# add the project's callback (…/auth/v1/callback) to the Google Cloud console instead.
+# OAuth providers — Google sign-in (the "Continue with Google" button + flow are already
+# wired in the app; nothing in app code changes). PASTE-AND-FLIP (see DATA-SOURCE.md →
+# "Enable Google sign-in"): 1) create a Google OAuth client, 2) put the id/secret in the
+# project .env as SUPABASE_AUTH_GOOGLE_CLIENT_ID / _SECRET (server-side — NOT a VITE_ var,
+# so it never reaches the browser; the CLI reads .env for these env() refs), 3) flip
+# enabled = true and `supabase stop && supabase start`. Google must allow the callback
+# http://127.0.0.1:54421/auth/v1/callback (local). On HOSTED, skip this block and set
+# Google in dashboard → Authentication → Providers (callback …supabase.co/auth/v1/callback).
 [auth.external.google]
-enabled = false
+enabled = false  # ← flip to true once the two env vars below are set
 client_id = "env(SUPABASE_AUTH_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_GOOGLE_SECRET)"
-# redirect_uri = "http://127.0.0.1:54421/auth/v1/callback"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.

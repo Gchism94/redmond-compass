@@ -100,8 +100,35 @@ same in the hosted dashboard. OTP email templates (`supabase/templates/`) surfac
 (`rc.pendingIntent`) before the redirect and **replayed** on return (the session picks up
 `detectSessionInUrl`+PKCE), so a save/follow still completes — same JIT guarantee as OTP.
 The provider is scaffolded in `config.toml` (`[auth.external.google]`, **disabled until a
-Google client id/secret is set**); on hosted, enable Google in dashboard → Authentication →
-Providers. Mock signs in instantly (no real OAuth) so dev keeps flowing.
+Google client id/secret is set**). Mock signs in instantly (no real OAuth) so dev keeps flowing.
+
+### Enable Google sign-in (paste-and-flip)
+
+The button + flow are already wired — **no app code changes**. The secret is **server-side
+only** (never a `VITE_` var): Supabase performs the OAuth handshake; the app just calls
+`signInWithOAuth({ provider: 'google' })`.
+
+1. **Google Cloud console** → APIs & Services → Credentials → *Create OAuth client ID* →
+   **Web application**. Add **Authorized redirect URIs** (the Supabase callback):
+   - local:  `http://127.0.0.1:54421/auth/v1/callback`
+   - hosted: `https://jdrhcmkqtewlzlojixpd.supabase.co/auth/v1/callback`
+
+   and **Authorized JavaScript origins** `http://localhost:5173` + `https://app.redmondcompass.com`.
+   Copy the **Client ID** and **Client secret**.
+2. **Local (paste-and-flip):** put the two values in the project **`.env`** (gitignored) —
+   ```
+   SUPABASE_AUTH_GOOGLE_CLIENT_ID=…apps.googleusercontent.com
+   SUPABASE_AUTH_GOOGLE_SECRET=…
+   ```
+   then set `enabled = true` under `[auth.external.google]` in `supabase/config.toml` and
+   `supabase stop && supabase start`. (`env(…)` is read from `.env`/your shell; if your CLI
+   doesn't pick up `.env`, `export` the two vars before `supabase start`.)
+3. **Hosted:** dashboard → Authentication → **Providers → Google** → enable + paste the same
+   Client ID / secret. Site URL + redirect URLs are already covered by **Auth URL Configuration**
+   above (`http://localhost:5173`, `https://app.redmondcompass.com`).
+
+Until enabled, "Continue with Google" surfaces "provider is not enabled" gracefully; **email
+OTP is the fully-working default**.
 
 ## Seeding (`supabase/seed.sql`, generated)
 
