@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowUpDown, SlidersHorizontal, Map as MapIcon, MapPin } from "lucide-react";
+import { ArrowUpDown, SlidersHorizontal, Map as MapIcon, MapPin, ChevronLeft, Search, X } from "lucide-react";
 import {
-  SearchField,
   Chip,
   Toggle,
   ResultCard,
@@ -11,6 +10,7 @@ import {
   EmptyState,
   Skeleton,
 } from "@/components";
+import { IconButton } from "@/components/ui/IconButton";
 import { useBusinesses, useEvents, useSearch } from "@/data/queries";
 import type { BusinessSort } from "@/data/DataSource";
 import { AMENITY_FACETS, TOP_CATEGORIES } from "@/lib/taxonomy";
@@ -55,6 +55,7 @@ export function ResultsScreen() {
 
   const catLabel = TOP_CATEGORIES.find((c) => c.slug === cat)?.label;
   const heading = q || catLabel || "All Redmond";
+  const hasQuery = !!q || !!cat; // an active search term or category → show a clearable filter
   const count = businesses.data?.total ?? 0;
 
   const patch = (next: Record<string, string | null>) => {
@@ -83,14 +84,37 @@ export function ResultsScreen() {
       {/* Sticky results header */}
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 pt-3 pb-2.5 shadow-sticky backdrop-blur">
         <div className="flex items-center gap-2">
+          {/* Back to Search — no dead end (A) */}
+          <IconButton label="Back to search" variant="solid" onClick={() => navigate("/search")}>
+            <ChevronLeft size={20} />
+          </IconButton>
           <div className="min-w-0 flex-1">
-            <SearchField
-              value=""
-              onChange={() => {}}
-              readOnlyButton
-              onActivate={() => navigate("/search")}
-              placeholder={heading}
-            />
+            {/* Tappable bar → Search; the active query/category is a removable filter
+                whose × clears it and returns to Search idle. */}
+            <div className="flex min-h-tap items-center gap-2 rounded-lg border border-border bg-card px-3">
+              <Search size={18} className="shrink-0 text-muted-foreground" />
+              <button
+                type="button"
+                onClick={() => navigate("/search")}
+                className="min-w-0 flex-1 truncate py-2.5 text-left text-base focus-visible:outline-none"
+              >
+                {hasQuery ? (
+                  <span className="font-medium text-foreground">{heading}</span>
+                ) : (
+                  <span className="text-muted-foreground">Search Redmond…</span>
+                )}
+              </button>
+              {hasQuery && (
+                <button
+                  type="button"
+                  aria-label="Clear search and return to Search"
+                  onClick={() => navigate("/search")}
+                  className="shrink-0 rounded-full p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-positive/40"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
           </div>
           <Toggle
             ariaLabel="Results view"

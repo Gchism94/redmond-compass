@@ -26,11 +26,16 @@ export function LoginScreen() {
 
   const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || busy) return;
+    if (busy) return;
+    const addr = email.trim();
+    if (!addr || !/^\S+@\S+\.\S+$/.test(addr)) {
+      setError("Enter a valid email to continue.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      const { needsOtp } = await startSignIn(email, name);
+      const { needsOtp } = await startSignIn(addr, name);
       if (needsOtp) setStep("code");
       else navigate("/account", { replace: true });
     } catch (err) {
@@ -55,7 +60,11 @@ export function LoginScreen() {
 
   const submitCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim() || busy) return;
+    if (busy) return;
+    if (!code.trim()) {
+      setError("Enter the 6-digit code we emailed you.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -95,12 +104,11 @@ export function LoginScreen() {
               <span className="h-px flex-1 bg-border" />
             </div>
           </div>
-          <form onSubmit={submitEmail} className="space-y-3">
+          <form onSubmit={submitEmail} className="space-y-3" noValidate>
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-foreground">Email</span>
               <input
                 type="email"
-                required
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -128,7 +136,7 @@ export function LoginScreen() {
           </form>
           </>
         ) : (
-          <form onSubmit={submitCode} className="mt-6 space-y-3">
+          <form onSubmit={submitCode} className="mt-6 space-y-3" noValidate>
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-foreground">6-digit code</span>
               <input
@@ -136,7 +144,6 @@ export function LoginScreen() {
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 maxLength={6}
-                required
                 autoFocus
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}

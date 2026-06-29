@@ -89,11 +89,11 @@ export function HomeScreen() {
       <Rail title={railTitle} seeAllHref={hasOpen ? "/search/results?openNow=1" : "/search/results?sort=distance"}>
         {railLoading
           ? Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="w-32 shrink-0">
+              <div key={i} className="w-36 shrink-0">
                 <Skeleton className="h-20 w-full rounded-lg" />
                 <Skeleton className="mt-1.5 h-3.5 w-3/4" />
                 <Skeleton className="mt-1 h-3.5 w-1/2" />
-                <Skeleton className="mt-1 h-3 w-2/3" />
+                <Skeleton className="mt-1 h-4 w-2/3" />
               </div>
             ))
           : railItems.map((b) => (

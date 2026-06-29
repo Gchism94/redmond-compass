@@ -45,7 +45,7 @@ export function ActionBar({
         external
         icon={<Navigation size={18} />}
         label="Directions"
-        tone="primary"
+        tone="secondary"
       />
       <ActionButton
         active={saved}
@@ -76,7 +76,7 @@ function ActionLink({
   disabled?: boolean;
   icon: React.ReactNode;
   label: string;
-  tone: "primary";
+  tone: "primary" | "secondary";
 }) {
   return (
     <a
@@ -86,7 +86,8 @@ function ActionLink({
       onClick={(e) => disabled && e.preventDefault()}
       className={cn(
         "flex min-h-tap flex-col items-center justify-center gap-1 rounded-lg py-1.5 text-xs font-medium transition",
-        tone === "primary" && "bg-primary text-primary-foreground hover:brightness-95",
+        tone === "primary" && "bg-primary text-primary-foreground hover:brightness-95", // the one amber CTA
+        tone === "secondary" && "border border-border bg-card text-foreground hover:bg-muted",
         disabled && "pointer-events-none opacity-40",
       )}
     >

@@ -89,11 +89,20 @@ export default defineConfig({
         // Split the heavy, rarely-changing libs into their own cached chunks. With the
         // PWA's autoUpdate, an app-code change then re-downloads only the small app chunk
         // instead of the whole entry (supabase-js + React + Query), and the vendors load
-        // in parallel. Screens are already route-split via React.lazy.
-        manualChunks: {
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
-          supabase: ["@supabase/supabase-js"],
-          query: ["@tanstack/react-query"],
+        // in parallel. Screens are already route-split via React.lazy; the supabase chunk
+        // is referenced only by the dynamically-imported source, so it stays on-demand.
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("@supabase")) return "supabase";
+          if (id.includes("@tanstack")) return "query";
+          if (
+            id.includes("/react/") ||
+            id.includes("/react-dom/") ||
+            id.includes("/react-router") ||
+            id.includes("@remix-run") ||
+            id.includes("/scheduler/")
+          )
+            return "react-vendor";
         },
       },
     },

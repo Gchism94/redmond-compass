@@ -11,24 +11,14 @@ export interface ThumbProps {
   rounded?: string;
 }
 
-// Warm, on-brand placeholder tints (cream/tan/secondary family — never the wireframe grays).
-const TINTS = [
-  "bg-secondary text-secondary-foreground/60",
-  "bg-muted text-muted-foreground",
-  "bg-accent/12 text-accent",
-  "bg-positive/10 text-positive",
-];
-
-function tintFor(seed?: string): string {
-  if (!seed) return TINTS[0];
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return TINTS[h % TINTS.length];
-}
+// ONE consistent on-brand placeholder everywhere: a warm tan (secondary) tinted square
+// with a pine-green initial. Single tint + single initial color (not per-letter varying),
+// so every photo-less card reads identically across Home / Results / Saved / Search.
+const PLACEHOLDER = "bg-secondary text-positive";
 
 /**
  * Image with a branded placeholder fallback (used everywhere thumbnails appear).
- * When no src or on load error, shows a tinted tile with the seed's initial —
+ * When no src or on load error, shows the tinted tile with the seed's initial —
  * so a photo-less free listing still reads complete, never broken.
  */
 export function Thumb({ src, alt, seed, className, rounded = "rounded-md" }: ThumbProps) {
@@ -39,7 +29,7 @@ export function Thumb({ src, alt, seed, className, rounded = "rounded-md" }: Thu
       className={cn(
         "relative flex shrink-0 items-center justify-center overflow-hidden",
         rounded,
-        !showImg && tintFor(seed),
+        !showImg && PLACEHOLDER,
         className,
       )}
     >
@@ -52,7 +42,7 @@ export function Thumb({ src, alt, seed, className, rounded = "rounded-md" }: Thu
           className="h-full w-full object-cover"
         />
       ) : seed ? (
-        <span aria-hidden className="font-heading text-lg font-semibold opacity-80">
+        <span aria-hidden className="font-heading text-lg font-semibold">
           {seed.trim().charAt(0).toUpperCase()}
         </span>
       ) : (

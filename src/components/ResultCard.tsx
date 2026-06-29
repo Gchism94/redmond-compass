@@ -44,7 +44,7 @@ export function ResultCard({
       <Link
         to={businessHref(business)}
         className={cn(
-          "block w-32 shrink-0 focus-visible:outline-none",
+          "block w-36 shrink-0 focus-visible:outline-none",
           className,
         )}
       >
@@ -56,14 +56,14 @@ export function ResultCard({
           rounded="rounded-lg"
         />
         {/* Fixed name (2 lines) + single-line status so rail-card height is stable
-            (skeleton ⇄ content swap doesn't shift the page — CLS). */}
+            (skeleton ⇄ content swap doesn't shift the page — CLS). The distance suffix
+            is dropped here so the full "Open · closes 7:00 PM" fits the narrow card. */}
         <div className="mt-1.5 line-clamp-2 min-h-[2.4em] font-heading text-sm font-semibold leading-tight text-foreground">
           {business.name}
         </div>
-        <div className="mt-0.5 h-4 overflow-hidden">
+        <div className="mt-0.5 h-5 overflow-hidden">
           <OpenStatusLabel
             hours={business.hours}
-            trailing={dist}
             className="flex-nowrap whitespace-nowrap text-xs"
           />
         </div>
@@ -120,7 +120,7 @@ export function ResultCard({
             href={directionsHref({ address: business.address, geo: business.geo })}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition hover:brightness-95"
+            className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition hover:bg-muted"
           >
             <Navigation size={15} /> Directions
           </a>

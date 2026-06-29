@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, TrendingUp, CircleDot } from "lucide-react";
+import { Clock, TrendingUp, CircleDot, Sparkles, Users, Moon, ChevronRight } from "lucide-react";
 import { SearchField, Chip, SectionHeader, CategoryGrid, Thumb } from "@/components";
 import { useSearch } from "@/data/queries";
 import { addRecentSearch, getRecentSearches } from "@/lib/recents";
@@ -9,9 +9,9 @@ import type { SearchResult } from "@/lib/types";
 
 const TRENDING = ["Farmers market", "New cafes", "Live music", "Gluten-free"];
 const COLLECTIONS = [
-  { label: "New in town", q: "" },
-  { label: "Kid-friendly", tag: "Kid-friendly" },
-  { label: "Open late", openNow: "1" },
+  { label: "New in town", desc: "Recently added to Compass", icon: Sparkles, q: "" },
+  { label: "Kid-friendly", desc: "Welcoming for families", icon: Users, tag: "Kid-friendly" },
+  { label: "Open late", desc: "Still serving this evening", icon: Moon, openNow: "1" },
 ];
 
 const TAG_LABEL: Record<SearchResult["type"], { label: string; cls: string }> = {
@@ -170,14 +170,22 @@ export function SearchScreen() {
                 const params = new URLSearchParams();
                 if (c.tag) params.set("tag", c.tag);
                 if (c.openNow) params.set("openNow", c.openNow);
+                const Icon = c.icon;
                 return (
                   <button
                     key={c.label}
                     type="button"
                     onClick={() => navigate(`/search/results?${params.toString()}`)}
-                    className="flex h-14 items-center rounded-lg bg-gradient-to-r from-secondary to-muted px-4 text-left font-heading text-sm font-semibold text-foreground"
+                    className="flex items-center gap-3 rounded-lg border border-border bg-card px-3.5 py-3 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-positive/40"
                   >
-                    {c.label}
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-positive">
+                      <Icon size={18} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-heading text-sm font-semibold text-foreground">{c.label}</span>
+                      <span className="block truncate text-xs text-muted-foreground">{c.desc}</span>
+                    </span>
+                    <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
                   </button>
                 );
               })}
