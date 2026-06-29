@@ -152,6 +152,9 @@ function toPersisted(p: Profile): PersistedProfile {
   };
 }
 
+const notifChanged = (p: NotificationPrefs) =>
+  JSON.stringify(p) !== JSON.stringify(DEFAULT_PROFILE.notificationPrefs);
+
 /** Merge guest-local prefs with the server row so a guest's activity is never lost. */
 function mergeProfiles(local: Profile, server: Partial<PersistedProfile> | null): Profile {
   if (!server) return local;
@@ -162,7 +165,12 @@ function mergeProfiles(local: Profile, server: Partial<PersistedProfile> | null)
     savedEventIds: uniq(local.savedEventIds, server.savedEventIds),
     recentlyViewedIds: uniq(local.recentlyViewedIds, server.recentlyViewedIds).slice(0, MAX_RECENT),
     interests: uniq(local.interests, server.interests),
-    notificationPrefs: server.notificationPrefs ?? local.notificationPrefs,
+    // The server row is auto-created with DEFAULT notification prefs, so it's always
+    // truthy — prefer the guest's choice when they actually changed it (migrate it),
+    // else keep the server's (don't clobber another device's settings with defaults).
+    notificationPrefs: notifChanged(local.notificationPrefs)
+      ? local.notificationPrefs
+      : server.notificationPrefs ?? local.notificationPrefs,
     location: local.location ?? server.location ?? null,
     onboarded: local.onboarded || !!server.onboarded,
     ownerBusinessId: server.ownerBusinessId ?? local.ownerBusinessId ?? null,
