@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 
-# Redmond Compass app (app.redmondcompass.com). Directory SEO is owned by the
-# main redmondcompass.com site; this PWA is the installable companion app.
+# Redmond Compass — the community hub for Redmond, OR. Content pages (guides)
+# are prerendered to static HTML (scripts/prerender.mjs) for crawlers.
+Sitemap: https://app.redmondcompass.com/sitemap.xml

@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Siren, Landmark, Users, Zap, Phone, ExternalLink, LifeBuoy,
   HeartPulse, Brain, GraduationCap, House, Bus, CircleEllipsis,
+  ClipboardList, Languages, Flame, Mountain, PawPrint, HeartHandshake, Handshake, BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
@@ -13,6 +15,19 @@ import { useI18n, type DictKey } from "@/i18n";
 
 // All 10 resource categories (widened for the Base44 import); groups with no
 // entries simply don't render, so the screen stays exactly as tight as the data.
+// Content-page guides (Stage 1 Phase 2) surfaced above the resource list —
+// labels come from the dict (the page copy itself is a lazy chunk per guide).
+const GUIDES: { slug: string; icon: LucideIcon }[] = [
+  { slug: "getting-settled", icon: ClipboardList },
+  { slug: "new-to-the-area", icon: Languages },
+  { slug: "help-essentials", icon: LifeBuoy },
+  { slug: "seasonal-safety", icon: Flame },
+  { slug: "get-outside", icon: Mountain },
+  { slug: "pets", icon: PawPrint },
+  { slug: "senior-resources", icon: HeartHandshake },
+  { slug: "community-organizations", icon: Handshake },
+];
+
 const GROUPS: { category: ResourceCategory; icon: LucideIcon }[] = [
   { category: "emergency", icon: Siren },
   { category: "health", icon: HeartPulse },
@@ -48,6 +63,29 @@ export function ResourcesScreen() {
       <div className="px-4 pt-1">
         <SearchField value={text} onChange={setText} placeholder={t("resources.searchPlaceholder")} />
       </div>
+
+      {/* Guides grid — hidden while searching so results stay front and center */}
+      {!text && (
+        <section className="px-4 pt-3">
+          <h2 className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <BookOpen size={13} /> {t("guides.title")}
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            {GUIDES.map((g) => (
+              <Link
+                key={g.slug}
+                to={`/${g.slug}`}
+                className="flex min-h-tap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5"
+              >
+                <g.icon size={16} className="shrink-0 text-positive" />
+                <span className="text-[13px] font-medium leading-tight text-foreground">
+                  {t(`guides.${g.slug}` as DictKey)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {isLoading ? (
         <div className="space-y-3 px-4 pt-3">

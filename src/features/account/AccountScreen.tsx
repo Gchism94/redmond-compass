@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
   LogIn,
@@ -151,8 +151,8 @@ export function AccountScreen() {
           </div>
         </div>
         <InstallRow />
-        <LinkRow label={t("account.aboutContact")} href="https://redmondcompass.com" external />
-        <LinkRow label={t("account.help")} href="https://redmondcompass.com" external />
+        <LinkRow label={t("account.aboutContact")} to="/about" />
+        <LinkRow label={t("account.help")} to="/help-essentials" />
         <LinkRow label={t("account.privacy")} href="https://redmondcompass.com" external />
       </Section>
 
@@ -219,15 +219,21 @@ function ToggleRow({
   );
 }
 
-function LinkRow({ label, href, external }: { label: string; href: string; external?: boolean }) {
+function LinkRow({ label, href, to, external }: { label: string; href?: string; to?: string; external?: boolean }) {
+  const className = "flex items-center justify-between py-3 text-sm text-foreground";
+  const chevron = <ChevronRight size={16} className="text-muted-foreground" />;
+  if (to) {
+    return (
+      <Link to={to} className={className}>
+        {label}
+        {chevron}
+      </Link>
+    );
+  }
   return (
-    <a
-      href={href}
-      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
-      className="flex items-center justify-between py-3 text-sm text-foreground"
-    >
+    <a href={href} {...(external ? { target: "_blank", rel: "noreferrer" } : {})} className={className}>
       {label}
-      <ChevronRight size={16} className="text-muted-foreground" />
+      {chevron}
     </a>
   );
 }

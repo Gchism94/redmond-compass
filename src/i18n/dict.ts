@@ -239,6 +239,18 @@ export const en = {
   "resources.group.utilities": "Utilities",
   "resources.group.other": "More resources",
 
+  // ---- guides (content pages; the page copy itself lives in src/features/guides/content) ----
+  "guides.title": "Guides",
+  "guides.getting-settled": "Getting Settled",
+  "guides.new-to-the-area": "New to the Area",
+  "guides.help-essentials": "Help & Essentials",
+  "guides.seasonal-safety": "Seasonal Safety",
+  "guides.get-outside": "Get Outside",
+  "guides.pets": "Pets & Animals",
+  "guides.senior-resources": "Senior Resources",
+  "guides.community-organizations": "Community Organizations",
+  "guides.forOwners": "Tips & FAQs for business owners",
+
   // ---- saved ----
   "saved.title": "Saved",
   "saved.filter": "Saved filter",
@@ -638,6 +650,17 @@ export const es: Record<DictKey, string> = {
   "resources.group.transportation": "Transporte",
   "resources.group.utilities": "Servicios públicos",
   "resources.group.other": "Más recursos",
+
+  "guides.title": "Guías",
+  "guides.getting-settled": "Primeros pasos",
+  "guides.new-to-the-area": "Recién llegados",
+  "guides.help-essentials": "Ayuda esencial",
+  "guides.seasonal-safety": "Seguridad estacional",
+  "guides.get-outside": "Al aire libre",
+  "guides.pets": "Mascotas y animales",
+  "guides.senior-resources": "Adultos mayores",
+  "guides.community-organizations": "Organizaciones comunitarias",
+  "guides.forOwners": "Consejos y preguntas frecuentes para negocios",
 
   "saved.title": "Guardados",
   "saved.filter": "Filtro de guardados",

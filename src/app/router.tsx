@@ -1,6 +1,7 @@
 import { lazy, type ComponentType } from "react";
 import { createBrowserRouter } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { GUIDE_SLUGS } from "@/features/guides/registry";
 import { ErrorPage } from "./ErrorPage";
 
 /**
@@ -32,6 +33,7 @@ const PostBulletinScreen = named(() => import("@/features/owner/PostBulletinScre
 const SubmitEventScreen = named(() => import("@/features/owner/SubmitEventScreen"), "SubmitEventScreen");
 const GalleryPage = named(() => import("./GalleryPage"), "GalleryPage");
 const NotFoundPage = named(() => import("./pages"), "NotFoundPage");
+const GuideScreen = named(() => import("@/features/guides/GuideScreen"), "GuideScreen");
 
 export const router = createBrowserRouter([
   {
@@ -57,6 +59,8 @@ export const router = createBrowserRouter([
       { path: "/manage/bulletin/new", element: <PostBulletinScreen /> },
       { path: "/manage/event/new", element: <SubmitEventScreen /> },
       { path: "/gallery", element: <GalleryPage /> },
+      // Content pages (Stage 1 Phase 2) — the live site's guides, at their original URLs.
+      ...GUIDE_SLUGS.map((slug) => ({ path: `/${slug}`, element: <GuideScreen /> })),
       { path: "*", element: <NotFoundPage /> },
     ],
   },

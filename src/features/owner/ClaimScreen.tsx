@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, Store, Check } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronRight, Plus, Store, Check } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Button, Field, fieldInputClass, Thumb, Skeleton, Card } from "@/components";
 import { useBusinesses, useCreateBusiness, useClaimBusiness } from "@/data/queries";
@@ -44,6 +44,9 @@ export function ClaimScreen() {
         <p className="text-sm text-muted-foreground">
           {t("owner.claimFree")}
         </p>
+        <Link to="/for-business-owners" className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-positive">
+          {t("guides.forOwners")} <ChevronRight size={14} />
+        </Link>
       </div>
 
       {mode === "new" ? (
