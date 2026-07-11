@@ -153,7 +153,7 @@ export function AccountScreen() {
         <InstallRow />
         <LinkRow label={t("account.aboutContact")} to="/about" />
         <LinkRow label={t("account.help")} to="/help-essentials" />
-        <LinkRow label={t("account.privacy")} href="https://redmondcompass.com" external />
+        <LinkRow label={t("account.privacy")} to="/privacy" />
       </Section>
 
       <p className="px-4 pt-2 text-center text-xs text-muted-foreground">{t("account.version")}</p>

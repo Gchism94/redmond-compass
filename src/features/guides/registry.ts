@@ -18,6 +18,7 @@ export const GUIDE_LOADERS: Record<string, () => Promise<{ guide: Guide }>> = {
   "community-organizations": () => import("./content/community-organizations"),
   "for-business-owners": () => import("./content/for-business-owners"),
   "ember": () => import("./content/ember"),
+  "privacy": () => import("./content/privacy"),
 };
 
 export const GUIDE_SLUGS = Object.keys(GUIDE_LOADERS);
