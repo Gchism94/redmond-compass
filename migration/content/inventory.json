@@ -1,0 +1,184 @@
+[
+  {
+    "route": "/",
+    "slug": "home",
+    "title": "Redmond Compass",
+    "chars": 4795,
+    "images": 6
+  },
+  {
+    "route": "/about",
+    "slug": "about",
+    "title": "About | Redmond Compass",
+    "chars": 3064,
+    "images": 0
+  },
+  {
+    "route": "/business/6a1216609bf94e9c6c06c355",
+    "slug": "business-6a1216609bf94e9c6c06c355",
+    "title": "business | Redmond Compass",
+    "chars": 39,
+    "images": 0
+  },
+  {
+    "route": "/business/6a126c9066e88b58d21308c4",
+    "slug": "business-6a126c9066e88b58d21308c4",
+    "title": "business | Redmond Compass",
+    "chars": 39,
+    "images": 0
+  },
+  {
+    "route": "/business/6a35593dab00389698a234ed",
+    "slug": "business-6a35593dab00389698a234ed",
+    "title": "business | Redmond Compass",
+    "chars": 39,
+    "images": 0
+  },
+  {
+    "route": "/business/6a35e20457e944f011433d43",
+    "slug": "business-6a35e20457e944f011433d43",
+    "title": "business | Redmond Compass",
+    "chars": 39,
+    "images": 0
+  },
+  {
+    "route": "/business/6a4be6a8b1608afc036d6fd8",
+    "slug": "business-6a4be6a8b1608afc036d6fd8",
+    "title": "business | Redmond Compass",
+    "chars": 39,
+    "images": 0
+  },
+  {
+    "route": "/community",
+    "slug": "community",
+    "title": "Community | Redmond Compass",
+    "chars": 2877,
+    "images": 4
+  },
+  {
+    "route": "/community-organizations",
+    "slug": "community-organizations",
+    "title": "Community Organizations | Redmond Compass",
+    "chars": 5615,
+    "images": 1
+  },
+  {
+    "route": "/contact",
+    "slug": "contact",
+    "title": "Contact | Redmond Compass",
+    "chars": 416,
+    "images": 0
+  },
+  {
+    "route": "/directory",
+    "slug": "directory",
+    "title": "Directory | Redmond Compass",
+    "chars": 49237,
+    "images": 113
+  },
+  {
+    "route": "/ember",
+    "slug": "ember",
+    "title": "Ember Memorial | Redmond Compass",
+    "chars": 1924,
+    "images": 2
+  },
+  {
+    "route": "/events",
+    "slug": "events",
+    "title": "Events | Redmond Compass",
+    "chars": 20737,
+    "images": 0
+  },
+  {
+    "route": "/for-business-owners",
+    "slug": "for-business-owners",
+    "title": "For Business Owners | Redmond Compass",
+    "chars": 1359,
+    "images": 0
+  },
+  {
+    "route": "/get-outside",
+    "slug": "get-outside",
+    "title": "Get Outside | Redmond Compass",
+    "chars": 8403,
+    "images": 1
+  },
+  {
+    "route": "/getting-settled",
+    "slug": "getting-settled",
+    "title": "Getting Settled | Redmond Compass",
+    "chars": 4442,
+    "images": 1
+  },
+  {
+    "route": "/help-essentials",
+    "slug": "help-essentials",
+    "title": "Help Essentials | Redmond Compass",
+    "chars": 5407,
+    "images": 1
+  },
+  {
+    "route": "/login",
+    "slug": "login",
+    "title": "Login | Redmond Compass",
+    "chars": 111,
+    "images": 0
+  },
+  {
+    "route": "/new-to-the-area",
+    "slug": "new-to-the-area",
+    "title": "New To The Area | Redmond Compass",
+    "chars": 1460,
+    "images": 1
+  },
+  {
+    "route": "/news",
+    "slug": "news",
+    "title": "Local News | Redmond Compass",
+    "chars": 2985,
+    "images": 0
+  },
+  {
+    "route": "/pets",
+    "slug": "pets",
+    "title": "Pets | Redmond Compass",
+    "chars": 4789,
+    "images": 1
+  },
+  {
+    "route": "/resources",
+    "slug": "resources",
+    "title": "Resources | Redmond Compass",
+    "chars": 301,
+    "images": 0
+  },
+  {
+    "route": "/seasonal-safety",
+    "slug": "seasonal-safety",
+    "title": "Seasonal Safety | Redmond Compass",
+    "chars": 4865,
+    "images": 1
+  },
+  {
+    "route": "/senior-resources",
+    "slug": "senior-resources",
+    "title": "Senior Resources | Redmond Compass",
+    "chars": 2264,
+    "images": 1
+  },
+  {
+    "route": "/submit-event",
+    "slug": "submit-event",
+    "title": "Submit Event | Redmond Compass",
+    "chars": 129,
+    "images": 0
+  },
+  {
+    "route": "/yard-sales",
+    "slug": "yard-sales",
+    "title": "Yard Sales | Redmond Compass",
+    "chars": 584,
+    "images": 0
+  }
+]

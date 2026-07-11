@@ -1,0 +1,41 @@
+[
+  {
+    "image_url": "https://assets.cdn.filesafe.space/bSVzQa4vXOQIymm0xMWH/media/6a179e2b50a5a2a5d20658d6.jpeg",
+    "submitter_name": null,
+    "submitter_email": null,
+    "title": "Downtown Hub — 2BR/1BA in the Heart of Redmond",
+    "body": "2 bedrooms · 1 bath · Dog Friendly\n\nStay in the heart of Downtown Redmond, walking distance to restaurants, shops, and community events. Safe, quiet neighborhood with easy access to Highways 97 and 126.\n\n📞 Text or Call Holli to inquire and check availability: 541-640-3800",
+    "business_id": "6a178d4ec13a0fe0a5e05219",
+    "gallery_images": [
+      "https://assets.cdn.filesafe.space/bSVzQa4vXOQIymm0xMWH/media/6a179dcc50a5a2a5d2065564.jpeg",
+      "https://assets.cdn.filesafe.space/bSVzQa4vXOQIymm0xMWH/media/6a179e224db8a774bb48f793.jpeg",
+      "https://assets.cdn.filesafe.space/bSVzQa4vXOQIymm0xMWH/media/6a179dec8c6ee94929a7ac36.jpeg"
+    ],
+    "status": "approved",
+    "id": "6a178d5cc13a0fe0a5e0521b",
+    "created_date": "2026-05-28T00:33:32.126000",
+    "updated_date": "2026-05-28T01:45:53.507000",
+    "created_by_id": "6a05e41957c8ee753cb7380d",
+    "is_sample": false
+  },
+  {
+    "image_url": "https://assets.cdn.filesafe.space/bSVzQa4vXOQIymm0xMWH/media/6a179bc1d2af304d12261e8a.jpg",
+    "submitter_name": null,
+    "submitter_email": null,
+    "title": "High Desert Haven — Luxury Eagle Crest Retreat (4 En-Suite Bedrooms)",
+    "body": "4 private en-suite bedrooms · Hot tub · Game room · Fireplace\n\nIdeal for families, golf foursomes, or couples seeking a relaxed getaway. Enjoy open-concept living and a fully stocked game room featuring a pool table, shuffleboard, foosball, and darts. Unwind in the hot tub or by the cozy fireplace after a day of play.\n\nYour stay includes guest passes to all 3 Eagle Crest recreation centers.\n\n📞 Text or Call Holli to inquire and check availability: 541-640-3800",
+    "business_id": "6a178d4ec13a0fe0a5e05219",
+    "gallery_images": [
+      "https://assets.cdn.filesafe.space/bSVzQa4vXOQIymm0xMWH/media/6a179bc25be84ad640119599.jpg",
+      "https://assets.cdn.filesafe.space/bSVzQa4vXOQIymm0xMWH/media/6a179bc3ab0c04a0ea3ccbee.jpg",
+      "https://assets.cdn.filesafe.space/bSVzQa4vXOQIymm0xMWH/media/6a179bc25be84ad64011959a.jpg",
+      "https://assets.cdn.filesafe.space/bSVzQa4vXOQIymm0xMWH/media/6a179bf7ab0c04a0ea3ccdeb.jpg"
+    ],
+    "status": "approved",
+    "id": "6a178d5cc13a0fe0a5e0521c",
+    "created_date": "2026-05-28T00:33:32.126000",
+    "updated_date": "2026-05-28T01:41:14.693000",
+    "created_by_id": "6a05e41957c8ee753cb7380d",
+    "is_sample": false
+  }
+]

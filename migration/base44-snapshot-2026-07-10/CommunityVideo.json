@@ -1,0 +1,28 @@
+[
+  {
+    "description": "A look back at the founding and growth of Redmond, Oregon from pioneer days to the thriving community it is today.",
+    "featured": true,
+    "title": "Redmond, Oregon - A Brief History",
+    "youtube_url": "https://youtu.be/utoNoNoBbZc?si=XtEpXVRtAkrHRBVZ",
+    "category": "History",
+    "source_name": "City of Redmond",
+    "id": "6a3b2f725e726c550b78c868",
+    "created_date": "2026-06-24T01:14:26.144000",
+    "updated_date": "2026-06-24T01:20:55.082000",
+    "created_by_id": "6a05e41957c8ee753cb7380d",
+    "is_sample": false
+  },
+  {
+    "description": "",
+    "featured": false,
+    "title": "Redmond Community Stories",
+    "youtube_url": "https://youtu.be/yAiytjr6qds?si=pq3f40dtrNpQPo3j",
+    "category": "",
+    "source_name": "",
+    "id": "6a3be73ab7840fa96dd67f9d",
+    "created_date": "2026-06-24T14:18:34.755000",
+    "updated_date": "2026-06-24T14:18:34.755000",
+    "created_by_id": "6a05e41957c8ee753cb7380d",
+    "is_sample": false
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "appId": "6a05e41957c8ee753cb7380c",
+  "capturedAt": "2026-07-10T23:58:11.658Z",
+  "entities": {
+    "Business": {
+      "count": 130,
+      "sha256": "df065ba59f9bfe92efa72c5d2f437f1e9bba8c15e18716298988d735782a0fdf"
+    },
+    "Event": {
+      "count": 111,
+      "sha256": "2674d268af27fc4b76b13a4641fd9aca8dbee13703ba68f4e871dfc4048369be"
+    },
+    "NewsPost": {
+      "count": 11,
+      "sha256": "9b9605ca708fc57e64bfcbeeddcc46823c046b46816c5a37390c7f64ca40e5b2"
+    },
+    "Resource": {
+      "count": 57,
+      "sha256": "e15825f05a2d30a0a89ad5f9ee81ce4e76657638a041b19c3cd2dae00b2fc102"
+    },
+    "Bulletin": {
+      "count": 1,
+      "sha256": "fb74ffc79a8d98325d950e652f80fc200f7c748f54345fe28848e137c12d4b5d"
+    },
+    "BusinessPost": {
+      "count": 2,
+      "sha256": "d156678b40e823f2b2de07bfe8ba4427b06d79f5a40ad5bdf285267933be8c4f"
+    },
+    "BusinessClass": {
+      "count": 10,
+      "sha256": "440c610958eac56bd1eb107339b9c5636af4546b499b222568e704579be2595a"
+    },
+    "BusinessReview": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "BusinessPhoto": {
+      "count": 4,
+      "sha256": "f2651d44c0e52504c2f995b4841068f1c13ed2172b91a0f354efa63701925546"
+    },
+    "CommunityVideo": {
+      "count": 2,
+      "sha256": "ec673604293057b531032117f281ef924c43ecb2a51f25fb89cfc65a982516bc"
+    },
+    "YardSale": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    "BusinessAnalytics": {
+      "count": 169,
+      "sha256": "8fb1f326d22e16257a0fcfa3f4e042a2a7e17a3a5b96ffd39f3c02355dd15749"
+    },
+    "User": {
+      "count": 8,
+      "sha256": "d35cb5fb29e8806cd700b56fa0e4e9c7da85cd7723bad378272e23c04beadb47"
+    }
+  },
+  "media": {
+    "referenced": 151,
+    "downloaded": 150,
+    "failed": [
+      {
+        "url": "https://scontent-sjc6-1.xx.fbcdn.net/v/t39.30808-1/686049366_122128210155005178_7359132758503984180_n.jpg?stp=dst-jpg_tt6&cstp=mx2000x2000&ctp=s480x480&_nc_cat=109&ccb=1-7&_nc_sid=2d3e12&_nc_ohc=J_EPbb2Or3IQ7kNvwH9oUMN&_nc_oc=Adpen1uLCE7MJS37ac4GAB5j4Pwsp72WPuTLi_n-6qjNN474Ig8VG9_DGiOmGEikA0c&_nc_zt=24&_nc_ht=scontent-sjc6-1.xx&_nc_gid=KjyTP2h_XO8ijW-HciuY1g&_nc_ss=7b2a8&oh=00_Af-uJCSgBTvnrASCY6kzKxcsBjIvIoRLl_b1VYqCPwiUDA&oe=6A2A3064",
+        "error": "HTTP 403"
+      }
+    ]
+  }
+}

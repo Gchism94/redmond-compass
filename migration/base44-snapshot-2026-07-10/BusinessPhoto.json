@@ -1,0 +1,58 @@
+[
+  {
+    "image_url": "https://media.base44.com/images/public/6a05e41957c8ee753cb7380c/b9a242724_Pawfect3.jpg",
+    "caption": null,
+    "description": null,
+    "submitter_name": "Admin",
+    "submitter_email": null,
+    "business_id": "6a126c9066e88b58d21308c4",
+    "status": "approved",
+    "id": "6a3c856487ee725b909f2401",
+    "created_date": "2026-06-25T01:33:24.062000",
+    "updated_date": "2026-06-25T01:33:24.062000",
+    "created_by_id": "6a05e41957c8ee753cb7380d",
+    "is_sample": false
+  },
+  {
+    "image_url": "https://media.base44.com/images/public/6a05e41957c8ee753cb7380c/9019cc3c9_Pawfect2.jpg",
+    "caption": null,
+    "description": null,
+    "submitter_name": "Admin",
+    "submitter_email": null,
+    "business_id": "6a126c9066e88b58d21308c4",
+    "status": "approved",
+    "id": "6a3c856487ee725b909f2400",
+    "created_date": "2026-06-25T01:33:24.062000",
+    "updated_date": "2026-06-25T01:33:24.062000",
+    "created_by_id": "6a05e41957c8ee753cb7380d",
+    "is_sample": false
+  },
+  {
+    "image_url": "https://media.base44.com/images/public/6a05e41957c8ee753cb7380c/27f14e0f2_Pawfect1.jpg",
+    "caption": null,
+    "description": null,
+    "submitter_name": "Admin",
+    "submitter_email": null,
+    "business_id": "6a126c9066e88b58d21308c4",
+    "status": "approved",
+    "id": "6a3c856487ee725b909f23ff",
+    "created_date": "2026-06-25T01:33:24.062000",
+    "updated_date": "2026-06-25T01:33:24.062000",
+    "created_by_id": "6a05e41957c8ee753cb7380d",
+    "is_sample": false
+  },
+  {
+    "image_url": "https://media.base44.com/images/public/6a05e41957c8ee753cb7380c/e3a2fec4e_Pawfect4.jpg",
+    "caption": null,
+    "description": null,
+    "submitter_name": "Admin",
+    "submitter_email": null,
+    "business_id": "6a126c9066e88b58d21308c4",
+    "status": "approved",
+    "id": "6a3c856487ee725b909f2402",
+    "created_date": "2026-06-25T01:33:24.063000",
+    "updated_date": "2026-06-25T01:33:24.063000",
+    "created_by_id": "6a05e41957c8ee753cb7380d",
+    "is_sample": false
+  }
+]
