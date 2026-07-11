@@ -5,6 +5,7 @@ import { Button, Chip } from "@/components";
 import { INTERESTS } from "@/lib/taxonomy";
 import { useSession } from "./session";
 import { useI18n } from "@/i18n";
+import { useIsDesktop } from "@/lib/useMediaQuery";
 
 /**
  * First-launch lite onboarding (BUILD-BRIEF §10). Location framed as a benefit +
@@ -14,11 +15,14 @@ import { useI18n } from "@/i18n";
 export function Onboarding() {
   const { t, lang, setLang } = useI18n();
   const { onboarded, completeOnboarding, setLocation } = useSession();
+  const desktop = useIsDesktop();
   const [picked, setPicked] = useState<string[]>([]);
   const [locating, setLocating] = useState(false);
   const [locGranted, setLocGranted] = useState(false);
 
-  if (onboarded) return null;
+  // Mobile-app ritual only: the desktop site (WebShell) opens like the original
+  // website — no full-screen overlay. Guests can still set interests in Account.
+  if (onboarded || desktop) return null;
 
   const toggle = (i: string) =>
     setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));

@@ -17,6 +17,8 @@ import { useSession } from "@/features/account/session";
 import { InstallBanner } from "@/pwa/InstallPrompt";
 import type { Business } from "@/lib/types";
 import { useI18n } from "@/i18n";
+import { useIsDesktop } from "@/lib/useMediaQuery";
+import { WebHero } from "./WebHero";
 
 /**
  * Home (S2). Personalized feed with a graceful cold-start — at MVP (pre-auth)
@@ -28,6 +30,7 @@ export function HomeScreen() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const session = useSession();
+  const desktop = useIsDesktop();
   const origin = session.location ?? undefined;
   const openNow = useBusinesses({ openNow: true, sort: "distance", limit: 8, origin });
   const bulletins = useBulletins();
@@ -64,28 +67,35 @@ export function HomeScreen() {
 
   return (
     <div className="pb-4">
-      {/* Header — pinned-feel search + location */}
-      <header className="bg-background px-4 pt-4 pb-2">
-        <p className="font-heading text-2xl font-bold text-foreground">Redmond Compass</p>
-        <div className="mt-3">
-          <SearchField
-            value=""
-            onChange={() => {}}
-            readOnlyButton
-            onActivate={() => navigate("/search")}
-            placeholder={t("home.searchPlaceholder")}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={() => navigate("/account")}
-          className="mt-2.5 inline-flex items-center gap-1.5 rounded-pill border border-positive/25 bg-positive/10 px-3 py-1.5 text-xs font-semibold text-positive"
-        >
-          <MapPin size={13} /> {t("home.nearYou")}
-        </button>
-      </header>
+      {/* Desktop (WebShell): the original site's hero + shortcut tiles.
+          Mobile (AppShell): pinned-feel search header + install banner. */}
+      {desktop ? (
+        <WebHero />
+      ) : (
+        <>
+          <header className="bg-background px-4 pt-4 pb-2">
+            <p className="font-heading text-2xl font-bold text-foreground">Redmond Compass</p>
+            <div className="mt-3">
+              <SearchField
+                value=""
+                onChange={() => {}}
+                readOnlyButton
+                onActivate={() => navigate("/search")}
+                placeholder={t("home.searchPlaceholder")}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/account")}
+              className="mt-2.5 inline-flex items-center gap-1.5 rounded-pill border border-positive/25 bg-positive/10 px-3 py-1.5 text-xs font-semibold text-positive"
+            >
+              <MapPin size={13} /> {t("home.nearYou")}
+            </button>
+          </header>
 
-      <InstallBanner />
+          <InstallBanner />
+        </>
+      )}
 
       {/* Open now near you — degrades to "Nearby" when nothing is open */}
       <Rail title={railTitle} seeAllHref={hasOpen ? "/search/results?openNow=1" : "/search/results?sort=distance"}>
@@ -103,6 +113,8 @@ export function HomeScreen() {
             ))}
       </Rail>
 
+      {/* Feed sections — single column on mobile; Popular · Events · News side by side on desktop */}
+      <div className="lg:grid lg:grid-cols-3 lg:gap-x-8">
       {/* Follow feed → t("home.popular") cold-start fallback */}
       <section className="px-4 py-2">
         <SectionHeader title={feedTitle} seeAllHref="/community" />
@@ -164,6 +176,7 @@ export function HomeScreen() {
           ))}
         </div>
       </section>
+      </div>
 
       {/* Browse by category */}
       <section className="px-4 py-3">

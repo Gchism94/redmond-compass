@@ -48,7 +48,8 @@ export function GuideScreen() {
   }
 
   return (
-    <div className="pb-6">
+    // Desktop (WebShell) caps guides at a readable measure; mobile is full-width.
+    <div className="pb-6 lg:mx-auto lg:max-w-2xl">
       <ScreenHeader title={c.name} back />
       <div className="px-4">
         {c.kicker && (

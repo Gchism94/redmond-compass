@@ -1,43 +1,13 @@
-import { Outlet, useLocation } from "react-router-dom";
-import { Suspense, useEffect, useRef } from "react";
-import { BottomTabNav } from "../BottomTabNav";
-import { RouteFallback } from "./RouteFallback";
-import { OfflineBanner } from "@/pwa/OfflineBanner";
+import { AppShell } from "./AppShell";
+import { WebShell } from "./WebShell";
+import { useIsDesktop } from "@/lib/useMediaQuery";
 
 /**
- * App shell: the mobile content column + persistent bottom tab nav.
- * Caps width to ~480px (mobile-first canvas), reserves space for the tab bar,
- * and resets scroll on route change. A skip link + main landmark cover a11y basics.
+ * Layout switcher: one router, two frames. ≥1024px renders the desktop site
+ * (WebShell — top nav + footer matching the original redmondcompass.com);
+ * below that, the installable PWA (AppShell — bottom tab nav). All routes and
+ * content components are shared; only the shell differs.
  */
 export function AppLayout() {
-  const { pathname } = useLocation();
-  const mainRef = useRef<HTMLElement>(null);
-
-  // Scroll to top on navigation (respects reduced-motion via global CSS).
-  useEffect(() => {
-    mainRef.current?.scrollTo({ top: 0 });
-    window.scrollTo({ top: 0 });
-  }, [pathname]);
-
-  return (
-    <div className="min-h-[100dvh] bg-background">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-md focus:bg-foreground focus:px-3 focus:py-2 focus:text-background"
-      >
-        Skip to content
-      </a>
-      <main
-        id="main"
-        ref={mainRef}
-        className="app-frame min-h-[100dvh] pb-[calc(58px+env(safe-area-inset-bottom))]"
-      >
-        <Suspense fallback={<RouteFallback />}>
-          <Outlet />
-        </Suspense>
-      </main>
-      <OfflineBanner />
-      <BottomTabNav />
-    </div>
-  );
+  return useIsDesktop() ? <WebShell /> : <AppShell />;
 }

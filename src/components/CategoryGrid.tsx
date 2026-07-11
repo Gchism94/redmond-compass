@@ -7,7 +7,7 @@ import { useI18n, type DictKey } from "@/i18n";
  * Browse-by-category grid (S3) — a reliable doorway for people who don't know
  * what to type. Routes to pre-scoped Results.
  */
-export function CategoryGrid({ columns = 4 }: { columns?: 3 | 4 }) {
+export function CategoryGrid({ columns = 4 }: { columns?: 3 | 4 | 6 }) {
   const { t } = useI18n();
   return (
     <div

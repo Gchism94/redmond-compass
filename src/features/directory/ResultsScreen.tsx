@@ -252,9 +252,11 @@ export function ResultsScreen() {
                 onClearFilters={() => patch({ openNow: null, maxmi: null, tags: null })}
               />
             ) : (
-              <ul className="divide-y divide-border">
+              /* Mobile: divided list. Desktop site: 3–4 column card grid (per the
+                 original directory page) — same ResultCard, tile-framed by the li. */
+              <ul className="divide-y divide-border lg:grid lg:grid-cols-3 lg:gap-3 lg:divide-y-0 xl:grid-cols-4">
                 {businesses.data?.items.map((b) => (
-                  <li key={b.id}>
+                  <li key={b.id} className="lg:rounded-lg lg:border lg:border-border lg:bg-card lg:px-3">
                     <ResultCard
                       business={b}
                       origin={session.location ?? undefined}
