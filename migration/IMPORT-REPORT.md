@@ -49,13 +49,15 @@ rls-test 18/18; auth-test 22/22; typecheck + build green; six screens at 390px r
 real data (real names/photos, category roll-ups, resources in all populated groups),
 zero console errors.
 
-Hosted: **pending** — apply with:
-```bash
-supabase db push                                   # 20260710000000_base44_parity.sql
-SUPABASE_URL=https://jdrhcmkqtewlzlojixpd.supabase.co \
-SUPABASE_SERVICE_ROLE_KEY=<from `supabase projects api-keys`> \
-node migration/scripts/import-base44.mjs           # then re-run scripts/rls-test.mjs against hosted
-```
+Hosted: **DONE (2026-07-10, Greg-approved).** The project had auto-paused (free tier,
+~12 days idle) and was restored first. Migration pushed; import ran identically
+(132/111/11/57/10/1/2 + 10 users, 2 owner links); fictional demo rows replaced by real
+content. Verified against hosted: rls-test **18/18**, pending events hidden from anon
+(109/111 visible), owner links live, parity fields publicly readable, and the production
+build renders all six screens with real data at 390px — zero console errors.
+
+⚠️ **Free-tier auto-pause**: the hosted project pauses after ~7 idle days, taking the
+live data down. Move to Pro (or add a keep-alive) **before the Phase 3 DNS cutover**.
 
 ## Follow-ups (not blocking)
 1. Geocode the 132 businesses (lat/lng NULL — distance sort currently degenerate).
