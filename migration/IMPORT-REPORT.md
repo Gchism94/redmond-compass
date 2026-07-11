@@ -60,7 +60,7 @@ build renders all six screens with real data at 390px — zero console errors.
 live data down. Move to Pro (or add a keep-alive) **before the Phase 3 DNS cutover**.
 
 ## Follow-ups (not blocking)
-1. Geocode the 132 businesses (lat/lng NULL — distance sort currently degenerate).
+1. ~~Geocode~~ DONE 2026-07-10: 102/132 geocoded (Nominatim, 50-mi sanity radius, cache in migration/geocode-cache.json). Remaining 30: 17 no address, 13 junk/unmappable addresses — editorial fix list.
 2. Editorial pass on the 33 noon-defaulted event times.
 3. Structured-hours parsing (or owner edit) to replace `hours_text` over time.
 4. Phase 2 UI for community bulletins / videos / classes / yard-sale submit flow.
