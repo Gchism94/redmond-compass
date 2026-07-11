@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { CalendarPlus, Download, CalendarDays, ExternalLink } from "lucide-react";
 import type { EventItem } from "@/lib/types";
 import { cn } from "@/lib/cn";
+import { useI18n } from "@/i18n";
 import {
   eventToICS,
   downloadICS,
@@ -37,6 +38,7 @@ export function AddToCalendar({
   iconOnly = false,
   className,
 }: AddToCalendarProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -60,7 +62,7 @@ export function AddToCalendar({
   const items = [
     {
       key: "ics",
-      label: ".ics file (Apple, etc.)",
+      label: t("events.icsFile"),
       icon: <Download size={16} />,
       run: () => downloadICS(slugifyForFile(event.title), eventToICS(event)),
     },
@@ -85,7 +87,7 @@ export function AddToCalendar({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        aria-label={iconOnly ? "Add to calendar" : undefined}
+        aria-label={iconOnly ? t("events.addToCalendar") : undefined}
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "inline-flex items-center justify-center gap-1.5 font-medium transition focus-visible:outline-none",
@@ -97,14 +99,14 @@ export function AddToCalendar({
         )}
       >
         <CalendarPlus size={iconOnly ? 18 : 16} />
-        {!iconOnly && "Add to calendar"}
+        {!iconOnly && t("events.addToCalendar")}
       </button>
 
       {open && (
         <div
           id={menuId}
           role="menu"
-          aria-label="Add to calendar"
+          aria-label={t("events.addToCalendar")}
           className={cn(
             "absolute z-40 w-52 overflow-hidden rounded-lg border border-border bg-popover shadow-modal animate-fade-in",
             align === "right" ? "right-0" : "left-0",

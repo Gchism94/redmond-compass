@@ -6,6 +6,7 @@ import { Field, fieldInputClass, Button, Card, Skeleton } from "@/components";
 import { useOwnerBusiness } from "./useOwnerBusiness";
 import { useBulletinCount, useCreateBulletin } from "@/data/queries";
 import { bulletinAllowance, LIMITS } from "@/lib/entitlements";
+import { useI18n, getLocale } from "@/i18n";
 
 const MAX = 280;
 
@@ -15,6 +16,7 @@ const MAX = 280;
  * instead of being blocked (BUILD-BRIEF §6).
  */
 export function PostBulletinScreen() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { ownerBusinessId, data: business, isLoading } = useOwnerBusiness();
   const count = useBulletinCount(ownerBusinessId ?? undefined);
@@ -28,7 +30,7 @@ export function PostBulletinScreen() {
   if (isLoading || !business || count.isLoading) {
     return (
       <>
-        <ScreenHeader title="Post bulletin" back />
+        <ScreenHeader title={t("owner.postBulletin")} back />
         <div className="space-y-3 px-4 pt-2">
           <Skeleton className="h-28 w-full" />
           <Skeleton className="h-12 w-full" />
@@ -45,7 +47,7 @@ export function PostBulletinScreen() {
   // Reset date = first day of next month (when the free cap refills).
   const now = new Date();
   const reset = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const resetLabel = reset.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+  const resetLabel = reset.toLocaleDateString(getLocale(), { month: "long", day: "numeric" });
   const resetISO = `${reset.getFullYear()}-${String(reset.getMonth() + 1).padStart(2, "0")}-01T08:00:00`;
 
   const valid = body.trim().length > 0 && body.length <= MAX;
@@ -63,20 +65,20 @@ export function PostBulletinScreen() {
 
   return (
     <div className="pb-8">
-      <ScreenHeader title="Post a bulletin" back />
+      <ScreenHeader title={t("owner.postBulletin")} back />
 
       <div className="space-y-4 px-4 pt-1">
         {/* Cap status — quiet, not a countdown of doom */}
         {remaining !== null && (
           <p className="text-sm text-muted-foreground">
             {allowance.canPostNow
-              ? `${remaining} of ${cap} free posts left this month.`
-              : `You've used all ${cap} free posts this month.`}
+              ? t("owner.postsLeft", { n: remaining, cap })
+              : t("owner.postsUsed", { cap })}
           </p>
         )}
 
         <Card className="space-y-3.5 p-4">
-          <Field label="Bulletin" required htmlFor="b-body" hint={`${body.length}/${MAX}`}>
+          <Field label={t("owner.bulletinLabel")} required htmlFor="b-body" hint={`${body.length}/${MAX}`}>
             <textarea
               id="b-body"
               rows={4}
@@ -84,14 +86,14 @@ export function PostBulletinScreen() {
               className={fieldInputClass}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Share an update — a special, an arrival, a heads-up…"
+              placeholder={t("owner.bulletinPlaceholder")}
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Link label" htmlFor="b-ll">
+            <Field label={t("owner.linkLabel")} htmlFor="b-ll">
               <input id="b-ll" className={fieldInputClass} value={linkLabel} onChange={(e) => setLinkLabel(e.target.value)} placeholder="Order now" />
             </Field>
-            <Field label="Link URL" htmlFor="b-lu">
+            <Field label={t("owner.linkUrl")} htmlFor="b-lu">
               <input id="b-lu" className={fieldInputClass} value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://…" inputMode="url" />
             </Field>
           </div>
@@ -99,18 +101,18 @@ export function PostBulletinScreen() {
 
         {allowance.canPostNow ? (
           <Button variant="primary" size="lg" fullWidth disabled={!valid || create.isPending} onClick={() => submit(false)}>
-            {create.isPending ? "Posting…" : <><Megaphone size={16} /> Post now</>}
+            {create.isPending ? t("owner.posting") : <><Megaphone size={16} /> {t("owner.postNow")}</>}
           </Button>
         ) : (
           <div className="space-y-2.5">
             <div className="rounded-lg border border-positive/30 bg-positive/5 p-3 text-sm text-foreground">
-              <p className="font-semibold text-positive">Your monthly free posts are used up — but your draft is safe.</p>
+              <p className="font-semibold text-positive">{t("owner.capSafe")}</p>
               <p className="mt-1 text-muted-foreground">
-                Schedule it free to go live on <b>{resetLabel}</b>, when your cap resets. No upgrade needed.
+                {t("owner.capScheduleMsg", { date: resetLabel })}
               </p>
             </div>
             <Button variant="positive" size="lg" fullWidth disabled={!valid || create.isPending} onClick={() => submit(true)}>
-              {create.isPending ? "Scheduling…" : <><CalendarClock size={16} /> Schedule free for {resetLabel}</>}
+              {create.isPending ? t("owner.scheduling") : <><CalendarClock size={16} /> {t("owner.scheduleFree", { date: resetLabel })}</>}
             </Button>
           </div>
         )}

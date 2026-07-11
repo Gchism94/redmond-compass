@@ -12,22 +12,24 @@ import {
   EventCalendar,
 } from "@/components";
 import { useEvents } from "@/data/queries";
-import { eventGroup, EVENT_GROUP_LABEL, type EventGroup } from "@/lib/format";
+import { eventGroup, eventGroupLabel, type EventGroup } from "@/lib/format";
+import { useI18n } from "@/i18n";
 import { useSession } from "@/features/account/session";
 import type { EventItem } from "@/lib/types";
 
 type Quick = "all" | "today" | "weekend" | "free";
-const QUICK: { value: Quick; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "today", label: "Today" },
-  { value: "weekend", label: "This weekend" },
-  { value: "free", label: "Free" },
+const QUICK: { value: Quick; labelKey: "events.filter.all" | "events.filter.today" | "events.filter.weekend" | "events.filter.free" }[] = [
+  { value: "all", labelKey: "events.filter.all" },
+  { value: "today", labelKey: "events.filter.today" },
+  { value: "weekend", labelKey: "events.filter.weekend" },
+  { value: "free", labelKey: "events.filter.free" },
 ];
 const ORDER: EventGroup[] = ["today", "weekend", "later"];
 
 /** Events (S6). List (default) ⇄ calendar view; time-grouped list with quick filters. */
 export function EventsScreen() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [text, setText] = useState("");
   const [quick, setQuick] = useState<Quick>("all");
   const [view, setView] = useState<"list" | "calendar">("list");
@@ -51,26 +53,26 @@ export function EventsScreen() {
   return (
     <div className="pb-4">
       <ScreenHeader
-        title="Events"
+        title={t("events.title")}
         action={
           <SegmentedToggle
-            ariaLabel="Events view"
+            ariaLabel={t("events.view")}
             value={view}
             onChange={setView}
             options={[
-              { value: "list", label: "List", icon: <List size={15} strokeWidth={1.75} /> },
-              { value: "calendar", label: "Calendar", icon: <CalendarDays size={15} strokeWidth={1.75} /> },
+              { value: "list", label: t("events.list"), icon: <List size={15} strokeWidth={1.75} /> },
+              { value: "calendar", label: t("events.calendar"), icon: <CalendarDays size={15} strokeWidth={1.75} /> },
             ]}
           />
         }
       />
       <div className="px-4 pt-1">
-        <SearchField value={text} onChange={setText} placeholder="Search events" />
+        <SearchField value={text} onChange={setText} placeholder={t("events.searchPlaceholder")} />
         {view === "list" && (
           <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1">
             {QUICK.map((q) => (
               <Chip key={q.value} active={quick === q.value} onClick={() => setQuick(q.value)}>
-                {q.label}
+                {t(q.labelKey)}
               </Chip>
             ))}
           </div>
@@ -88,15 +90,15 @@ export function EventsScreen() {
       ) : total === 0 ? (
         <EmptyState
           icon={<Calendar size={20} />}
-          title="No events match"
-          message="Try a different filter or search the directory for what's happening."
-          action={{ label: "Browse businesses", href: "/search" }}
+          title={t("events.empty")}
+          message={t("events.emptyMsg")}
+          action={{ label: t("search.title"), href: "/search" }}
         />
       ) : (
         ORDER.filter((g) => grouped[g].length > 0).map((g) => (
           <section key={g} className="px-4 pt-3">
             <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {EVENT_GROUP_LABEL[g]}
+              {eventGroupLabel(g)}
             </h2>
             <div className="divide-y divide-border">
               {grouped[g].map((e) => (

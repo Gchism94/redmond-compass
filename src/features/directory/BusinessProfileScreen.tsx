@@ -23,11 +23,12 @@ import {
   useHasRecommended,
   useRecommend,
 } from "@/data/queries";
-import { WEEKDAY_ORDER, DAY_LABEL, todayKey, formatClock } from "@/lib/hours";
+import { WEEKDAY_ORDER, dayLabel, todayKey, formatClock } from "@/lib/hours";
 import { directionsHref } from "@/lib/links";
 import { relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
 import type { Business } from "@/lib/types";
+import { useI18n, tGlobal } from "@/i18n";
 
 /**
  * Business Profile (S5) — the anchor screen. A FREE listing must read COMPLETE:
@@ -36,6 +37,7 @@ import type { Business } from "@/lib/types";
  * and simply not rendered (no empty stubs, nothing visibly "locked").
  */
 export function BusinessProfileScreen() {
+  const { t } = useI18n();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { data: business, isLoading, isFetched } = useBusiness(slug);
@@ -56,9 +58,9 @@ export function BusinessProfileScreen() {
       <div className="pt-10">
         <EmptyState
           icon={<MapPin size={20} />}
-          title="Business not found"
-          message="That listing may have moved. Search the directory to find it."
-          action={{ label: "Back to search", href: "/search" }}
+          title={t("profile.notFound")}
+          message={t("profile.notFoundMsg")}
+          action={{ label: t("profile.backToSearch"), href: "/search" }}
         />
       </div>
     );
@@ -68,10 +70,10 @@ export function BusinessProfileScreen() {
     <div className="pb-6">
       {/* Topbar over hero */}
       <div className="absolute left-0 right-0 z-20 mx-auto flex max-w-content items-center justify-between px-2 pt-2">
-        <IconButton label="Back" variant="solid" onClick={() => navigate(-1)}>
+        <IconButton label={t("common.back")} variant="solid" onClick={() => navigate(-1)}>
           <ChevronLeft size={20} />
         </IconButton>
-        <IconButton label="Share" variant="solid" onClick={() => {}}>
+        <IconButton label={t("common.share")} variant="solid" onClick={() => {}}>
           <Share2 size={18} />
         </IconButton>
       </div>
@@ -112,10 +114,10 @@ export function BusinessProfileScreen() {
       {/* Trust signals (factual, no stars) */}
       <div className="flex flex-wrap gap-2 px-4 pt-4">
         {business.verified && <VerifiedBadge />}
-        {business.postFrequency === "weekly" && <StatusBadge tone="neutral">Posts weekly</StatusBadge>}
+        {business.postFrequency === "weekly" && <StatusBadge tone="neutral">{t("status.postsWeekly")}</StatusBadge>}
         {business.responseTime && <StatusBadge tone="neutral">{business.responseTime}</StatusBadge>}
         {business.claimed && (
-          <StatusBadge tone="info">On Compass since {new Date(business.createdAt).getFullYear()}</StatusBadge>
+          <StatusBadge tone="info">{t("status.onCompassSince", { year: new Date(business.createdAt).getFullYear() })}</StatusBadge>
         )}
       </div>
 
@@ -123,14 +125,14 @@ export function BusinessProfileScreen() {
       <RecommendRow businessId={business.id} />
 
       {/* At a glance */}
-      <Section title="At a glance">
+      <Section title={t("profile.atAGlance")}>
         {business.hours && <HoursBlock business={business} />}
         {!business.hours && business.hoursText && (
-          <Fact icon={<Clock size={15} />} label="Hours">
+          <Fact icon={<Clock size={15} />} label={t("profile.hours")}>
             {business.hoursText}
           </Fact>
         )}
-        <Fact icon={<MapPin size={15} />} label="Address">
+        <Fact icon={<MapPin size={15} />} label={t("profile.address")}>
           <a
             href={directionsHref({ address: business.address, geo: business.geo })}
             target="_blank"
@@ -141,14 +143,14 @@ export function BusinessProfileScreen() {
           </a>
         </Fact>
         {business.phone && (
-          <Fact icon={<PhoneIcon size={15} />} label="Phone">
+          <Fact icon={<PhoneIcon size={15} />} label={t("profile.phone")}>
             <a href={`tel:${business.phone.replace(/[^\d+]/g, "")}`} className="text-positive hover:underline">
               {business.phone}
             </a>
           </Fact>
         )}
         {business.website && (
-          <Fact icon={<Globe size={15} />} label="Website">
+          <Fact icon={<Globe size={15} />} label={t("profile.website")}>
             <a href={business.website} target="_blank" rel="noreferrer" className="text-positive hover:underline">
               {business.website.replace(/^https?:\/\//, "")}
             </a>
@@ -167,7 +169,7 @@ export function BusinessProfileScreen() {
 
       {/* What's new — bulletins */}
       {(bulletins.data?.length ?? 0) > 0 && (
-        <Section title="What's new">
+        <Section title={t("profile.whatsNew")}>
           <div className="-my-1 divide-y divide-border">
             {bulletins.data!.map((bl) => (
               <FeedItem
@@ -186,7 +188,7 @@ export function BusinessProfileScreen() {
 
       {/* Upcoming — events */}
       {(events.data?.length ?? 0) > 0 && (
-        <Section title="Upcoming">
+        <Section title={t("profile.upcoming")}>
           <div className="-my-1 divide-y divide-border">
             {events.data!.map((e) => (
               <EventCard key={e.id} event={e} />
@@ -196,14 +198,14 @@ export function BusinessProfileScreen() {
       )}
 
       {/* About */}
-      <Section title="About">
-        <p className="text-sm leading-relaxed text-foreground">{business.description}</p>
+      <Section title={t("profile.about")}>
+        <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{business.longDescription || business.description}</p>
       </Section>
 
       <p className="px-4 pt-2 text-center text-xs text-muted-foreground">
-        Information provided by the business ·{" "}
+        {t("profile.providedBy")} ·{" "}
         <Link to="/resources" className="font-semibold text-positive hover:underline">
-          See local resources
+          {t("profile.seeResources")}
         </Link>
       </p>
     </div>
@@ -216,6 +218,7 @@ export function BusinessProfileScreen() {
  * un-recommended or down-voted (insert-only at the DB). JIT-gated like save/follow.
  */
 function RecommendRow({ businessId }: { businessId: string }) {
+  const { t } = useI18n();
   const session = useSession();
   const recs = useRecommendations(businessId);
   const mine = useHasRecommended(businessId);
@@ -235,11 +238,10 @@ function RecommendRow({ businessId }: { businessId: string }) {
         <Heart size={15} className="text-accent" fill={count > 0 ? "currentColor" : "none"} aria-hidden />
         {count > 0 ? (
           <span className="text-foreground">
-            <b className="font-semibold">{count}</b>{" "}
-            {count === 1 ? "local recommends" : "locals recommend"} this
+            {count === 1 ? t("profile.recommendOne") : t("profile.recommendMany", { n: count })}
           </span>
         ) : (
-          <span className="text-muted-foreground">Be the first to recommend</span>
+          <span className="text-muted-foreground">{t("profile.beFirst")}</span>
         )}
       </p>
       <Button
@@ -250,11 +252,11 @@ function RecommendRow({ businessId }: { businessId: string }) {
       >
         {recommended ? (
           <>
-            <Check size={14} /> Recommended
+            <Check size={14} /> {t("profile.recommended")}
           </>
         ) : (
           <>
-            <Heart size={14} /> Recommend
+            <Heart size={14} /> {t("profile.recommend")}
           </>
         )}
       </Button>
@@ -310,8 +312,8 @@ function HoursBlock({ business }: { business: Business }) {
               }
             >
               <span>
-                {DAY_LABEL[d]}
-                {isToday ? " · Today" : ""}
+                {dayLabel(d)}
+                {isToday ? ` · ${tGlobal("day.today")}` : ""}
               </span>
               <span className="tabular-nums">
                 {dh.closed || !dh.open ? "Closed" : `${formatClock(dh.open)} – ${formatClock(dh.close)}`}

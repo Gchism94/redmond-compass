@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/cn";
+import { tGlobal } from "@/i18n";
 
 export interface SectionHeaderProps {
   title: string;
@@ -15,7 +16,7 @@ export interface SectionHeaderProps {
 export function SectionHeader({
   title,
   seeAllHref,
-  seeAllLabel = "See all",
+  seeAllLabel,
   variant = "default",
   className,
 }: SectionHeaderProps) {
@@ -31,10 +32,10 @@ export function SectionHeader({
       {seeAllHref && (
         <Link
           to={seeAllHref}
-          aria-label={`${seeAllLabel}: ${title}`}
+          aria-label={`${seeAllLabel ?? tGlobal("common.seeAll")}: ${title}`}
           className="shrink-0 text-sm font-semibold text-positive hover:underline"
         >
-          {seeAllLabel}
+          {seeAllLabel ?? tGlobal("common.seeAll")}
         </Link>
       )}
     </div>

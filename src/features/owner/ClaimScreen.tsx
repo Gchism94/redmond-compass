@@ -6,12 +6,14 @@ import { Button, Field, fieldInputClass, Thumb, Skeleton, Card } from "@/compone
 import { useBusinesses, useCreateBusiness, useClaimBusiness } from "@/data/queries";
 import { useSession } from "@/features/account/session";
 import { BUSINESS_CATEGORIES } from "@/lib/taxonomy";
+import { useI18n } from "@/i18n";
 
 /**
  * Claim / List (B0) — free. Two paths: claim an existing unclaimed listing, or add
  * a new one (current-site parity fields). Setting ownership requires sign-in (JIT).
  */
 export function ClaimScreen() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const session = useSession();
   const unclaimed = useBusinesses({ limit: 50 });
@@ -36,12 +38,11 @@ export function ClaimScreen() {
 
   return (
     <div className="pb-8">
-      <ScreenHeader title="List your business" back />
+      <ScreenHeader title={t("owner.claimTitle")} back />
 
       <div className="px-4 pt-1">
         <p className="text-sm text-muted-foreground">
-          Free to list, free to keep. Your listing appears in search with equal ranking — no paid
-          placement.
+          {t("owner.claimFree")}
         </p>
       </div>
 
@@ -64,13 +65,13 @@ export function ClaimScreen() {
               onClick={() => setMode("new")}
               className="flex min-h-tap w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground"
             >
-              <Plus size={18} /> Add a new business
+              <Plus size={18} /> {t("owner.addNew")}
             </button>
           </section>
 
           <section className="px-4 pt-5">
             <h2 className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Store size={13} /> Or claim an existing listing
+              <Store size={13} /> {t("owner.orClaim")}
             </h2>
             {unclaimed.isLoading ? (
               <div className="space-y-3 pt-2">
@@ -80,7 +81,7 @@ export function ClaimScreen() {
               </div>
             ) : list.length === 0 ? (
               <p className="py-4 text-sm text-muted-foreground">
-                Every listing is already claimed — add a new business above.
+                {t("owner.allClaimed")}
               </p>
             ) : (
               <ul className="divide-y divide-border">
@@ -97,7 +98,7 @@ export function ClaimScreen() {
                       onClick={() => claim(b.id)}
                       disabled={claimBusiness.isPending}
                     >
-                      Claim
+                      {t("owner.claim")}
                     </Button>
                   </li>
                 ))}
@@ -127,6 +128,7 @@ function NewListingForm({
   onCancel: () => void;
   submitting: boolean;
 }) {
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [category, setCategory] = useState(BUSINESS_CATEGORIES[0]);
   const [address, setAddress] = useState("");
@@ -144,32 +146,32 @@ function NewListingForm({
       className="space-y-3.5 px-4 pt-4"
     >
       <Card className="space-y-3.5 p-4">
-        <Field label="Business name" required htmlFor="biz-name">
+        <Field label={t("owner.bizName")} required htmlFor="biz-name">
           <input id="biz-name" className={fieldInputClass} value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Juniper & Sage Cafe" />
         </Field>
-        <Field label="Category" htmlFor="biz-cat">
+        <Field label={t("owner.category")} htmlFor="biz-cat">
           <select id="biz-cat" className={fieldInputClass} value={category} onChange={(e) => setCategory(e.target.value)}>
             {BUSINESS_CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </Field>
-        <Field label="Address" required htmlFor="biz-addr">
+        <Field label={t("owner.address")} required htmlFor="biz-addr">
           <input id="biz-addr" className={fieldInputClass} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, Redmond, OR" />
         </Field>
-        <Field label="Phone" htmlFor="biz-phone">
+        <Field label={t("owner.phone")} htmlFor="biz-phone">
           <input id="biz-phone" className={fieldInputClass} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(541) 555-0000" inputMode="tel" />
         </Field>
-        <Field label="Short description" htmlFor="biz-desc">
-          <textarea id="biz-desc" className={fieldInputClass} rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What makes your place worth a visit?" />
+        <Field label={t("owner.shortDesc")} htmlFor="biz-desc">
+          <textarea id="biz-desc" className={fieldInputClass} rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("owner.descPlaceholder")} />
         </Field>
       </Card>
       <div className="flex gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button type="submit" variant="primary" fullWidth disabled={!valid || submitting}>
-          {submitting ? "Creating…" : <><Check size={16} /> Create listing</>}
+          {submitting ? t("owner.creating") : <><Check size={16} /> {t("owner.createListing")}</>}
         </Button>
       </div>
     </form>

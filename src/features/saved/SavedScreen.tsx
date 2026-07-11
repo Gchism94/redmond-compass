@@ -6,11 +6,13 @@ import { useBusinesses, useEvents } from "@/data/queries";
 import { useSession } from "@/features/account/session";
 import { eventsToICS, downloadICS } from "@/lib/calendar";
 import type { Business } from "@/lib/types";
+import { useI18n } from "@/i18n";
 
 type Tab = "businesses" | "following" | "events";
 
 /** Saved (S7). Tabs: Businesses · Following · Events. (Rewards is deferred — Loyalty.) */
 export function SavedScreen() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("businesses");
   const session = useSession();
   const allBiz = useBusinesses({ limit: 50 });
@@ -32,16 +34,16 @@ export function SavedScreen() {
 
   return (
     <div className="pb-4">
-      <ScreenHeader title="Saved" />
+      <ScreenHeader title={t("saved.title")} />
       <div className="px-4 pt-1">
         <Toggle
-          ariaLabel="Saved filter"
+          ariaLabel={t("saved.filter")}
           value={tab}
           onChange={setTab}
           options={[
-            { value: "businesses", label: "Businesses" },
-            { value: "following", label: "Following" },
-            { value: "events", label: "Events" },
+            { value: "businesses", label: t("saved.tab.businesses") },
+            { value: "following", label: t("saved.tab.following") },
+            { value: "events", label: t("saved.tab.events") },
           ]}
         />
       </div>
@@ -51,10 +53,10 @@ export function SavedScreen() {
         <div className="mx-4 mt-3 flex items-center gap-3 rounded-lg border border-border bg-secondary/60 p-3">
           <LogIn size={18} className="shrink-0 text-positive" />
           <p className="flex-1 text-xs text-muted-foreground">
-            Sign in to sync your saves and follows across devices.
+            {t("saved.signInMsg")}
           </p>
           <Button size="sm" variant="ghost" onClick={() => session.openAuth("account")}>
-            Sign in
+            {t("saved.signIn")}
           </Button>
         </div>
       )}
@@ -83,9 +85,9 @@ export function SavedScreen() {
           ) : (
             <EmptyState
               icon={<Bookmark size={20} />}
-              title="No saved places yet"
-              message="Save businesses you want to remember — they'll show up here, even offline."
-              action={{ label: "Find local businesses", href: "/search" }}
+              title={t("saved.emptyBusinesses")}
+              message={t("saved.emptyBusinessesMsg")}
+              action={{ label: t("saved.explore"), href: "/search" }}
             />
           )
         ) : tab === "following" ? (
@@ -105,9 +107,9 @@ export function SavedScreen() {
           ) : (
             <EmptyState
               icon={<UserPlus size={20} />}
-              title="You're not following anyone yet"
-              message="Follow places you love to get their bulletins in your Home feed."
-              action={{ label: "Explore businesses", href: "/search" }}
+              title={t("saved.emptyFollowing")}
+              message={t("saved.emptyFollowingMsg")}
+              action={{ label: t("saved.explore"), href: "/search" }}
             />
           )
         ) : savedEvents.length ? (
@@ -117,7 +119,7 @@ export function SavedScreen() {
               onClick={() => downloadICS("redmond-compass-events", eventsToICS(savedEvents))}
               className="mb-1 inline-flex min-h-tap items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none"
             >
-              <CalendarPlus size={16} strokeWidth={1.75} /> Add all to calendar (.ics)
+              <CalendarPlus size={16} strokeWidth={1.75} /> {t("events.addAll")}
             </button>
             <div className="divide-y divide-border">
               {savedEvents.map((e) => (
@@ -135,9 +137,9 @@ export function SavedScreen() {
         ) : (
           <EmptyState
             icon={<CalendarPlus size={20} />}
-            title="No saved events"
-            message="Save events you're interested in and we'll keep them handy here."
-            action={{ label: "Browse events", href: "/events" }}
+            title={t("saved.emptyEvents")}
+            message={t("saved.emptyEventsMsg")}
+            action={{ label: t("events.browse"), href: "/events" }}
           />
         )}
       </div>

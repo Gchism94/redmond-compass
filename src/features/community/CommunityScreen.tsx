@@ -4,6 +4,7 @@ import { Toggle, FeedItem, Skeleton } from "@/components";
 import { useNews, useBulletins, useBusinesses } from "@/data/queries";
 import { relativeTime } from "@/lib/format";
 import type { Business } from "@/lib/types";
+import { useI18n } from "@/i18n";
 
 type Tab = "all" | "news" | "bulletins";
 
@@ -13,6 +14,7 @@ type Entry =
 
 /** Community / News (C). Blended feed of admin news + business bulletins, type-tagged. */
 export function CommunityScreen() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("all"); // default All (BUILD-BRIEF §14 — flagged)
   const news = useNews();
   const bulletins = useBulletins();
@@ -41,7 +43,7 @@ export function CommunityScreen() {
         kind: "bulletin",
         id: bl.id,
         title: bl.body,
-        source: biz?.name ?? "Local business",
+        source: biz?.name ?? t("community.localBusiness"),
         seed: biz?.name,
         time: relativeTime(bl.createdAt),
         ts: +new Date(bl.createdAt),
@@ -56,16 +58,16 @@ export function CommunityScreen() {
 
   return (
     <div className="pb-4">
-      <ScreenHeader title="Community" />
+      <ScreenHeader title={t("community.title")} />
       <div className="px-4 pt-1">
         <Toggle
-          ariaLabel="Community filter"
+          ariaLabel={t("community.filter")}
           value={tab}
           onChange={setTab}
           options={[
-            { value: "all", label: "All" },
-            { value: "news", label: "News" },
-            { value: "bulletins", label: "Bulletins" },
+            { value: "all", label: t("community.tab.all") },
+            { value: "news", label: t("community.tab.news") },
+            { value: "bulletins", label: t("community.tab.bulletins") },
           ]}
         />
       </div>

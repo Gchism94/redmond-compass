@@ -5,6 +5,7 @@ import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Button } from "@/components";
 import { useSession } from "./session";
 import { GoogleButton } from "./GoogleButton";
+import { useI18n } from "@/i18n";
 
 const inputClass =
   "min-h-tap w-full rounded-lg border border-border bg-card px-3 text-base outline-none focus:border-positive focus:ring-2 focus:ring-positive/20";
@@ -15,6 +16,7 @@ const inputClass =
  * (Supabase) or instant (mock).
  */
 export function LoginScreen() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { startSignIn, verifyOtp, signInWithProvider } = useSession();
   const [step, setStep] = useState<"email" | "code">("email");
@@ -29,7 +31,7 @@ export function LoginScreen() {
     if (busy) return;
     const addr = email.trim();
     if (!addr || !/^\S+@\S+\.\S+$/.test(addr)) {
-      setError("Enter a valid email to continue.");
+      setError(t("auth.invalidEmail"));
       return;
     }
     setBusy(true);
@@ -39,7 +41,7 @@ export function LoginScreen() {
       if (needsOtp) setStep("code");
       else navigate("/account", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't send your code. Try again.");
+      setError(err instanceof Error ? err.message : t("auth.sendFailed"));
     } finally {
       setBusy(false);
     }
@@ -53,7 +55,7 @@ export function LoginScreen() {
       const { redirected } = await signInWithProvider("google");
       if (!redirected) navigate("/account", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't start Google sign-in.");
+      setError(err instanceof Error ? err.message : t("auth.googleFailed"));
       setBusy(false);
     }
   };
@@ -62,7 +64,7 @@ export function LoginScreen() {
     e.preventDefault();
     if (busy) return;
     if (!code.trim()) {
-      setError("Enter the 6-digit code we emailed you.");
+      setError(t("auth.enterCodeError"));
       return;
     }
     setBusy(true);
@@ -71,7 +73,7 @@ export function LoginScreen() {
       await verifyOtp(email, code);
       navigate("/account", { replace: true });
     } catch {
-      setError("That code didn't work. Check it and try again.");
+      setError(t("auth.badCode"));
     } finally {
       setBusy(false);
     }
@@ -79,7 +81,7 @@ export function LoginScreen() {
 
   return (
     <div>
-      <ScreenHeader title="Sign in" back />
+      <ScreenHeader title={t("auth.loginTitle")} back />
       <div className="px-6 pt-4">
         <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground text-background">
           <Compass size={26} />
@@ -87,10 +89,10 @@ export function LoginScreen() {
         <p className="text-center text-sm text-muted-foreground">
           {step === "code" ? (
             <>
-              Enter the 6-digit code we emailed to <b className="text-foreground">{email}</b>.
+              {t("auth.loginCodeSub")} <b className="text-foreground">{email}</b>.
             </>
           ) : (
-            "Sign in to sync your saves, follows, and preferences. Browsing is always free."
+            t("auth.loginSub")
           )}
         </p>
 
@@ -100,45 +102,45 @@ export function LoginScreen() {
             <GoogleButton onClick={continueWithGoogle} disabled={busy} />
             <div className="my-3 flex items-center gap-3">
               <span className="h-px flex-1 bg-border" />
-              <span className="text-xs text-muted-foreground">or</span>
+              <span className="text-xs text-muted-foreground">{t("common.or")}</span>
               <span className="h-px flex-1 bg-border" />
             </div>
           </div>
           <form onSubmit={submitEmail} className="space-y-3" noValidate>
             <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-foreground">Email</span>
+              <span className="mb-1 block text-xs font-semibold text-foreground">{t("auth.email")}</span>
               <input
                 type="email"
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 className={inputClass}
               />
             </label>
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-foreground">
-                Name <span className="font-normal text-muted-foreground">(optional)</span>
+                {t("auth.name")} <span className="font-normal text-muted-foreground">{t("auth.optional")}</span>
               </span>
               <input
                 type="text"
                 autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="What should we call you?"
+                placeholder={t("auth.namePlaceholder")}
                 className={inputClass}
               />
             </label>
             {error && <p className="text-sm text-danger">{error}</p>}
             <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
-              {busy ? "Sending…" : "Continue"}
+              {busy ? t("auth.sending") : t("common.continue")}
             </Button>
           </form>
           </>
         ) : (
           <form onSubmit={submitCode} className="mt-6 space-y-3" noValidate>
             <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-foreground">6-digit code</span>
+              <span className="mb-1 block text-xs font-semibold text-foreground">{t("auth.codeLabel")}</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -153,7 +155,7 @@ export function LoginScreen() {
             </label>
             {error && <p className="text-sm text-danger">{error}</p>}
             <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
-              {busy ? "Verifying…" : "Verify & continue"}
+              {busy ? t("auth.verifying") : t("auth.verifyContinue")}
             </Button>
             <button
               type="button"
@@ -164,7 +166,7 @@ export function LoginScreen() {
               }}
               className="w-full py-1 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
             >
-              Use a different email
+              {t("auth.differentEmail")}
             </button>
           </form>
         )}

@@ -6,6 +6,7 @@ import { useBulletinCount } from "@/data/queries";
 import { useSession } from "@/features/account/session";
 import { listingCompleteness } from "@/lib/completeness";
 import { LIMITS } from "@/lib/entitlements";
+import { useI18n } from "@/i18n";
 
 /**
  * Owner Dashboard (B1) — light "manage my listing" hub. MVP is FREE only:
@@ -14,6 +15,7 @@ import { LIMITS } from "@/lib/entitlements";
  * helper (can(tier, …)); they simply don't render for free.
  */
 export function OwnerDashboard() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { ownerBusinessId, data: business, isLoading } = useOwnerBusiness();
   const { setOwnerBusinessId } = useSession();
@@ -35,13 +37,13 @@ export function OwnerDashboard() {
     <div className="pb-6">
       {/* Topbar */}
       <header className="flex items-center justify-between px-4 pt-4 pb-1">
-        <h1 className="font-heading text-xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="font-heading text-xl font-bold text-foreground">{t("owner.dashboard")}</h1>
         <button
           type="button"
           onClick={() => navigate("/")}
           className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground"
         >
-          <Repeat size={13} /> Consumer view
+          <Repeat size={13} /> {t("owner.consumerView")}
         </button>
       </header>
 
@@ -55,12 +57,12 @@ export function OwnerDashboard() {
               {business.verified ? (
                 <VerifiedBadge />
               ) : (
-                <StatusBadge tone="neutral">Not yet verified</StatusBadge>
+                <StatusBadge tone="neutral">{t("owner.notVerified")}</StatusBadge>
               )}
-              <StatusBadge tone="info">Free listing</StatusBadge>
+              <StatusBadge tone="info">{t("owner.freeListing")}</StatusBadge>
             </div>
             <Link to={`/b/${business.slug}`} className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-positive hover:underline">
-              View public profile <ArrowRight size={12} />
+              {t("owner.viewPublicProfile")} <ArrowRight size={12} />
             </Link>
           </div>
         </Card>
@@ -68,30 +70,30 @@ export function OwnerDashboard() {
 
       {/* Completeness */}
       <section className="px-4 pt-4">
-        <h2 className="mb-2 font-heading text-md font-semibold text-foreground">Profile completeness</h2>
+        <h2 className="mb-2 font-heading text-md font-semibold text-foreground">{t("owner.completeness")}</h2>
         <Card className="p-4">
-          <CompletenessMeter value={percent} label={percent >= 100 ? "All set" : "Looking good"} nextAction={nextAction} />
+          <CompletenessMeter value={percent} label={percent >= 100 ? t("owner.allSet") : t("owner.lookingGood")} nextAction={nextAction} />
         </Card>
       </section>
 
       {/* Quick actions */}
       <section className="px-4 pt-4">
-        <h2 className="mb-2 font-heading text-md font-semibold text-foreground">Quick actions</h2>
+        <h2 className="mb-2 font-heading text-md font-semibold text-foreground">{t("owner.quickActions")}</h2>
         <div className="grid grid-cols-3 gap-3">
           <ActionTile
             icon={<Megaphone size={20} />}
-            label="Post bulletin"
+            label={t("owner.postBulletin")}
             badge={`${used}/${cap}`}
             onClick={() => navigate("/manage/bulletin/new")}
           />
           <ActionTile
             icon={<CalendarPlus size={20} />}
-            label="Submit event"
+            label={t("owner.submitEventBtn")}
             onClick={() => navigate("/manage/event/new")}
           />
           <ActionTile
             icon={<Pencil size={20} />}
-            label="Edit listing"
+            label={t("owner.editListing")}
             onClick={() => navigate("/manage/edit")}
           />
         </div>
@@ -99,7 +101,7 @@ export function OwnerDashboard() {
 
       {/* Status note */}
       <p className="px-4 pt-5 text-center text-xs text-muted-foreground">
-        Your free listing is live and appears in search with equal ranking — no paid placement, ever.
+        {t("owner.equalRankingNote")}
       </p>
       {/* Seam: Member (analytics, demand signals) + Pro (Bookings/Inbox/Loyalty) render
           here when can(tier, …) is true. Not shown at MVP (no tiers/paywall/modules). */}

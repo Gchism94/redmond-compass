@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { tGlobal } from "@/i18n";
 
 type Tone = "positive" | "neutral" | "accent" | "info";
 
@@ -41,7 +42,7 @@ export function StatusBadge({ children, tone = "neutral", icon, className }: Sta
 export function VerifiedBadge({ className }: { className?: string }) {
   return (
     <StatusBadge tone="positive" icon={<Check size={12} strokeWidth={3} />} className={className}>
-      Verified
+      {tGlobal("status.verified")}
     </StatusBadge>
   );
 }

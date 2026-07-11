@@ -3,13 +3,15 @@ import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import type { EventItem } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { formatClock } from "@/lib/hours";
+import { useI18n, getLocale } from "@/i18n";
 
 export interface EventCalendarProps {
   events: EventItem[];
   onSelectEvent: (id: string) => void;
 }
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const WEEKDAYS_EN = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const WEEKDAYS_ES = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"];
 
 /** "YYYY-MM-DD" day key from a naive event start (local Redmond day). */
 const dayKey = (iso: string) => iso.slice(0, 10);
@@ -24,6 +26,8 @@ const todayKeyStr = () => {
  * pine dot. Selecting a day lists its events below; tapping one opens it.
  */
 export function EventCalendar({ events, onSelectEvent }: EventCalendarProps) {
+  const { t, lang } = useI18n();
+  const WEEKDAYS = lang === "es" ? WEEKDAYS_ES : WEEKDAYS_EN;
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth()); // 0–11
@@ -57,7 +61,7 @@ export function EventCalendar({ events, onSelectEvent }: EventCalendarProps) {
   const firstWeekday = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
-  const monthLabel = new Date(year, month, 1).toLocaleDateString(undefined, {
+  const monthLabel = new Date(year, month, 1).toLocaleDateString(getLocale(), {
     month: "long",
     year: "numeric",
   });
@@ -79,7 +83,7 @@ export function EventCalendar({ events, onSelectEvent }: EventCalendarProps) {
       <div className="flex items-center justify-between">
         <button
           type="button"
-          aria-label="Previous month"
+          aria-label={t("events.prevMonth")}
           onClick={() => step(-1)}
           className="flex min-h-tap min-w-tap items-center justify-center rounded-full text-foreground hover:bg-muted"
         >
@@ -88,7 +92,7 @@ export function EventCalendar({ events, onSelectEvent }: EventCalendarProps) {
         <h2 className="font-heading text-md font-semibold text-foreground">{monthLabel}</h2>
         <button
           type="button"
-          aria-label="Next month"
+          aria-label={t("events.nextMonth")}
           onClick={() => step(1)}
           className="flex min-h-tap min-w-tap items-center justify-center rounded-full text-foreground hover:bg-muted"
         >

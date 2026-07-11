@@ -2,6 +2,7 @@ import { Phone, Navigation, Bookmark, Plus, Check } from "lucide-react";
 import type { Business } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { directionsHref, telHref } from "@/lib/links";
+import { useI18n } from "@/i18n";
 
 export interface ActionBarProps {
   business: Business;
@@ -25,6 +26,7 @@ export function ActionBar({
   onFollow,
   className,
 }: ActionBarProps) {
+  const { t } = useI18n();
   const tel = telHref(business.phone);
   return (
     <div
@@ -37,27 +39,27 @@ export function ActionBar({
         href={tel}
         disabled={!tel}
         icon={<Phone size={18} />}
-        label="Call"
+        label={t("common.call")}
         tone="primary"
       />
       <ActionLink
         href={directionsHref({ address: business.address, geo: business.geo })}
         external
         icon={<Navigation size={18} />}
-        label="Directions"
+        label={t("common.directions")}
         tone="secondary"
       />
       <ActionButton
         active={saved}
         onClick={() => onSave?.(business)}
         icon={<Bookmark size={18} className={saved ? "fill-current" : undefined} />}
-        label={saved ? "Saved" : "Save"}
+        label={saved ? t("common.saved") : t("common.save")}
       />
       <ActionButton
         active={following}
         onClick={() => onFollow?.(business)}
         icon={following ? <Check size={18} /> : <Plus size={18} />}
-        label={following ? "Following" : "Follow"}
+        label={following ? t("common.following") : t("common.follow")}
       />
     </div>
   );

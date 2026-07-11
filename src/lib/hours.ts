@@ -4,17 +4,13 @@
  * Special hours (holidays) override the weekly schedule for a given date.
  */
 import type { Hours, Weekday, DayHours } from "./types";
+import { tGlobal } from "@/i18n";
 
 const ORDER: Weekday[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-const DAY_LABEL: Record<Weekday, string> = {
-  sun: "Sun",
-  mon: "Mon",
-  tue: "Tue",
-  wed: "Wed",
-  thu: "Thu",
-  fri: "Fri",
-  sat: "Sat",
-};
+/** Localized short weekday label ("Mon" / "Lun"). */
+export function dayLabel(d: Weekday): string {
+  return tGlobal(`day.${d}`);
+}
 
 export interface OpenStatus {
   /** true if open right now */
@@ -60,7 +56,7 @@ function dayHoursFor(hours: Hours, date: Date): DayHours {
  * and looks ahead up to 7 days for the next opening when closed.
  */
 export function getOpenStatus(hours: Hours | undefined, now: Date = new Date()): OpenStatus {
-  if (!hours) return { open: false, state: "unknown", label: "Hours not listed" };
+  if (!hours) return { open: false, state: "unknown", label: tGlobal("status.hoursNotListed") };
 
   const today = dayHoursFor(hours, now);
   const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -75,8 +71,8 @@ export function getOpenStatus(hours: Hours | undefined, now: Date = new Date()):
       return {
         open: true,
         state: "open",
-        label: "Open",
-        detail: `closes ${formatClock(today.close)}`,
+        label: tGlobal("status.open"),
+        detail: tGlobal("status.closes", { time: formatClock(today.close) }),
       };
     }
     // Before opening today
@@ -84,8 +80,8 @@ export function getOpenStatus(hours: Hours | undefined, now: Date = new Date()):
       return {
         open: false,
         state: "closed",
-        label: "Closed",
-        detail: `opens ${formatClock(today.open)}`,
+        label: tGlobal("status.closed"),
+        detail: tGlobal("status.opens", { time: formatClock(today.open) }),
       };
     }
   }
@@ -100,13 +96,13 @@ export function getOpenStatus(hours: Hours | undefined, now: Date = new Date()):
       return {
         open: false,
         state: "closed",
-        label: "Closed",
-        detail: `opens ${DAY_LABEL[wd]} ${formatClock(dh.open)}`,
+        label: tGlobal("status.closed"),
+        detail: tGlobal("status.opens", { time: `${dayLabel(wd)} ${formatClock(dh.open)}` }),
       };
     }
   }
 
-  return { open: false, state: "closed", label: "Closed" };
+  return { open: false, state: "closed", label: tGlobal("status.closed") };
 }
 
 /** Today's weekday key (for highlighting "Today" in the hours list). */
@@ -114,4 +110,4 @@ export function todayKey(now: Date = new Date()): Weekday {
   return ORDER[now.getDay()];
 }
 
-export { DAY_LABEL, ORDER as WEEKDAY_ORDER };
+export { ORDER as WEEKDAY_ORDER };

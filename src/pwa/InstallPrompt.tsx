@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Download, X, Share, Plus } from "lucide-react";
 import { Button } from "@/components";
 import { useInstallPrompt } from "./useInstallPrompt";
+import { useI18n } from "@/i18n";
 
 const DISMISS_KEY = "rc.installDismissed";
 function dismissed(): boolean {
@@ -17,6 +18,7 @@ function dismissed(): boolean {
  * iOS Safari → Share-sheet instructions. Hidden once installed/standalone or dismissed.
  */
 export function InstallBanner() {
+  const { t } = useI18n();
   const { canInstall, showIosHint, promptInstall } = useInstallPrompt();
   const [hidden, setHidden] = useState(dismissed());
   if (hidden || (!canInstall && !showIosHint)) return null;
@@ -37,29 +39,29 @@ export function InstallBanner() {
           <Download size={18} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-heading text-sm font-semibold text-foreground">Get the app</p>
+          <p className="font-heading text-sm font-semibold text-foreground">{t("pwa.installTitle")}</p>
           {canInstall ? (
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Install Redmond Compass for quick access from your home screen.
+              {t("pwa.installMsg")}
             </p>
           ) : (
             <p className="mt-0.5 inline-flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-              Tap <Share size={12} className="inline" /> Share, then{" "}
+              {t("pwa.iosTap")} <Share size={12} className="inline" /> {t("pwa.iosShareThen")}{" "}
               <span className="inline-flex items-center gap-0.5 font-medium text-foreground">
-                <Plus size={12} /> Add to Home Screen
+                <Plus size={12} /> {t("pwa.addToHome")}
               </span>
               .
             </p>
           )}
           {canInstall && (
             <Button size="sm" variant="primary" className="mt-2" onClick={promptInstall}>
-              <Download size={14} /> Install
+              <Download size={14} /> {t("pwa.install")}
             </Button>
           )}
         </div>
         <button
           type="button"
-          aria-label="Dismiss"
+          aria-label={t("common.dismiss")}
           onClick={close}
           className="-mr-1 -mt-1 rounded-full p-1.5 text-muted-foreground hover:text-foreground"
         >
@@ -72,6 +74,7 @@ export function InstallBanner() {
 
 /** Account entry: an "Install app" action (or iOS hint). Hidden when not applicable. */
 export function InstallRow() {
+  const { t } = useI18n();
   const { canInstall, showIosHint, promptInstall, isStandalone } = useInstallPrompt();
   if (isStandalone) return null;
   if (canInstall) {
@@ -82,9 +85,9 @@ export function InstallRow() {
         className="flex w-full items-center justify-between py-3 text-sm text-foreground"
       >
         <span className="flex items-center gap-2">
-          <Download size={15} className="text-positive" /> Install app
+          <Download size={15} className="text-positive" /> {t("pwa.installApp")}
         </span>
-        <span className="text-xs font-semibold text-positive">Add to home screen</span>
+        <span className="text-xs font-semibold text-positive">{t("pwa.addToHome")}</span>
       </button>
     );
   }
@@ -93,10 +96,10 @@ export function InstallRow() {
       <div className="flex items-start gap-2 py-3 text-sm text-foreground">
         <Download size={15} className="mt-0.5 text-positive" />
         <span>
-          Install app —{" "}
+          {t("pwa.installApp")} —{" "}
           <span className="text-muted-foreground">
-            tap <Share size={12} className="inline" /> Share, then{" "}
-            <span className="font-medium">Add to Home Screen</span>.
+            {t("pwa.iosTap")} <Share size={12} className="inline" /> {t("pwa.iosShareThen")}{" "}
+            <span className="font-medium">{t("pwa.addToHome")}</span>.
           </span>
         </span>
       </div>

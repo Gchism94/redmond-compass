@@ -1,8 +1,10 @@
 /** "Continue with Google" — shared by the AuthSheet (JIT) and the /login screen. */
+import { tGlobal } from "@/i18n";
+
 export function GoogleButton({
   onClick,
   disabled,
-  label = "Continue with Google",
+  label,
 }: {
   onClick: () => void;
   disabled?: boolean;
@@ -16,7 +18,7 @@ export function GoogleButton({
       className="flex min-h-tap w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-card px-4 text-base font-medium text-foreground transition-colors hover:bg-surface-sunken disabled:opacity-60"
     >
       <GoogleG />
-      {label}
+      {label ?? tGlobal("auth.google")}
     </button>
   );
 }

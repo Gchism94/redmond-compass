@@ -16,17 +16,19 @@ import type { BusinessSort } from "@/data/DataSource";
 import { AMENITY_FACETS, TOP_CATEGORIES } from "@/lib/taxonomy";
 import { relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
+import { useI18n, type DictKey } from "@/i18n";
 
 type Tab = "all" | "businesses" | "events" | "community";
-const SORTS: { value: BusinessSort; label: string }[] = [
-  { value: "relevance", label: "Relevance" },
-  { value: "distance", label: "Distance" },
-  { value: "openNow", label: "Open now" },
-  { value: "name", label: "Name" },
+const SORTS: { value: BusinessSort; labelKey: DictKey }[] = [
+  { value: "relevance", labelKey: "results.sort.relevance" },
+  { value: "distance", labelKey: "results.sort.distance" },
+  { value: "openNow", labelKey: "results.sort.openNow" },
+  { value: "name", labelKey: "results.sort.name" },
 ];
 
 /** Results & filters (S4). List view + filters; map is deferred (seam present). */
 export function ResultsScreen() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const session = useSession();
   const [params, setParams] = useSearchParams();
@@ -53,8 +55,8 @@ export function ResultsScreen() {
   const events = useEvents({ text: q || undefined });
   const community = useSearch(q, { types: ["news", "bulletin"], limit: 12 });
 
-  const catLabel = TOP_CATEGORIES.find((c) => c.slug === cat)?.label;
-  const heading = q || catLabel || "All Redmond";
+  const catSlug = TOP_CATEGORIES.find((c) => c.slug === cat)?.slug;
+  const heading = q || (catSlug ? t(`cat.${catSlug}` as DictKey) : "") || t("results.allRedmond");
   const hasQuery = !!q || !!cat; // an active search term or category → show a clearable filter
   const count = businesses.data?.total ?? 0;
 
@@ -74,8 +76,8 @@ export function ResultsScreen() {
   };
 
   const activeFilters = [
-    openNow ? { label: "Open now", clear: () => patch({ openNow: null }) } : null,
-    maxmi ? { label: `< ${maxmi} mi`, clear: () => patch({ maxmi: null }) } : null,
+    openNow ? { label: t("search.openNow"), clear: () => patch({ openNow: null }) } : null,
+    maxmi ? { label: t("results.withinMi", { n: maxmi }), clear: () => patch({ maxmi: null }) } : null,
     ...tags.map((t) => ({ label: t, clear: () => toggleTag(t) })),
   ].filter(Boolean) as { label: string; clear: () => void }[];
 
@@ -85,7 +87,7 @@ export function ResultsScreen() {
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 pt-3 pb-2.5 shadow-sticky backdrop-blur">
         <div className="flex items-center gap-2">
           {/* Back to Search — no dead end (A) */}
-          <IconButton label="Back to search" variant="solid" onClick={() => navigate("/search")}>
+          <IconButton label={t("results.backToSearch")} variant="solid" onClick={() => navigate("/search")}>
             <ChevronLeft size={20} />
           </IconButton>
           <div className="min-w-0 flex-1">
@@ -101,13 +103,13 @@ export function ResultsScreen() {
                 {hasQuery ? (
                   <span className="font-medium text-foreground">{heading}</span>
                 ) : (
-                  <span className="text-muted-foreground">Search Redmond…</span>
+                  <span className="text-muted-foreground">{t("home.searchPlaceholder")}</span>
                 )}
               </button>
               {hasQuery && (
                 <button
                   type="button"
-                  aria-label="Clear search and return to Search"
+                  aria-label={t("results.clearSearch")}
                   onClick={() => navigate("/search")}
                   className="shrink-0 rounded-full p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-positive/40"
                 >
@@ -117,12 +119,12 @@ export function ResultsScreen() {
             </div>
           </div>
           <Toggle
-            ariaLabel="Results view"
+            ariaLabel={t("results.list")}
             value={view}
             onChange={setView}
             options={[
-              { value: "list", label: "List" },
-              { value: "map", label: "Map" },
+              { value: "list", label: t("results.list") },
+              { value: "map", label: t("results.map") },
             ]}
           />
         </div>
@@ -131,9 +133,8 @@ export function ResultsScreen() {
           <>
             <div className="mt-2 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                <span className="font-heading font-semibold text-foreground">{count}</span>{" "}
-                {count === 1 ? "place" : "places"}
-                {openNow ? " · Open now" : ""}
+                {count === 1 ? t("results.place") : t("results.places", { n: count })}
+                {openNow ? t("results.openNowSuffix") : ""}
               </p>
               <div className="flex gap-2">
                 <button
@@ -141,14 +142,14 @@ export function ResultsScreen() {
                   onClick={() => setPanel((p) => (p === "sort" ? "none" : "sort"))}
                   className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
                 >
-                  <ArrowUpDown size={13} /> Sort
+                  <ArrowUpDown size={13} /> {t("results.sort")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setPanel((p) => (p === "filters" ? "none" : "filters"))}
                   className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
                 >
-                  <SlidersHorizontal size={13} /> Filters
+                  <SlidersHorizontal size={13} /> {t("results.filters")}
                 </button>
               </div>
             </div>
@@ -165,17 +166,17 @@ export function ResultsScreen() {
 
             {/* Result tabs */}
             <div className="mt-2.5 flex gap-1.5 overflow-x-auto">
-              {(["all", "businesses", "events", "community"] as Tab[]).map((t) => (
+              {(["all", "businesses", "events", "community"] as Tab[]).map((tb) => (
                 <button
-                  key={t}
+                  key={tb}
                   type="button"
-                  onClick={() => setTab(t)}
+                  onClick={() => setTab(tb)}
                   className={
-                    "shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium capitalize transition " +
-                    (tab === t ? "bg-foreground text-background" : "bg-muted text-muted-foreground")
+                    "shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium transition " +
+                    (tab === tb ? "bg-foreground text-background" : "bg-muted text-muted-foreground")
                   }
                 >
-                  {t}
+                  {t(`results.tab.${tb}` as DictKey)}
                 </button>
               ))}
             </div>
@@ -186,7 +187,7 @@ export function ResultsScreen() {
       {/* Sort panel */}
       {view === "list" && panel === "sort" && (
         <div className="border-b border-border bg-card px-4 py-3">
-          <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Sort by</p>
+          <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.sortBy")}</p>
           <div className="flex flex-wrap gap-2">
             {SORTS.map((s) => (
               <Chip
@@ -197,7 +198,7 @@ export function ResultsScreen() {
                   setPanel("none");
                 }}
               >
-                {s.label}
+                {t(s.labelKey)}
               </Chip>
             ))}
           </div>
@@ -208,27 +209,27 @@ export function ResultsScreen() {
       {view === "list" && panel === "filters" && (
         <div className="space-y-3 border-b border-border bg-card px-4 py-3">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Availability</p>
+            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.availability")}</p>
             <Chip active={openNow} onClick={() => patch({ openNow: openNow ? null : "1" })}>
-              Open now
+              {t("search.openNow")}
             </Chip>
           </div>
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Distance</p>
+            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.distance")}</p>
             <div className="flex flex-wrap gap-2">
               {[2, 5, 10].map((mi) => (
                 <Chip key={mi} active={maxmi === mi} onClick={() => patch({ maxmi: maxmi === mi ? null : String(mi) })}>
-                  {`< ${mi} mi`}
+                  {t("results.withinMi", { n: mi })}
                 </Chip>
               ))}
             </div>
           </div>
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Amenities</p>
+            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.amenities")}</p>
             <div className="flex flex-wrap gap-2">
-              {AMENITY_FACETS.map((t) => (
-                <Chip key={t} active={tags.includes(t)} onClick={() => toggleTag(t)}>
-                  {t}
+              {AMENITY_FACETS.map((tag) => (
+                <Chip key={tag} active={tags.includes(tag)} onClick={() => toggleTag(tag)}>
+                  {tag}
                 </Chip>
               ))}
             </div>
@@ -280,9 +281,9 @@ export function ResultsScreen() {
               ) : (
                 <EmptyState
                   icon={<MapPin size={20} />}
-                  title="No matching events"
-                  message="Try the Events tab for everything happening in Redmond."
-                  action={{ label: "Browse events", href: "/events" }}
+                  title={t("results.noEvents")}
+                  message={t("results.noEventsMsg")}
+                  action={{ label: t("results.browseEvents"), href: "/events" }}
                 />
               )}
             </div>
@@ -307,7 +308,7 @@ export function ResultsScreen() {
                         key={i}
                         type="bulletin"
                         title={r.item.body}
-                        sourceLabel="Local business"
+                        sourceLabel={t("community.localBusiness")}
                         time={relativeTime(r.item.createdAt)}
                       />
                     );
@@ -316,9 +317,9 @@ export function ResultsScreen() {
               ) : (
                 <EmptyState
                   icon={<MapPin size={20} />}
-                  title="No community posts"
-                  message="See the latest news and bulletins in Community."
-                  action={{ label: "Open Community", href: "/community" }}
+                  title={t("results.noCommunity")}
+                  message={t("results.noCommunityMsg")}
+                  action={{ label: t("results.openCommunity"), href: "/community" }}
                 />
               )}
             </div>
@@ -355,11 +356,12 @@ function NoResults({
   hasFilters: boolean;
   onClearFilters: () => void;
 }) {
+  const { t } = useI18n();
   const navigate = useNavigate();
   return (
     <div className="py-8 text-center">
-      <h3 className="font-heading text-md font-semibold text-foreground">No matches for “{query}”</h3>
-      <p className="mt-1.5 text-sm text-muted-foreground">Here are a few ways forward:</p>
+      <h3 className="font-heading text-md font-semibold text-foreground">{t("results.noMatch", { q: query })}</h3>
+      <p className="mt-1.5 text-sm text-muted-foreground">{t("results.waysForward")}</p>
       <div className="mx-auto mt-4 flex max-w-xs flex-col gap-2">
         {hasFilters && (
           <button
@@ -367,7 +369,7 @@ function NoResults({
             onClick={onClearFilters}
             className="min-h-tap rounded-lg border border-border bg-card px-4 text-sm font-medium"
           >
-            Clear all filters
+            {t("results.clearFilters")}
           </button>
         )}
         <button
@@ -375,18 +377,18 @@ function NoResults({
           onClick={() => navigate("/search")}
           className="min-h-tap rounded-lg border border-border bg-card px-4 text-sm font-medium"
         >
-          Try a different search
+          {t("results.tryDifferent")}
         </button>
       </div>
       <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Try a category
+        {t("results.tryCategory")}
       </p>
       <div className="mt-2.5 flex flex-wrap justify-center gap-2">
         {TOP_CATEGORIES.filter((c) => c.slug !== "more")
           .slice(0, 4)
           .map((c) => (
             <Chip key={c.slug} onClick={() => navigate(`/search/results?cat=${c.slug}`)}>
-              {c.label}
+              {t(`cat.${c.slug}` as DictKey)}
             </Chip>
           ))}
       </div>
@@ -396,12 +398,13 @@ function NoResults({
 
 /** Map view is deferred (BUILD-BRIEF §3) — this seam keeps the toggle honest. */
 function MapPlaceholder({ onBack }: { onBack: () => void }) {
+  const { t } = useI18n();
   return (
     <EmptyState
       icon={<MapIcon size={22} />}
-      title="Map view is coming soon"
-      message="The same results and filters will appear on a map. For now, browse the list."
-      action={{ label: "Back to list", onClick: onBack }}
+      title={t("results.mapSoon")}
+      message={t("results.mapSoonMsg")}
+      action={{ label: t("results.backToList"), onClick: onBack }}
     />
   );
 }

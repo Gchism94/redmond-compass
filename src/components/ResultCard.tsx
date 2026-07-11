@@ -8,6 +8,7 @@ import type { GeoPoint } from "@/lib/types";
 import { OpenStatusLabel } from "./ui/OpenStatusLabel";
 import { Thumb } from "./ui/Thumb";
 import { VerifiedBadge } from "./ui/StatusBadge";
+import { useI18n } from "@/i18n";
 
 export interface ResultCardProps {
   business: Business;
@@ -35,6 +36,7 @@ export function ResultCard({
   onSave,
   className,
 }: ResultCardProps) {
+  const { t } = useI18n();
   const dist = formatDistance(distanceMiles(origin, business.geo));
   const catLine = [business.category, ...(business.subcategories ?? [])].slice(0, 3).join(" · ");
   const tel = telHref(business.phone);
@@ -114,7 +116,7 @@ export function ResultCard({
               !tel && "pointer-events-none opacity-40",
             )}
           >
-            <Phone size={15} /> Call
+            <Phone size={15} /> {t("common.call")}
           </a>
           <a
             href={directionsHref({ address: business.address, geo: business.geo })}
@@ -122,12 +124,12 @@ export function ResultCard({
             rel="noreferrer"
             className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition hover:bg-muted"
           >
-            <Navigation size={15} /> Directions
+            <Navigation size={15} /> {t("common.directions")}
           </a>
           <button
             type="button"
             aria-pressed={saved}
-            aria-label={saved ? "Saved" : "Save"}
+            aria-label={saved ? t("common.saved") : t("common.save")}
             onClick={() => onSave?.(business)}
             className={cn(
               "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border transition",

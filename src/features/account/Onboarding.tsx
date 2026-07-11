@@ -4,6 +4,7 @@ import { Compass, MapPin, Check } from "lucide-react";
 import { Button, Chip } from "@/components";
 import { INTERESTS } from "@/lib/taxonomy";
 import { useSession } from "./session";
+import { useI18n } from "@/i18n";
 
 /**
  * First-launch lite onboarding (BUILD-BRIEF §10). Location framed as a benefit +
@@ -11,6 +12,7 @@ import { useSession } from "./session";
  * Shows only until completed/skipped once.
  */
 export function Onboarding() {
+  const { t, lang, setLang } = useI18n();
   const { onboarded, completeOnboarding, setLocation } = useSession();
   const [picked, setPicked] = useState<string[]>([]);
   const [locating, setLocating] = useState(false);
@@ -46,14 +48,23 @@ export function Onboarding() {
   return createPortal(
     <div className="fixed inset-0 z-[60] flex flex-col overflow-y-auto bg-background">
       <div className="app-frame flex min-h-full flex-col px-6 pb-8 pt-12">
+        <div className="absolute right-4 top-4">
+          <button
+            type="button"
+            onClick={() => setLang(lang === "en" ? "es" : "en")}
+            className="rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground"
+          >
+            {lang === "en" ? "Español" : "English"}
+          </button>
+        </div>
         <div className="flex flex-1 flex-col">
           <div className="mb-6 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-foreground text-background">
               <Compass size={30} />
             </div>
-            <h1 className="font-heading text-2xl font-bold text-foreground">Welcome to Redmond Compass</h1>
+            <h1 className="font-heading text-2xl font-bold text-foreground">{t("onboarding.welcome")}</h1>
             <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
-              Find the right local spot fast — and keep up with what's happening around town.
+              {t("onboarding.welcomeMsg")}
             </p>
           </div>
 
@@ -64,9 +75,9 @@ export function Onboarding() {
                 <MapPin size={18} />
               </span>
               <div className="flex-1">
-                <p className="font-heading text-sm font-semibold text-foreground">See what's near you</p>
+                <p className="font-heading text-sm font-semibold text-foreground">{t("onboarding.nearYouTitle")}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Share your location to sort by distance and find what's open now. Optional — you can browse all of Redmond either way.
+                  {t("onboarding.nearYouMsg")}
                 </p>
               </div>
             </div>
@@ -80,20 +91,20 @@ export function Onboarding() {
             >
               {locGranted ? (
                 <>
-                  <Check size={16} /> Location on
+                  <Check size={16} /> {t("onboarding.locationOn")}
                 </>
               ) : locating ? (
-                "Locating…"
+                t("account.locating")
               ) : (
-                "Use my location"
+                t("onboarding.useLocation")
               )}
             </Button>
           </div>
 
           {/* Interests */}
           <div className="mt-6">
-            <p className="font-heading text-sm font-semibold text-foreground">What are you into?</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Pick a few to personalize your feed. Skippable.</p>
+            <p className="font-heading text-sm font-semibold text-foreground">{t("onboarding.whatInto")}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t("onboarding.whatIntoMsg")}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {INTERESTS.map((i) => (
                 <Chip key={i} active={picked.includes(i)} onClick={() => toggle(i)}>
@@ -106,14 +117,14 @@ export function Onboarding() {
 
         <div className="mt-8 space-y-2">
           <Button variant="primary" size="lg" fullWidth onClick={() => finish(true)}>
-            Start exploring
+            {t("onboarding.start")}
           </Button>
           <button
             type="button"
             onClick={() => finish(false)}
             className="w-full py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
           >
-            Skip for now
+            {t("onboarding.skip")}
           </button>
         </div>
       </div>

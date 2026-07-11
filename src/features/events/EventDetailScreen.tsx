@@ -4,11 +4,13 @@ import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Button, Thumb, StatusBadge, EmptyState, Skeleton, AddToCalendar } from "@/components";
 import { useEvent, useBusinessById } from "@/data/queries";
 import { eventDateBadge, eventTimeShort } from "@/lib/format";
+import { useI18n } from "@/i18n";
 import { directionsHref } from "@/lib/links";
 import { useSession } from "@/features/account/session";
 
 /** Single event detail. */
 export function EventDetailScreen() {
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const { data: event, isLoading, isFetched } = useEvent(id);
   const host = useBusinessById(event?.businessId);
@@ -17,7 +19,7 @@ export function EventDetailScreen() {
   if (isLoading) {
     return (
       <>
-        <ScreenHeader title="Event" back />
+        <ScreenHeader title={t("events.event")} back />
         <div className="space-y-3 px-4">
           <Skeleton className="h-40 w-full" />
           <Skeleton className="h-6 w-2/3" />
@@ -29,12 +31,12 @@ export function EventDetailScreen() {
   if (isFetched && !event)
     return (
       <>
-        <ScreenHeader title="Event" back />
+        <ScreenHeader title={t("events.event")} back />
         <EmptyState
           icon={<MapPin size={20} />}
-          title="Event not found"
-          message="It may have passed or been cancelled."
-          action={{ label: "Browse events", href: "/events" }}
+          title={t("events.notFound")}
+          message={t("events.notFoundMsg")}
+          action={{ label: t("events.browse"), href: "/events" }}
         />
       </>
     );
@@ -44,7 +46,7 @@ export function EventDetailScreen() {
 
   return (
     <div className="pb-6">
-      <ScreenHeader title="Event" back />
+      <ScreenHeader title={t("events.event")} back />
       <Thumb src={event.image} seed={event.title} alt={event.title} className="h-44 w-full" rounded="rounded-none" />
 
       <div className="px-4 pt-4">
@@ -58,9 +60,9 @@ export function EventDetailScreen() {
             {(event.category || event.tags?.length) && (
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {event.category && <StatusBadge tone="accent">{event.category}</StatusBadge>}
-                {event.tags?.map((t) => (
-                  <StatusBadge key={t} tone="neutral">
-                    {t}
+                {event.tags?.map((tag) => (
+                  <StatusBadge key={tag} tone="neutral">
+                    {tag}
                   </StatusBadge>
                 ))}
               </div>
@@ -94,7 +96,7 @@ export function EventDetailScreen() {
 
         {host.data && (
           <p className="mt-4 text-sm text-muted-foreground">
-            Hosted by{" "}
+            {t("events.hostedBy")}{" "}
             <Link to={`/b/${host.data.slug}`} className="font-semibold text-positive hover:underline">
               {host.data.name}
             </Link>
@@ -108,7 +110,7 @@ export function EventDetailScreen() {
             rel="noreferrer"
             className="inline-flex min-h-tap h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground"
           >
-            <Navigation size={16} /> Directions
+            <Navigation size={16} /> {t("common.directions")}
           </a>
           <Button
             variant={session.isSavedEvent(event.id) ? "positive" : "ghost"}
@@ -119,7 +121,7 @@ export function EventDetailScreen() {
               size={16}
               className={session.isSavedEvent(event.id) ? "fill-current" : undefined}
             />{" "}
-            {session.isSavedEvent(event.id) ? "Saved" : "Save"}
+            {session.isSavedEvent(event.id) ? t("common.saved") : t("common.save")}
           </Button>
         </div>
       </div>

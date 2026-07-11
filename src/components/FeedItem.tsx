@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/cn";
 import { Thumb } from "./ui/Thumb";
+import { tGlobal } from "@/i18n";
 
 export type FeedItemType = "news" | "bulletin";
 
@@ -61,7 +62,7 @@ export function FeedItem({
                 TAG_STYLE[type],
               )}
             >
-              {type}
+              {tGlobal(type === "news" ? "feed.news" : "feed.bulletin")}
             </span>
           )}
         </div>

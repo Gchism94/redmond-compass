@@ -4,33 +4,14 @@ import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components";
 import { useSession, type AuthReason } from "./session";
 import { GoogleButton } from "./GoogleButton";
+import { useI18n, type DictKey } from "@/i18n";
 
-const COPY: Record<AuthReason, { icon: React.ReactNode; title: string; sub: string }> = {
-  save: {
-    icon: <Bookmark size={22} />,
-    title: "Sign in to save",
-    sub: "Keep your favorite Redmond spots in one place, synced across devices.",
-  },
-  follow: {
-    icon: <UserPlus size={22} />,
-    title: "Sign in to follow",
-    sub: "Follow places you love and get their latest bulletins in your feed.",
-  },
-  saveEvent: {
-    icon: <CalendarPlus size={22} />,
-    title: "Sign in to save events",
-    sub: "Save events you're interested in and get reminders before they start.",
-  },
-  recommend: {
-    icon: <Heart size={22} />,
-    title: "Sign in to recommend",
-    sub: "Recommend places you love so other Redmond locals can find them.",
-  },
-  account: {
-    icon: <Compass size={22} />,
-    title: "Sign in to Redmond Compass",
-    sub: "Sync your saves, follows, and preferences across devices.",
-  },
+const COPY: Record<AuthReason, { icon: React.ReactNode; titleKey: DictKey; subKey: DictKey }> = {
+  save: { icon: <Bookmark size={22} />, titleKey: "auth.saveTitle", subKey: "auth.saveSub" },
+  follow: { icon: <UserPlus size={22} />, titleKey: "auth.followTitle", subKey: "auth.followSub" },
+  saveEvent: { icon: <CalendarPlus size={22} />, titleKey: "auth.saveEventTitle", subKey: "auth.saveEventSub" },
+  recommend: { icon: <Heart size={22} />, titleKey: "auth.recommendTitle", subKey: "auth.recommendSub" },
+  account: { icon: <Compass size={22} />, titleKey: "auth.accountTitle", subKey: "auth.accountSub" },
 };
 
 const inputClass =
@@ -43,6 +24,7 @@ const inputClass =
  * completes right here); the mock signs in instantly.
  */
 export function AuthSheet() {
+  const { t } = useI18n();
   const { authPrompt, closeAuth, startSignIn, verifyOtp, signInWithProvider } = useSession();
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
@@ -76,7 +58,7 @@ export function AuthSheet() {
     if (busy) return;
     const addr = email.trim();
     if (!addr || !/^\S+@\S+\.\S+$/.test(addr)) {
-      setError("Enter a valid email to continue."); // inline, on-brand — not the native bubble
+      setError(t("auth.invalidEmail")); // inline, on-brand — not the native bubble
       return;
     }
     setBusy(true);
@@ -86,7 +68,7 @@ export function AuthSheet() {
       if (needsOtp) setStep("code");
       else finish(); // mock — signed in instantly
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't send your code. Try again.");
+      setError(err instanceof Error ? err.message : t("auth.sendFailed"));
     } finally {
       setBusy(false);
     }
@@ -105,7 +87,7 @@ export function AuthSheet() {
       }
       // redirected: the browser is navigating to Google; nothing more to do here
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't start Google sign-in.");
+      setError(err instanceof Error ? err.message : t("auth.googleFailed"));
       setBusy(false);
     }
   };
@@ -114,7 +96,7 @@ export function AuthSheet() {
     e.preventDefault();
     if (busy) return;
     if (!code.trim()) {
-      setError("Enter the 6-digit code we emailed you.");
+      setError(t("auth.enterCodeError"));
       return;
     }
     setBusy(true);
@@ -123,7 +105,7 @@ export function AuthSheet() {
       await verifyOtp(email, code);
       finish();
     } catch {
-      setError("That code didn't work. Check it and try again.");
+      setError(t("auth.badCode"));
     } finally {
       setBusy(false);
     }
@@ -136,15 +118,15 @@ export function AuthSheet() {
           {copy.icon}
         </div>
         <h2 className="font-heading text-lg font-semibold text-foreground">
-          {step === "code" ? "Enter your code" : copy.title}
+          {step === "code" ? t("auth.enterCode") : t(copy.titleKey)}
         </h2>
         <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground">
           {step === "code" ? (
             <>
-              We emailed a 6-digit code to <b className="text-foreground">{email}</b>.
+              {t("auth.codeSent")} <b className="text-foreground">{email}</b>.
             </>
           ) : (
-            copy.sub
+            t(copy.subKey)
           )}
         </p>
       </div>
@@ -155,45 +137,45 @@ export function AuthSheet() {
           <GoogleButton onClick={continueWithGoogle} disabled={busy} />
           <div className="my-3 flex items-center gap-3">
             <span className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
+            <span className="text-xs text-muted-foreground">{t("common.or")}</span>
             <span className="h-px flex-1 bg-border" />
           </div>
         </div>
         <form onSubmit={submitEmail} className="space-y-3" noValidate>
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-foreground">Email</span>
+            <span className="mb-1 block text-xs font-semibold text-foreground">{t("auth.email")}</span>
             <input
               type="email"
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t("auth.emailPlaceholder")}
               className={inputClass}
             />
           </label>
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-foreground">
-              Name <span className="font-normal text-muted-foreground">(optional)</span>
+              {t("auth.name")} <span className="font-normal text-muted-foreground">{t("auth.optional")}</span>
             </span>
             <input
               type="text"
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="What should we call you?"
+              placeholder={t("auth.namePlaceholder")}
               className={inputClass}
             />
           </label>
           {error && <p className="text-sm text-danger">{error}</p>}
           <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
-            {busy ? "Sending…" : "Continue"}
+            {busy ? t("auth.sending") : t("common.continue")}
           </Button>
         </form>
         </>
       ) : (
         <form onSubmit={submitCode} className="mt-5 space-y-3" noValidate>
           <label className="block">
-            <span className="mb-1 block text-xs font-semibold text-foreground">6-digit code</span>
+            <span className="mb-1 block text-xs font-semibold text-foreground">{t("auth.codeLabel")}</span>
             <input
               type="text"
               inputMode="numeric"
@@ -208,7 +190,7 @@ export function AuthSheet() {
           </label>
           {error && <p className="text-sm text-danger">{error}</p>}
           <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
-            {busy ? "Verifying…" : "Verify & continue"}
+            {busy ? t("auth.verifying") : t("auth.verifyContinue")}
           </Button>
           <button
             type="button"
@@ -219,7 +201,7 @@ export function AuthSheet() {
             }}
             className="w-full py-1 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
           >
-            Use a different email
+            {t("auth.differentEmail")}
           </button>
         </form>
       )}
@@ -229,10 +211,10 @@ export function AuthSheet() {
         onClick={closeAuth}
         className="mt-3 w-full py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
       >
-        Keep browsing without an account
+        {t("auth.keepBrowsing")}
       </button>
       <p className="mt-2 text-center text-xs text-muted-foreground">
-        Browsing is always free — we only ask when you save or follow.
+        {t("auth.alwaysFree")}
       </p>
     </Sheet>
   );

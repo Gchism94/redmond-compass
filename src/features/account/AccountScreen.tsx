@@ -8,6 +8,7 @@ import {
   Plus,
   Store,
   Check,
+  Globe,
 } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Switch, Chip, Button } from "@/components";
@@ -15,9 +16,11 @@ import { Sheet } from "@/components/ui/Sheet";
 import { INTERESTS } from "@/lib/taxonomy";
 import { InstallRow } from "@/pwa/InstallPrompt";
 import { useSession } from "./session";
+import { useI18n } from "@/i18n";
 
 /** Account (S8). Status, interests, notification prefs, location, switch-to-business. */
 export function AccountScreen() {
+  const { t, lang, setLang } = useI18n();
   const s = useSession();
   const navigate = useNavigate();
   const [editInterests, setEditInterests] = useState(false);
@@ -29,7 +32,7 @@ export function AccountScreen() {
 
   return (
     <div className="pb-6">
-      <ScreenHeader title="Account" />
+      <ScreenHeader title={t("account.title")} />
 
       {/* Status */}
       <section className="px-4 pt-1">
@@ -40,32 +43,32 @@ export function AccountScreen() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-heading text-sm font-semibold text-foreground">{s.user!.name}</p>
-              <p className="truncate text-xs text-muted-foreground">Signed in · syncing saves</p>
+              <p className="truncate text-xs text-muted-foreground">{t("account.signedIn")}</p>
             </div>
             <button
               type="button"
               onClick={s.signOut}
               className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
             >
-              <LogOut size={13} /> Sign out
+              <LogOut size={13} /> {t("account.signOut")}
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary/60 p-3">
             <LogIn size={20} className="shrink-0 text-positive" />
             <div className="flex-1">
-              <p className="font-heading text-sm font-semibold text-foreground">Browsing as a guest</p>
-              <p className="text-xs text-muted-foreground">Sign in to sync saves, follows & prefs.</p>
+              <p className="font-heading text-sm font-semibold text-foreground">{t("account.guest")}</p>
+              <p className="text-xs text-muted-foreground">{t("account.guestMsg")}</p>
             </div>
             <Button size="sm" variant="primary" onClick={() => s.openAuth("account")}>
-              Sign in
+              {t("account.signIn")}
             </Button>
           </div>
         )}
       </section>
 
       {/* Interests */}
-      <Section title="Your interests" onAction={() => setEditInterests(true)} actionLabel="Edit">
+      <Section title={t("account.interests")} onAction={() => setEditInterests(true)} actionLabel={t("common.edit")}>
         {s.interests.length ? (
           <div className="flex flex-wrap gap-2">
             {s.interests.map((i) => (
@@ -74,7 +77,7 @@ export function AccountScreen() {
               </Chip>
             ))}
             <Chip leadingIcon={<Plus size={12} />} onClick={() => setEditInterests(true)}>
-              Add
+              {t("account.add")}
             </Chip>
           </div>
         ) : (
@@ -83,25 +86,25 @@ export function AccountScreen() {
             onClick={() => setEditInterests(true)}
             className="text-sm font-medium text-positive"
           >
-            + Add interests to personalize your feed
+            {t("account.addInterests")}
           </button>
         )}
       </Section>
 
       {/* Notifications */}
-      <Section title="Notifications">
+      <Section title={t("account.notifications")}>
         <ToggleRow
-          label="Bulletins from places you follow"
+          label={t("account.notifBulletins")}
           checked={s.notificationPrefs.followedBulletins}
           onChange={(v) => s.setNotificationPref("followedBulletins", v)}
         />
         <ToggleRow
-          label="Saved-event reminders"
+          label={t("account.notifEvents")}
           checked={s.notificationPrefs.savedEvents}
           onChange={(v) => s.setNotificationPref("savedEvents", v)}
         />
         <ToggleRow
-          label="Local news"
+          label={t("account.notifNews")}
           checked={s.notificationPrefs.localNews}
           onChange={(v) => s.setNotificationPref("localNews", v)}
         />
@@ -114,31 +117,50 @@ export function AccountScreen() {
           onClick={switchToBusiness}
           className="flex min-h-tap w-full items-center justify-center gap-2 rounded-lg bg-foreground px-4 text-sm font-semibold text-background"
         >
-          <Store size={16} /> {s.ownerBusinessId ? "Go to your dashboard" : "Switch to Business"}
+          <Store size={16} /> {s.ownerBusinessId ? t("account.goToDashboard") : t("account.switchToBusiness")}
         </button>
       </section>
 
       {/* Location + links */}
-      <Section title="Settings">
+      <Section title={t("account.settings")}>
         <div className="flex items-center justify-between py-3 text-sm">
           <span className="flex items-center gap-2 text-foreground">
-            <MapPin size={15} className="text-muted-foreground" /> Location
+            <MapPin size={15} className="text-muted-foreground" /> {t("account.location")}
           </span>
           <LocationControl />
         </div>
+        <div className="flex items-center justify-between py-3 text-sm">
+          <span className="flex items-center gap-2 text-foreground">
+            <Globe size={15} className="text-muted-foreground" /> {t("account.language")}
+          </span>
+          <div className="flex gap-1 rounded-pill border border-border p-0.5">
+            {(["en", "es"] as const).map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLang(l)}
+                aria-pressed={lang === l}
+                className={
+                  "rounded-pill px-3 py-1 text-xs font-semibold transition " +
+                  (lang === l ? "bg-foreground text-background" : "text-muted-foreground")
+                }
+              >
+                {l === "en" ? "English" : "Español"}
+              </button>
+            ))}
+          </div>
+        </div>
         <InstallRow />
-        <LinkRow label="About & Contact" href="https://redmondcompass.com" external />
-        <LinkRow label="Help" href="https://redmondcompass.com" external />
-        <LinkRow label="Privacy & terms" href="https://redmondcompass.com" external />
+        <LinkRow label={t("account.aboutContact")} href="https://redmondcompass.com" external />
+        <LinkRow label={t("account.help")} href="https://redmondcompass.com" external />
+        <LinkRow label={t("account.privacy")} href="https://redmondcompass.com" external />
       </Section>
 
-      <p className="px-4 pt-2 text-center text-xs text-muted-foreground">Redmond Compass · v0.1 (MVP)</p>
+      <p className="px-4 pt-2 text-center text-xs text-muted-foreground">{t("account.version")}</p>
 
       {/* Interest editor */}
-      <Sheet open={editInterests} onClose={() => setEditInterests(false)} title="Your interests">
-        <p className="mb-3 text-sm text-muted-foreground">
-          Pick what you're into — we'll use it to personalize your Home feed.
-        </p>
+      <Sheet open={editInterests} onClose={() => setEditInterests(false)} title={t("account.interests")}>
+        <p className="mb-3 text-sm text-muted-foreground">{t("account.interestsSheetMsg")}</p>
         <div className="flex flex-wrap gap-2">
           {INTERESTS.map((i) => (
             <Chip key={i} active={s.interests.includes(i)} onClick={() => s.toggleInterest(i)}>
@@ -147,7 +169,7 @@ export function AccountScreen() {
           ))}
         </div>
         <Button variant="primary" size="lg" fullWidth className="mt-5" onClick={() => setEditInterests(false)}>
-          Done
+          {t("common.done")}
         </Button>
       </Sheet>
     </div>
@@ -211,6 +233,7 @@ function LinkRow({ label, href, external }: { label: string; href: string; exter
 }
 
 function LocationControl() {
+  const { t } = useI18n();
   const s = useSession();
   const [busy, setBusy] = useState(false);
   if (s.location) {
@@ -220,7 +243,7 @@ function LocationControl() {
         onClick={() => s.setLocation(null)}
         className="text-sm font-medium text-positive"
       >
-        Using your location · Clear
+        {t("account.usingLocation")}
       </button>
     );
   }
@@ -242,7 +265,7 @@ function LocationControl() {
       }}
       className="text-sm font-medium text-positive"
     >
-      {busy ? "Locating…" : "Redmond, OR · Use mine"}
+      {busy ? t("account.locating") : t("account.useMine")}
     </button>
   );
 }

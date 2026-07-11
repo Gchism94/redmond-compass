@@ -6,6 +6,7 @@ import { eventDateBadge, eventTimeShort } from "@/lib/format";
 import { formatDistance, distanceMiles, REDMOND_CENTER } from "@/lib/geo";
 import type { GeoPoint } from "@/lib/types";
 import { AddToCalendar } from "./AddToCalendar";
+import { useI18n } from "@/i18n";
 
 export interface EventCardProps {
   event: EventItem;
@@ -33,6 +34,7 @@ export function EventCard({
   calendarMenuPlacement = "down",
   className,
 }: EventCardProps) {
+  const { t } = useI18n();
   const badge = eventDateBadge(event.startAt);
   const dist =
     event.geo != null ? ` · ${formatDistance(distanceMiles(origin, event.geo))}` : "";
@@ -67,7 +69,7 @@ export function EventCard({
             <button
               type="button"
               aria-pressed={saved}
-              aria-label={saved ? "Saved" : "Save event"}
+              aria-label={saved ? t("common.saved") : t("events.saveEvent")}
               onClick={() => onSave(event)}
               className={cn(
                 "rounded-full p-2 transition",

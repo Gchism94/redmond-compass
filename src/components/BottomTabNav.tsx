@@ -1,13 +1,14 @@
 import { NavLink } from "react-router-dom";
 import { Home, Search, Calendar, Bookmark, User } from "lucide-react";
+import { useI18n } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 const TABS = [
-  { to: "/", label: "Home", icon: Home, end: true },
-  { to: "/search", label: "Search", icon: Search, end: false },
-  { to: "/events", label: "Events", icon: Calendar, end: false },
-  { to: "/saved", label: "Saved", icon: Bookmark, end: false },
-  { to: "/account", label: "Account", icon: User, end: false },
+  { to: "/", label: "nav.home", icon: Home, end: true },
+  { to: "/search", label: "nav.search", icon: Search, end: false },
+  { to: "/events", label: "nav.events", icon: Calendar, end: false },
+  { to: "/saved", label: "nav.saved", icon: Bookmark, end: false },
+  { to: "/account", label: "nav.account", icon: User, end: false },
 ] as const;
 
 /**
@@ -15,6 +16,7 @@ const TABS = [
  * incl. pushed ones (profile). Active tab = pine-green. 44px+ tap targets.
  */
 export function BottomTabNav() {
+  const { t } = useI18n();
   return (
     <nav
       aria-label="Primary"
@@ -36,7 +38,7 @@ export function BottomTabNav() {
               {({ isActive }) => (
                 <>
                   <Icon size={22} strokeWidth={isActive ? 2.4 : 2} aria-hidden />
-                  <span>{label}</span>
+                  <span>{t(label as never)}</span>
                 </>
               )}
             </NavLink>

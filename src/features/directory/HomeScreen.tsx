@@ -16,6 +16,7 @@ import { relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
 import { InstallBanner } from "@/pwa/InstallPrompt";
 import type { Business } from "@/lib/types";
+import { useI18n } from "@/i18n";
 
 /**
  * Home (S2). Personalized feed with a graceful cold-start — at MVP (pre-auth)
@@ -24,6 +25,7 @@ import type { Business } from "@/lib/types";
  * Personalization (follows, recently-viewed) switches on with auth in step 6.
  */
 export function HomeScreen() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const session = useSession();
   const origin = session.location ?? undefined;
@@ -43,16 +45,16 @@ export function HomeScreen() {
   // degrades from "Open now" to "Nearby in Redmond" rather than going blank.
   const openItems = openNow.data?.items ?? [];
   const hasOpen = openItems.length > 0;
-  const railTitle = hasOpen ? "Open now in Redmond" : "Nearby in Redmond";
+  const railTitle = hasOpen ? t("home.openNow") : t("home.nearbyIn");
   const railItems = hasOpen ? openItems : (allBiz.data?.items ?? []).slice(0, 8);
   const railLoading = openNow.isLoading || (!hasOpen && allBiz.isLoading);
 
   // Personalization (BUILD-BRIEF §12 step 6). Follow-feed when following anyone,
-  // else "Popular this week". Recently-viewed rail appears for returning users.
+  // else t("home.popular"). Recently-viewed rail appears for returning users.
   const followed = session.followedBusinessIds;
   const followBulletins = (bulletins.data ?? []).filter((b) => followed.includes(b.businessId));
   const usingFollowFeed = followBulletins.length > 0;
-  const feedTitle = usingFollowFeed ? "From places you follow" : "Popular this week";
+  const feedTitle = usingFollowFeed ? t("home.fromFollowed") : t("home.popular");
   const feedBulletins = (usingFollowFeed ? followBulletins : (bulletins.data ?? [])).slice(0, 4);
 
   const recentlyViewed = session.recentlyViewedIds
@@ -71,7 +73,7 @@ export function HomeScreen() {
             onChange={() => {}}
             readOnlyButton
             onActivate={() => navigate("/search")}
-            placeholder="Search Redmond…"
+            placeholder={t("home.searchPlaceholder")}
           />
         </div>
         <button
@@ -79,7 +81,7 @@ export function HomeScreen() {
           onClick={() => navigate("/account")}
           className="mt-2.5 inline-flex items-center gap-1.5 rounded-pill border border-positive/25 bg-positive/10 px-3 py-1.5 text-xs font-semibold text-positive"
         >
-          <MapPin size={13} /> Redmond, OR · Near you
+          <MapPin size={13} /> {t("home.nearYou")}
         </button>
       </header>
 
@@ -101,7 +103,7 @@ export function HomeScreen() {
             ))}
       </Rail>
 
-      {/* Follow feed → "Popular this week" cold-start fallback */}
+      {/* Follow feed → t("home.popular") cold-start fallback */}
       <section className="px-4 py-2">
         <SectionHeader title={feedTitle} seeAllHref="/community" />
         <div className="-my-1 divide-y divide-border">
@@ -114,7 +116,7 @@ export function HomeScreen() {
                     key={bl.id}
                     type="bulletin"
                     title={bl.body}
-                    sourceLabel={biz?.name ?? "A local business"}
+                    sourceLabel={biz?.name ?? t("home.aLocalBusiness")}
                     seed={biz?.name}
                     time={relativeTime(bl.createdAt)}
                     href={biz ? `/b/${biz.slug}` : undefined}
@@ -125,14 +127,14 @@ export function HomeScreen() {
         </div>
         {!usingFollowFeed && (
           <div className="mt-2 rounded-lg border border-dashed border-positive/40 bg-positive/5 px-3 py-2.5 text-xs text-positive">
-            <b className="font-semibold">Follow places</b> you like to make this feed yours.
+            <b className="font-semibold">{t("home.followHintStrong")}</b> {t("home.followHintRest")}
           </div>
         )}
       </section>
 
       {/* Upcoming events */}
       <section className="px-4 py-2">
-        <SectionHeader title="Upcoming events" seeAllHref="/events" />
+        <SectionHeader title={t("home.upcomingEvents")} seeAllHref="/events" />
         <div className="-my-1 divide-y divide-border">
           {events.isLoading
             ? Array.from({ length: 3 }).map((_, i) => <FeedRowSkeleton key={i} />)
@@ -142,7 +144,7 @@ export function HomeScreen() {
 
       {/* Local news */}
       <section className="px-4 py-2">
-        <SectionHeader title="Local news" seeAllHref="/community" />
+        <SectionHeader title={t("home.localNews")} seeAllHref="/community" />
         <div className="-my-1 divide-y divide-border">
           {news.isLoading
             ? Array.from({ length: 2 }).map((_, i) => <FeedRowSkeleton key={i} />)
@@ -165,13 +167,13 @@ export function HomeScreen() {
 
       {/* Browse by category */}
       <section className="px-4 py-3">
-        <SectionHeader title="Browse by category" />
+        <SectionHeader title={t("search.browseByCategory")} />
         <CategoryGrid />
       </section>
 
       {/* Recently viewed — returning users only (never an empty row) */}
       {recentlyViewed.length > 0 && (
-        <Rail title="Recently viewed">
+        <Rail title={t("home.recentlyViewed")}>
           {recentlyViewed.map((b) => (
             <ResultCard key={b.id} business={b} variant="rail" origin={origin} />
           ))}
@@ -184,7 +186,7 @@ export function HomeScreen() {
           to="/community"
           className="flex min-h-tap items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground"
         >
-          Community &amp; news
+          {t("home.communityNews")}
         </Link>
         <Link
           to="/resources"

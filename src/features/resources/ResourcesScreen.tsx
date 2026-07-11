@@ -9,24 +9,26 @@ import { SearchField, EmptyState, Skeleton } from "@/components";
 import { useResources } from "@/data/queries";
 import { telHref } from "@/lib/links";
 import type { Resource, ResourceCategory } from "@/lib/types";
+import { useI18n, type DictKey } from "@/i18n";
 
 // All 10 resource categories (widened for the Base44 import); groups with no
 // entries simply don't render, so the screen stays exactly as tight as the data.
-const GROUPS: { category: ResourceCategory; label: string; icon: LucideIcon }[] = [
-  { category: "emergency", label: "Emergency & safety", icon: Siren },
-  { category: "health", label: "Health", icon: HeartPulse },
-  { category: "mental_health", label: "Mental health", icon: Brain },
-  { category: "government", label: "Government", icon: Landmark },
-  { category: "community", label: "Community", icon: Users },
-  { category: "education", label: "Education", icon: GraduationCap },
-  { category: "housing", label: "Housing", icon: House },
-  { category: "transportation", label: "Transportation", icon: Bus },
-  { category: "utilities", label: "Utilities", icon: Zap },
-  { category: "other", label: "More resources", icon: CircleEllipsis },
+const GROUPS: { category: ResourceCategory; icon: LucideIcon }[] = [
+  { category: "emergency", icon: Siren },
+  { category: "health", icon: HeartPulse },
+  { category: "mental_health", icon: Brain },
+  { category: "government", icon: Landmark },
+  { category: "community", icon: Users },
+  { category: "education", icon: GraduationCap },
+  { category: "housing", icon: House },
+  { category: "transportation", icon: Bus },
+  { category: "utilities", icon: Zap },
+  { category: "other", icon: CircleEllipsis },
 ];
 
 /** Resources. Searchable, categorized civic list — the simplest screen, pure utility. */
 export function ResourcesScreen() {
+  const { t } = useI18n();
   const [text, setText] = useState("");
   const { data, isLoading } = useResources({ text: text || undefined });
 
@@ -42,9 +44,9 @@ export function ResourcesScreen() {
 
   return (
     <div className="pb-4">
-      <ScreenHeader title="Resources" />
+      <ScreenHeader title={t("home.resources")} />
       <div className="px-4 pt-1">
-        <SearchField value={text} onChange={setText} placeholder="Search resources" />
+        <SearchField value={text} onChange={setText} placeholder={t("resources.searchPlaceholder")} />
       </div>
 
       {isLoading ? (
@@ -56,15 +58,15 @@ export function ResourcesScreen() {
       ) : (data?.length ?? 0) === 0 ? (
         <EmptyState
           icon={<LifeBuoy size={20} />}
-          title="No resources match"
-          message="Try a different search term."
-          action={{ label: "Clear search", onClick: () => setText("") }}
+          title={t("resources.empty")}
+          message={t("resources.emptyMsg")}
+          action={{ label: t("events.clear"), onClick: () => setText("") }}
         />
       ) : (
         GROUPS.filter((g) => (byCategory.get(g.category)?.length ?? 0) > 0).map((g) => (
           <section key={g.category} className="px-4 pt-3">
             <h2 className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <g.icon size={13} /> {g.label}
+              <g.icon size={13} /> {t(`resources.group.${g.category}` as DictKey)}
             </h2>
             <ul className="divide-y divide-border">
               {byCategory.get(g.category)!.map((r) => (
@@ -79,6 +81,7 @@ export function ResourcesScreen() {
 }
 
 function ResourceRow({ resource }: { resource: Resource }) {
+  const { t } = useI18n();
   const tel = telHref(resource.phone);
   return (
     <li className="flex items-start gap-3 py-3">
@@ -92,7 +95,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
           href={tel}
           className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
         >
-          <Phone size={13} /> Call
+          <Phone size={13} /> {t("common.call")}
         </a>
       ) : resource.url ? (
         <a
@@ -101,7 +104,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
           rel="noreferrer"
           className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-foreground"
         >
-          <ExternalLink size={13} /> Open
+          <ExternalLink size={13} /> {t("common.open")}
         </a>
       ) : null}
     </li>

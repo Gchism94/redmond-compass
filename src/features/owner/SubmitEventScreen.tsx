@@ -5,11 +5,13 @@ import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Field, fieldInputClass, Button, Card, Skeleton } from "@/components";
 import { useOwnerBusiness } from "./useOwnerBusiness";
 import { useCreateEvent } from "@/data/queries";
+import { useI18n } from "@/i18n";
 
 const CATEGORIES = ["Music", "Community", "Family", "Festival", "Outdoors", "Workshop", "Food & Drink", "Other"];
 
 /** Submit Event (B3) — free and uncapped for all tiers. Tied to the owner's business. */
 export function SubmitEventScreen() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { ownerBusinessId, data: business, isLoading } = useOwnerBusiness();
   const create = useCreateEvent();
@@ -28,7 +30,7 @@ export function SubmitEventScreen() {
   if (isLoading || !business) {
     return (
       <>
-        <ScreenHeader title="Submit event" back />
+        <ScreenHeader title={t("owner.submitEvent")} back />
         <div className="space-y-3 px-4 pt-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-14 w-full" />
@@ -59,53 +61,53 @@ export function SubmitEventScreen() {
 
   return (
     <div className="pb-8">
-      <ScreenHeader title="Submit an event" back />
+      <ScreenHeader title={t("owner.submitEvent")} back />
 
       <div className="space-y-4 px-4 pt-1">
         <p className="text-sm text-muted-foreground">
-          Events are free and unlimited — they appear on your profile and in the Events tab.
+          {t("owner.eventsFree")}
         </p>
 
         <Card className="space-y-3.5 p-4">
-          <Field label="Event title" required htmlFor="ev-title">
+          <Field label={t("owner.eventTitle")} required htmlFor="ev-title">
             <input id="ev-title" className={fieldInputClass} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Live acoustic night" />
           </Field>
           <div className="grid grid-cols-3 gap-3">
-            <Field label="Date" required htmlFor="ev-date">
+            <Field label={t("owner.date")} required htmlFor="ev-date">
               <input id="ev-date" type="date" className={fieldInputClass} value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
-            <Field label="Start" required htmlFor="ev-start">
+            <Field label={t("owner.start")} required htmlFor="ev-start">
               <input id="ev-start" type="time" className={fieldInputClass} value={start} onChange={(e) => setStart(e.target.value)} />
             </Field>
-            <Field label="End" htmlFor="ev-end">
+            <Field label={t("owner.end")} htmlFor="ev-end">
               <input id="ev-end" type="time" className={fieldInputClass} value={end} onChange={(e) => setEnd(e.target.value)} />
             </Field>
           </div>
-          <Field label="Venue" htmlFor="ev-venue" hint="Defaults to your business name">
+          <Field label={t("owner.venue")} htmlFor="ev-venue" hint={t("owner.venueHint")}>
             <input id="ev-venue" className={fieldInputClass} value={venue} onChange={(e) => setVenue(e.target.value)} placeholder={business.name} />
           </Field>
-          <Field label="Address" htmlFor="ev-addr" hint="Defaults to your business address">
+          <Field label={t("owner.address")} htmlFor="ev-addr" hint={t("owner.addressHint")}>
             <input id="ev-addr" className={fieldInputClass} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={business.address} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Category" htmlFor="ev-cat">
+            <Field label={t("owner.category")} htmlFor="ev-cat">
               <select id="ev-cat" className={fieldInputClass} value={category} onChange={(e) => setCategory(e.target.value)}>
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </Field>
-            <Field label="Tags" htmlFor="ev-tags" hint="Comma-separated">
+            <Field label={t("owner.tags")} htmlFor="ev-tags" hint={t("owner.tagsHint")}>
               <input id="ev-tags" className={fieldInputClass} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Free, Family" />
             </Field>
           </div>
-          <Field label="Description" htmlFor="ev-desc">
-            <textarea id="ev-desc" rows={3} className={fieldInputClass} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's happening?" />
+          <Field label={t("owner.description")} htmlFor="ev-desc">
+            <textarea id="ev-desc" rows={3} className={fieldInputClass} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("owner.eventDescPlaceholder")} />
           </Field>
         </Card>
 
         <Button variant="primary" size="lg" fullWidth disabled={!valid || create.isPending} onClick={submit}>
-          {create.isPending ? "Submitting…" : <><CalendarPlus size={16} /> Submit event</>}
+          {create.isPending ? t("owner.submitting") : <><CalendarPlus size={16} /> {t("owner.submitEventBtn")}</>}
         </Button>
       </div>
     </div>
