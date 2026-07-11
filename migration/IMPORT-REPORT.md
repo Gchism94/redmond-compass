@@ -59,6 +59,19 @@ build renders all six screens with real data at 390px — zero console errors.
 ⚠️ **Free-tier auto-pause**: the hosted project pauses after ~7 idle days, taking the
 live data down. Move to Pro (or add a keep-alive) **before the Phase 3 DNS cutover**.
 
+## Google Calendar inbound sync — DONE (2026-07-10)
+`scripts/sync-gcal-events.mjs`, scheduled every 6h by `.github/workflows/gcal-sync.yml`.
+The public ICS feed is the system of record for calendar events: upsert on
+`gcal_event_id` (Google id, matching what Base44 stored), recurring series expanded
+(DST-safe), duplicate calendar entries collapsed onto the row already in the DB,
+vanished **future** entries deleted, ICS-cancelled kept as `cancelled`. Rows the calendar
+doesn't own (`gcal_event_id NULL`) are never touched; editorial image/category/tags
+survive refreshes. First run added 22 events (Testimony Wine Bar series, Ember events,
+May–July Farmers Markets) on local AND hosted → 133 events total, anon sees 131 (2
+pending hidden); re-run is a no-op. ⚠️ Calendar-side cleanup worth doing: the Aug
+7/14/21/28 Farmers Markets each exist **three times** on the Google Calendar (the sync
+collapses them, but the calendar itself stays messy).
+
 ## Follow-ups (not blocking)
 1. ~~Geocode~~ DONE 2026-07-10: 102/132 geocoded (Nominatim, 50-mi sanity radius, cache in migration/geocode-cache.json). Remaining 30: 17 no address, 13 junk/unmappable addresses — editorial fix list.
 2. Editorial pass on the 33 noon-defaulted event times.

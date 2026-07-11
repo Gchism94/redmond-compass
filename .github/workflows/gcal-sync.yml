@@ -1,0 +1,26 @@
+# Google Calendar → Supabase events, every 6 hours (Stage 1 Phase 1 inbound sync).
+# One-way: the public ICS feed is the system of record for calendar events; the
+# script upserts on gcal_event_id and never touches rows the calendar doesn't own
+# (see scripts/sync-gcal-events.mjs). A failed sync fails the job → GitHub notifies.
+# The service-role key lives ONLY in the repo secret (private repo), never in code.
+name: gcal-sync
+on:
+  schedule:
+    - cron: "23 */6 * * *" # 00:23/06:23/12:23/18:23 UTC
+  workflow_dispatch: {}
+concurrency: gcal-sync
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Sync calendar into hosted events
+        run: node scripts/sync-gcal-events.mjs
+        env:
+          SUPABASE_URL: https://jdrhcmkqtewlzlojixpd.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

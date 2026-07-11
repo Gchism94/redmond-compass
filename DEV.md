@@ -30,6 +30,8 @@ Primary canvas ~360–390px. Open dev tools device mode (iPhone 12/13 ≈ 390px)
 
 - **Spanish (i18n)** — native-level, full-UI Spanish alongside English. Tiny typed layer in `src/i18n/` (no dependency): `dict.ts` holds EN + ES (ES typed against EN, so a missing translation is a compile error), `useI18n()` for components, `tGlobal()/getLocale()` for lib code (open-status, relative time, Intl dates). Auto-detects from `navigator.language` (es* → Spanish), persists (`rc.lang`), toggles in Account → Settings → Language and on the onboarding screen; `<html lang>` stays in sync. **Dynamic data (business descriptions, news bodies, event titles) renders as authored** — only UI chrome/labels translate; Phase 2 content pages get authored EN/ES versions on this infra.
 
+- **Google Calendar inbound sync (Stage 1, Phase 1)** — `scripts/sync-gcal-events.mjs` mirrors the public Redmond Compass calendar (ICS feed) into `events`, one-way, keyed on `gcal_event_id`: upserts title/description/times/venue+address/status (DST-safe via the app's `eventStartToUtc`), expands recurring series, collapses the calendar's own duplicate entries, deletes **future** rows whose calendar entry disappeared, and keeps ICS-cancelled entries as `cancelled`. Rows the calendar doesn't own (`gcal_event_id IS NULL` — Base44 imports, app submissions) are never touched, and editorial additions (image/category/tags) survive refreshes. Scheduled every 6h by `.github/workflows/gcal-sync.yml` (service-role key only as a repo secret); run locally with `node scripts/sync-gcal-events.mjs` (`DRY_RUN=1` prints the plan; env vars target hosted).
+
 ## Non-negotiables held
 
 - Browse/search free; no auth gate. Save/Follow fire **just-in-time** auth (the AuthSheet), never block browsing.

@@ -19,4 +19,5 @@ is **never committed** — same rule as the Supabase service keys.
 Sources of truth (per the Stage 1 brief): **GoHighLevel** is the system of record for
 business/community data (one-way GHL → Supabase sync, Phase 1). This snapshot and the
 Google Sheet (a Base44 export artifact) are insurance/verification, not sources of truth.
-The Google Calendar feeds the events inbound sync (public ICS; TZ America/Los_Angeles).
+The Google Calendar feeds the events inbound sync (public ICS; TZ America/Los_Angeles) —
+implemented as `scripts/sync-gcal-events.mjs`, scheduled by `.github/workflows/gcal-sync.yml`.
