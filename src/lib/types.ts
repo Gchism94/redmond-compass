@@ -55,6 +55,18 @@ export interface Business {
   tier: Tier; // MVP always "free"
   createdAt: string;
   memberSince?: string;
+  // Base44-parity fields (free-tier content the live site already showed)
+  longDescription?: string;
+  messageLink?: string;
+  socials?: Partial<Record<"facebook" | "instagram" | "tiktok" | "youtube" | "linkedin" | "twitter" | "pinterest", string>>;
+  licenseNumber?: string;
+  specials?: string;
+  specialsImageUrl?: string;
+  additionalLocations?: { name?: string; address?: string; hours?: string }[];
+  /** multi-category memberships beyond the primary `category` */
+  extraCategories?: string[];
+  /** unstructured hours from the legacy site; structured `hours` stays canonical */
+  hoursText?: string;
   // DEFERRED (post-MVP enhanced/Member + derived presence signals)
   story?: string;
   ownerSpotlight?: { name: string; blurb: string; photo?: string };
@@ -94,6 +106,11 @@ export interface EventItem {
   tags?: string[];
   linkCta?: { label: string; url: string };
   status: "upcoming" | "past" | "cancelled";
+  /** submission workflow (public read shows approved only — RLS-enforced) */
+  approvalStatus?: "pending" | "approved";
+  submitterName?: string;
+  /** Google Calendar sync dedupe key (inbound ICS sync) */
+  gcalEventId?: string;
 }
 
 export interface NewsArticle {
@@ -106,9 +123,15 @@ export interface NewsArticle {
   source: string;
   author?: string;
   publishedAt: string;
+  category?: string;
+  /** editorial pin on the News feed (content ordering, never business ranking) */
+  pinned?: boolean;
+  sourceUrl?: string;
 }
 
-export type ResourceCategory = "emergency" | "government" | "community" | "utilities";
+export type ResourceCategory =
+  | "emergency" | "government" | "community" | "utilities"
+  | "health" | "mental_health" | "education" | "housing" | "transportation" | "other";
 export interface Resource {
   id: ID;
   name: string;
@@ -117,6 +140,11 @@ export interface Resource {
   phone?: string;
   url?: string;
   address?: string;
+  subcategory?: string;
+  image?: string;
+  email?: string;
+  additionalPhones?: { label?: string; phone: string }[];
+  serviceTimes?: string;
 }
 
 export interface User {

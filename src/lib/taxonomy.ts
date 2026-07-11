@@ -15,13 +15,16 @@ export interface TopCategory {
   includes: string[];
 }
 
+// includes lists carry BOTH the original dev vocabulary and the Base44-imported display
+// categories (see migration/scripts/import-base44.mjs CATEGORY_LABELS) so real listings
+// roll up into the browse grid. Unmatched categories fall through to "more".
 export const TOP_CATEGORIES: TopCategory[] = [
-  { slug: "food-drink", label: "Food & Drink", icon: "UtensilsCrossed", includes: ["Cafe", "Coffee", "Bakery", "Restaurant", "Bar", "Brewery"] },
-  { slug: "services", label: "Services", icon: "Briefcase", includes: ["Services", "Professional", "Finance", "Beauty"] },
-  { slug: "retail", label: "Retail", icon: "ShoppingBag", includes: ["Retail", "Grocery", "Boutique"] },
-  { slug: "health", label: "Health", icon: "HeartPulse", includes: ["Health", "Fitness", "Wellness", "Medical"] },
-  { slug: "home", label: "Home", icon: "Home", includes: ["Home", "Hardware", "Garden", "Repair"] },
-  { slug: "auto", label: "Auto", icon: "Car", includes: ["Auto", "Automotive"] },
+  { slug: "food-drink", label: "Food & Drink", icon: "UtensilsCrossed", includes: ["Cafe", "Coffee", "Bakery", "Restaurant", "Bar", "Brewery", "Food & Drink", "Bars & Breweries"] },
+  { slug: "services", label: "Services", icon: "Briefcase", includes: ["Services", "Professional", "Finance", "Beauty", "Professionals", "Education", "Pet Services"] },
+  { slug: "retail", label: "Retail", icon: "ShoppingBag", includes: ["Retail", "Grocery", "Boutique", "Shopping"] },
+  { slug: "health", label: "Health", icon: "HeartPulse", includes: ["Health", "Fitness", "Wellness", "Medical", "Beauty & Wellness", "Beauty & Personal Care", "Sports & Fitness"] },
+  { slug: "home", label: "Home", icon: "Home", includes: ["Home", "Hardware", "Garden", "Repair", "Home Services"] },
+  { slug: "auto", label: "Auto", icon: "Car", includes: ["Auto", "Automotive", "Transportation"] },
   { slug: "outdoors", label: "Outdoors", icon: "Mountain", includes: ["Outdoors", "Recreation", "Sports"] },
   { slug: "more", label: "More categories", icon: "Grid3x3", includes: [] },
 ];

@@ -54,6 +54,15 @@ export function rowToBusiness(r: Row): Business {
     postFrequency: r.post_frequency ?? undefined,
     responseTime: r.response_time ?? undefined,
     recommendCount: r.recommend_count ?? undefined,
+    longDescription: r.long_description ?? undefined,
+    messageLink: r.message_link ?? undefined,
+    socials: r.socials ?? undefined,
+    licenseNumber: r.license_number ?? undefined,
+    specials: r.specials ?? undefined,
+    specialsImageUrl: r.specials_image_url ?? undefined,
+    additionalLocations: r.additional_locations ?? undefined,
+    extraCategories: r.extra_categories ?? undefined,
+    hoursText: r.hours_text ?? undefined,
   };
 }
 
@@ -87,6 +96,9 @@ export function rowToEvent(r: Row): EventItem {
     tags: r.tags ?? [],
     linkCta: r.link_cta ?? undefined,
     status: r.status,
+    approvalStatus: r.approval_status ?? undefined,
+    submitterName: r.submitter_name ?? undefined,
+    gcalEventId: r.gcal_event_id ?? undefined,
   };
 }
 
@@ -101,6 +113,9 @@ export function rowToNews(r: Row): NewsArticle {
     source: r.source,
     author: r.author ?? undefined,
     publishedAt: r.published_at,
+    category: r.category ?? undefined,
+    pinned: !!r.pinned,
+    sourceUrl: r.source_url ?? undefined,
   };
 }
 
@@ -113,5 +128,10 @@ export function rowToResource(r: Row): Resource {
     phone: r.phone ?? undefined,
     url: r.url ?? undefined,
     address: r.address ?? undefined,
+    subcategory: r.subcategory ?? undefined,
+    image: r.image_url ?? undefined,
+    email: r.email ?? undefined,
+    additionalPhones: r.additional_phones ?? undefined,
+    serviceTimes: r.service_times ?? undefined,
   };
 }

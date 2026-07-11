@@ -125,6 +125,11 @@ export function BusinessProfileScreen() {
       {/* At a glance */}
       <Section title="At a glance">
         {business.hours && <HoursBlock business={business} />}
+        {!business.hours && business.hoursText && (
+          <Fact icon={<Clock size={15} />} label="Hours">
+            {business.hoursText}
+          </Fact>
+        )}
         <Fact icon={<MapPin size={15} />} label="Address">
           <a
             href={directionsHref({ address: business.address, geo: business.geo })}

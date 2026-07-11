@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
-import { Siren, Landmark, Users, Zap, Phone, ExternalLink, LifeBuoy } from "lucide-react";
+import {
+  Siren, Landmark, Users, Zap, Phone, ExternalLink, LifeBuoy,
+  HeartPulse, Brain, GraduationCap, House, Bus, CircleEllipsis,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { SearchField, EmptyState, Skeleton } from "@/components";
@@ -7,11 +10,19 @@ import { useResources } from "@/data/queries";
 import { telHref } from "@/lib/links";
 import type { Resource, ResourceCategory } from "@/lib/types";
 
+// All 10 resource categories (widened for the Base44 import); groups with no
+// entries simply don't render, so the screen stays exactly as tight as the data.
 const GROUPS: { category: ResourceCategory; label: string; icon: LucideIcon }[] = [
   { category: "emergency", label: "Emergency & safety", icon: Siren },
+  { category: "health", label: "Health", icon: HeartPulse },
+  { category: "mental_health", label: "Mental health", icon: Brain },
   { category: "government", label: "Government", icon: Landmark },
   { category: "community", label: "Community", icon: Users },
+  { category: "education", label: "Education", icon: GraduationCap },
+  { category: "housing", label: "Housing", icon: House },
+  { category: "transportation", label: "Transportation", icon: Bus },
   { category: "utilities", label: "Utilities", icon: Zap },
+  { category: "other", label: "More resources", icon: CircleEllipsis },
 ];
 
 /** Resources. Searchable, categorized civic list — the simplest screen, pure utility. */
