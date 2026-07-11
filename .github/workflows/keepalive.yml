@@ -1,0 +1,21 @@
+# Stopgap for Supabase free-tier auto-pause (projects pause after ~7 idle days and take
+# the live data down). A daily REST read counts as project activity. If the ping fails
+# (e.g. the project paused anyway), the job fails and GitHub notifies — a free alarm.
+# The real fix before the Phase 3 DNS cutover is the Pro tier; then delete this.
+name: keepalive-hosted-supabase
+on:
+  schedule:
+    - cron: "17 9 * * *" # daily 09:17 UTC (~02:17 PT)
+  workflow_dispatch: {}
+concurrency: keepalive
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping hosted Supabase REST
+        run: |
+          code=$(curl -s -o /dev/null -m 30 -w '%{http_code}' \
+            "https://jdrhcmkqtewlzlojixpd.supabase.co/rest/v1/news_articles?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}")
+          echo "http=$code"
+          test "$code" = "200"
