@@ -10,3 +10,5 @@ dist-ssr
 coverage
 *.log
 *.tsbuildinfo
+.understand-anything/intermediate/
+.understand-anything/diff-overlay.json

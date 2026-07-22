@@ -89,6 +89,31 @@ for (const t of ["businesses", "bulletins", "events", "news_articles", "resource
   ok(!!probe.error, "no boost/featured/rank/sponsored column on businesses (equal ranking)");
 }
 
+// 7) PUBLISHED gating (Sheet-sync visibility): unpublished hidden from anon, owner still sees own
+{
+  const { data: unpub } = await admin
+    .from("businesses")
+    .insert({ name: "rls-unpub", slug: `rls-unpub-${Date.now()}`, category: "Cafe", owner_id: a.id, tier: "free", published: false })
+    .select("id")
+    .single();
+  const anonSee = await anon.from("businesses").select("id").eq("id", unpub.id);
+  ok((anonSee.data?.length ?? 0) === 0, "anon CANNOT see an unpublished business (published=false hidden)");
+  const ownerSee = await a.client.from("businesses").select("id").eq("id", unpub.id);
+  ok((ownerSee.data?.length ?? 0) === 1, "owner CAN still see their own unpublished business");
+  await admin.from("businesses").delete().eq("id", unpub.id);
+}
+
+// 8) sync_runs is service-role only (audit log; no anon/authenticated access)
+{
+  const anonRead = await anon.from("sync_runs").select("id").limit(1);
+  ok(!!anonRead.error || (anonRead.data?.length ?? 0) === 0, "anon cannot read sync_runs (audit log locked)");
+  const userRead = await a.client.from("sync_runs").select("id").limit(1);
+  ok(!!userRead.error || (userRead.data?.length ?? 0) === 0, "authed user cannot read sync_runs");
+  const adminIns = await admin.from("sync_runs").insert({ status: "success", trigger: "manual" }).select("id").single();
+  ok(!adminIns.error && !!adminIns.data?.id, "service_role can log a sync_run");
+  if (adminIns.data?.id) await admin.from("sync_runs").delete().eq("id", adminIns.data.id);
+}
+
 // --- cleanup (test rows must never leak into the seeded app data) ---
 await admin.from("businesses").delete().in("id", [bizA, bizB]);
 await admin.from("businesses").delete().like("slug", "rls-%"); // any leftovers from a prior crash

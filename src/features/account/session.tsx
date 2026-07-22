@@ -110,6 +110,8 @@ interface SessionValue extends Profile {
    *  after the redirect. Returns whether the browser is navigating away. */
   signInWithProvider: (provider: OAuthProvider) => Promise<{ redirected: boolean }>;
   signOut: () => void;
+  /** Permanently delete the account (server-side) and wipe this device's local prefs. */
+  deleteAccount: () => Promise<void>;
   requireAuth: (action: () => void, reason?: AuthReason, intent?: PendingIntent) => void;
 
   // JIT auth sheet
@@ -376,6 +378,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     void getDS().then((ds) => ds.signOut());
   }, [getDS]);
 
+  const deleteAccount = useCallback(async () => {
+    const ds = await getDS();
+    await ds.deleteAccount(); // server delete + signOut (Supabase); mock signs out
+    // account is gone — this device must not keep its saves/follows/interests.
+    syncedRef.current = false;
+    lastUserIdRef.current = null;
+    setProfile(DEFAULT_PROFILE);
+    try {
+      localStorage.removeItem(PROFILE_KEY);
+      localStorage.removeItem(PENDING_INTENT_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, [getDS]);
+
   const value = useMemo<SessionValue>(
     () => ({
       ...profile,
@@ -399,6 +416,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       verifyOtp,
       signInWithProvider,
       signOut,
+      deleteAccount,
       requireAuth,
       authPrompt,
       openAuth,
@@ -417,6 +435,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       verifyOtp,
       signInWithProvider,
       signOut,
+      deleteAccount,
       requireAuth,
       authPrompt,
       openAuth,

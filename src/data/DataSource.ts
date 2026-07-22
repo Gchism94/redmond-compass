@@ -212,6 +212,13 @@ export interface DataSource {
    */
   signInWithOAuth(provider: OAuthProvider, redirectTo?: string): Promise<{ redirected: boolean }>;
   signOut(): Promise<void>;
+  /**
+   * Permanently delete the signed-in user's account (privacy policy). Server-side
+   * it releases any owned listing (public content stays; ownership link drops),
+   * removes the profile, and deletes the auth user, then signs out. Mock just
+   * signs out. The caller (session) also wipes local device prefs.
+   */
+  deleteAccount(): Promise<void>;
   /** The current authed user from the live session (restored on reload), or null. */
   getAuthUser(): Promise<AuthUser | null>;
   /** Subscribe to auth changes (sign-in/out, token refresh). Returns an unsubscribe fn. */

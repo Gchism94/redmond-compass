@@ -404,6 +404,11 @@ export class MockDataSource implements DataSource {
     this.setAuthUser(null);
   }
 
+  async deleteAccount(): Promise<void> {
+    // no server in dev — just sign out; the session wipes local prefs.
+    this.setAuthUser(null);
+  }
+
   async getAuthUser(): Promise<AuthUser | null> {
     return this.authUser;
   }

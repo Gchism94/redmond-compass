@@ -3,7 +3,7 @@
  * Switching backends is config, not code — nothing in features/ or components/
  * imports a concrete source.
  *
- *   VITE_DATA_SOURCE = "mock" (dev default) | "supabase" (recommended path B) | "base44"
+ *   VITE_DATA_SOURCE = "mock" (dev default) | "supabase" (path B — the real backend)
  *
  * Loaded ON DEMAND via dynamic import: the chosen source (and, for supabase, the
  * ~55 KB-gzip @supabase/supabase-js it pulls in) is kept OUT of the entry chunk, so the
@@ -22,9 +22,8 @@ export function getDataSource(): Promise<DataSource> {
     switch (kind) {
       case "supabase": {
         const { createSupabaseSource } = await import("./supabase/SupabaseDataSource");
-        return createSupabaseSource(); // app reads only from Supabase (GHL syncs in later)
+        return createSupabaseSource(); // app reads only from Supabase (the Sheet syncs in server-side)
       }
-      // case "base44": { ... } // not implemented
       case "mock":
       default: {
         const { MockDataSource } = await import("./mock/MockDataSource");

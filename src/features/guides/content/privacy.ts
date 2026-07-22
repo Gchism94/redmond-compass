@@ -3,8 +3,14 @@ import type { Guide } from "../types";
 // Privacy & Terms — authored for this platform (the old site had none to
 // migrate). Grounded in what the app ACTUALLY does: local-first guest prefs,
 // optional JIT accounts (email OTP / Google), no analytics, no ads, no data
-// sales, equal ranking. If behavior changes (analytics, notifications that
-// send email, yard-sale submissions), update this page in the same commit.
+// sales, equal ranking, and in-app account deletion (Account → Delete account).
+//
+// ANALYTICS IS DELIBERATELY NOT CLAIMED HERE. The sheet-sync spec proposes GA4
+// "[confirm tool with Greg]", but it is NOT integrated and NOT confirmed, so the
+// "no third-party analytics" statements below stay TRUE. When GA4 (or whatever
+// tool) actually ships with a consent story, add the analytics paragraph AND name
+// the real tool in the SAME commit — the policy must never describe unbuilt or
+// unnamed behavior. Same rule for any new notification email or submission flow.
 export const guide: Guide = {
   slug: "privacy",
   en: {
@@ -44,9 +50,10 @@ export const guide: Guide = {
       {
         heading: "What's public by design",
         bullets: [
-          "Business listings, including everything an owner adds to their profile, bulletins, and events.",
+          "Business listings, including everything an owner adds to their profile, bulletins, and events. Listing details are maintained by our team and kept up to date.",
           "Community events, including the submitter's name if provided. We do not publish submitter email addresses.",
           "Recommendations are counted, not displayed with your name — one per person per business, and they never change search ranking.",
+          "Owner contact details used only for account management are not published unless you include them in your public listing.",
         ],
       },
       {
@@ -73,8 +80,12 @@ export const guide: Guide = {
           "Browse without an account — always available, never nagged.",
           "Clear guest data any time by clearing your browser or app storage.",
           "Sign out from Account whenever you like.",
-          "To delete your account and its data, email us and we'll take care of it promptly.",
+          "Delete your account any time from Account → Delete account — it permanently removes your account, saved places, and follows. A business you own stays listed but is no longer linked to you. You can also email RedmondCompass@gmail.com from your account address; either way, we act within 30 days.",
         ],
+      },
+      {
+        heading: "How long we keep it, and how it's kept",
+        body: "We keep personal information only as long as we need it — an active account for as long as it's active, and technical logs for a limited period. Data lives with providers that use industry-standard encryption and access controls, and we deliberately hold as little personal data as possible. No system is perfectly secure, but keeping the amount small is our first line of defense.",
       },
       {
         heading: "Children",
@@ -138,9 +149,10 @@ export const guide: Guide = {
       {
         heading: "Lo que es público por diseño",
         bullets: [
-          "Los listados de negocios, incluido todo lo que un dueño agrega a su perfil, sus avisos y eventos.",
+          "Los listados de negocios, incluido todo lo que un dueño agrega a su perfil, sus avisos y eventos. Nuestro equipo mantiene los datos de los listados y los conserva al día.",
           "Los eventos comunitarios, incluido el nombre de quien los envía, si lo da. No publicamos correos electrónicos de quienes envían eventos.",
           "Las recomendaciones se cuentan, no se muestran con tu nombre: una por persona por negocio, y nunca cambian el orden de los resultados.",
+          "Los datos de contacto del dueño que se usan solo para gestionar la cuenta no se publican, a menos que los incluyas en tu listado público.",
         ],
       },
       {
@@ -167,8 +179,12 @@ export const guide: Guide = {
           "Explora sin cuenta: siempre disponible, sin insistencia.",
           "Borra los datos de invitado cuando quieras limpiando el almacenamiento de tu navegador o de la app.",
           "Cierra sesión desde Cuenta cuando gustes.",
-          "Para eliminar tu cuenta y sus datos, escríbenos y lo hacemos pronto.",
+          "Elimina tu cuenta cuando quieras desde Cuenta → Eliminar cuenta: borra de forma permanente tu cuenta, los lugares guardados y los seguidos. Un negocio que administres sigue en el directorio, pero deja de estar vinculado a ti. También puedes escribir a RedmondCompass@gmail.com desde el correo de tu cuenta; en cualquier caso, actuamos dentro de 30 días.",
         ],
+      },
+      {
+        heading: "Cuánto tiempo lo guardamos y cómo lo protegemos",
+        body: "Conservamos la información personal solo el tiempo que la necesitamos: una cuenta activa mientras siga activa, y los registros técnicos por un periodo limitado. Los datos viven con proveedores que usan cifrado y controles de acceso estándar de la industria, y a propósito guardamos la menor cantidad posible de datos personales. Ningún sistema es perfectamente seguro, pero mantener poca información es nuestra primera defensa.",
       },
       {
         heading: "Menores de edad",

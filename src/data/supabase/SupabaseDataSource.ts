@@ -359,6 +359,15 @@ class SupabaseDataSource implements DataSource {
     if (error) throw error;
   }
 
+  async deleteAccount(): Promise<void> {
+    // supabase-js attaches the session JWT; the edge function verifies it, releases
+    // owned listings, deletes the profile, and deletes the auth user.
+    const { data, error } = await this.sb.functions.invoke("delete-account", { method: "POST" });
+    if (error) throw new Error(error.message ?? "Account deletion failed");
+    if (data && (data as { error?: string }).error) throw new Error((data as { error: string }).error);
+    await this.sb.auth.signOut();
+  }
+
   async getAuthUser(): Promise<AuthUser | null> {
     const { data } = await this.sb.auth.getSession();
     const u = data.session?.user;

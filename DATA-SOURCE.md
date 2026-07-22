@@ -5,14 +5,16 @@ Original guidance: the uploaded `DATASOURCE.md`. This file documents what exists
 
 ## Decision: Path B — read from Supabase
 
-GoHighLevel (GHL) is a CRM (system-of-record for **businesses**), not a public read
-backend. So: **GHL → server-side sync → Supabase → the app reads only from Supabase.**
-News, Resources, Events, and Bulletins are Supabase-native. GHL sync is **not built
-yet** (seam only); it must not block the read path.
+**Source of truth for directory data is the Google Sheet** (architecture change,
+2026-07-11 — supersedes the earlier GHL plan). A scheduled Supabase edge function
+(`sync-sheet`) pulls the Sheet into `businesses`; the app reads only from Supabase.
+News, Resources, Events, and Bulletins are Supabase-native; Events also sync in from
+the public Google Calendar (`sync-gcal-events`). **GoHighLevel is OUT of the data
+path** — it may persist as a human-side CRM, but the platform never reads from it.
 
 ```
-GoHighLevel ──sync (later)──▶ Supabase (canonical read store, RLS) ──▶ App (PWA, reads only)
-                                 ▲ News · Resources · Events · Bulletins authored here
+Google Sheet ──sync-sheet (15 min)──▶ Supabase (canonical read store, RLS) ──▶ App (PWA + prerendered pages)
+Google Calendar ──sync-gcal-events──▶     ▲ News · Resources · Bulletins authored here
 ```
 
 The app depends on the `DataSource` interface (`src/data/DataSource.ts`), never on
@@ -147,12 +149,16 @@ Business Profile (`RecommendRow`). It's **JIT-gated** like save/follow (AuthReas
 `recommend`), and — critically — the count is display-only and **never reorders results**
 (equal ranking holds). `verified_customer` remains a fast-follow seam.
 
-## GHL seam (not wired)
+## Sheet sync (`supabase/functions/sync-sheet`)
 
-`businesses.ghl_id` (stable upsert key) + `src/data/ghl/mapping.ts`: a documented
-`ghlRecordToBusiness` **stub** (throws). When the sync ships it runs in a Supabase edge
-function (webhook + nightly reconcile), `upsert … on conflict (ghl_id)`. The PWA never
-calls GHL directly.
+The Google Sheet is the source of truth for directory data. The `sync-sheet` edge
+function (scheduled every 15 min via `schedule.sql`) reads it with a Google service
+account, validates the header row (missing required column or empty sheet → **abort**,
+never a partial write), upserts on the sheet's `id` = `businesses.id`, soft-unpublishes
+rows that left the sheet (`published=false`, never a hard delete), logs each run to
+`sync_runs`, and fires the host deploy hook (debounced ≤1×/hr) when data changed. Pure
+sheet→row logic lives in `transform.ts` (unit-tested by `scripts/sync-sheet-test.mjs`).
+`businesses.ghl_id` is retained but **unused** (GHL is out of the data path).
 
 ## Run it locally
 

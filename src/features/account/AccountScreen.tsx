@@ -9,6 +9,7 @@ import {
   Store,
   Check,
   Globe,
+  Trash2,
 } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Switch, Chip, Button } from "@/components";
@@ -24,6 +25,7 @@ export function AccountScreen() {
   const s = useSession();
   const navigate = useNavigate();
   const [editInterests, setEditInterests] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Switch to Business → dashboard if they manage a listing, else claim/list (B0).
   // Owning a listing needs an account, so prompt JIT sign-in first when a guest.
@@ -156,7 +158,22 @@ export function AccountScreen() {
         <LinkRow label={t("account.privacy")} to="/privacy" />
       </Section>
 
-      <p className="px-4 pt-2 text-center text-xs text-muted-foreground">{t("account.version")}</p>
+      {/* Danger zone — permanent account deletion (privacy policy). Authed only. */}
+      {s.isAuthed && (
+        <section className="px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-danger/30 px-4 py-2.5 text-sm font-medium text-danger hover:bg-danger/5"
+          >
+            <Trash2 size={15} /> {t("account.deleteAccount")}
+          </button>
+        </section>
+      )}
+
+      <p className="px-4 pt-3 text-center text-xs text-muted-foreground">{t("account.version")}</p>
+
+      <DeleteAccountSheet open={confirmDelete} onClose={() => setConfirmDelete(false)} />
 
       {/* Interest editor */}
       <Sheet open={editInterests} onClose={() => setEditInterests(false)} title={t("account.interests")}>
@@ -235,6 +252,53 @@ function LinkRow({ label, href, to, external }: { label: string; href?: string; 
       {label}
       {chevron}
     </a>
+  );
+}
+
+/** Two-step confirmation for permanent account deletion. Locked while deleting. */
+function DeleteAccountSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useI18n();
+  const s = useSession();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const del = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await s.deleteAccount();
+      onClose();
+      navigate("/", { replace: true });
+    } catch {
+      setError(t("account.deleteError"));
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Sheet open={open} onClose={busy ? () => {} : onClose} hideHeader>
+      <div className="pt-2 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-danger/10 text-danger">
+          <Trash2 size={22} />
+        </div>
+        <h2 className="font-heading text-lg font-semibold text-foreground">{t("account.deleteTitle")}</h2>
+        <p className="mx-auto mt-1.5 max-w-xs text-sm text-muted-foreground">{t("account.deleteBody")}</p>
+      </div>
+      {error && <p className="mt-3 text-center text-sm text-danger">{error}</p>}
+      <Button variant="destructive" size="lg" fullWidth className="mt-5" onClick={del} disabled={busy}>
+        {busy ? t("account.deleteBusy") : t("account.deleteConfirm")}
+      </Button>
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={busy}
+        className="mt-3 w-full py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+      >
+        {t("common.cancel")}
+      </button>
+    </Sheet>
   );
 }
 
