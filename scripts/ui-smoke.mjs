@@ -176,6 +176,6 @@ async function newPage(width, height) {
 }
 
 await browser.close();
-server.kill();
+server?.kill();
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
