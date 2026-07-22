@@ -12,7 +12,7 @@
 // visitor's language. SITE_ORIGIN overrides the canonical/sitemap origin at cutover:
 //   SITE_ORIGIN=https://redmondcompass.com npm run prerender
 import { createServer } from "vite";
-import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -49,10 +49,12 @@ try {
     if (!/rel="canonical"/.test(page)) {
       page = page.replace("</head>", `<link rel="canonical" href="${ORIGIN}/${slug}">\n</head>`);
     }
-    const dir = path.join(DIST, slug);
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(path.join(dir, "index.html"), page);
-    console.log(`  ✓ /${slug}  →  dist/${slug}/index.html  (${title})`);
+    // Flat `<slug>.html` (not `<slug>/index.html`): Cloudflare Pages serves it at
+    // the extensionless URL with a clean 200 — directory-style output gets a 308 to
+    // the trailing-slash URL, which breaks old-site non-slash links' cutover
+    // fidelity and litters redirects. sirv (vite preview) resolves it the same way.
+    writeFileSync(path.join(DIST, `${slug}.html`), page);
+    console.log(`  ✓ /${slug}  →  dist/${slug}.html  (${title})`);
     ok++;
   }
 

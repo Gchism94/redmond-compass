@@ -15,9 +15,11 @@ import type { Guide, GuideContent } from "./types";
  */
 export function GuideScreen() {
   const { lang } = useI18n();
-  // React Router matches case-insensitively (/About reaches this route), so
-  // normalize — the old live site rendered mixed-case URLs the same way.
-  const slug = useLocation().pathname.replace(/^\//, "").toLowerCase();
+  // Normalize the path to a registry slug: React Router matches case-insensitively
+  // (/About reaches this route) and hosts normalize trailing slashes (Cloudflare
+  // Pages 308s directory-style URLs to "/getting-settled/") — strip both, or the
+  // loader lookup misses and the page would sit on its skeleton forever.
+  const slug = useLocation().pathname.replace(/^\/+|\/+$/g, "").toLowerCase();
   const [guide, setGuide] = useState<Guide | null>(null);
 
   useEffect(() => {

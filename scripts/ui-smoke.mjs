@@ -1,37 +1,47 @@
 // UI smoke suite — both shells, both languages. Mirrored assertion sets at
 // 390px (AppShell: bottom-tab PWA) and 1280px (WebShell: the desktop site that
-// must read as the original redmondcompass.com). Self-contained: builds are NOT
-// run here — it serves the existing dist/ via `vite preview`, so run
-// `npm run build` first.  Usage:  node scripts/ui-smoke.mjs
+// must read as the original redmondcompass.com).
+//
+// Local (default): serves the existing dist/ via `vite preview` — run
+//   `npm run build` first, then  node scripts/ui-smoke.mjs
+// Live/deployed (pages-dev-qa-checklist §6): point it at the real origin —
+//   SMOKE_URL=https://redmond-compass.pages.dev node scripts/ui-smoke.mjs
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { existsSync } from "node:fs";
 import puppeteer from "puppeteer-core";
 
-const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const CHROME =
+  process.env.PUPPETEER_EXECUTABLE_PATH ||
+  process.env.CHROME_PATH ||
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const REMOTE = process.env.SMOKE_URL?.replace(/\/+$/, "");
 const PORT = 4321;
-const BASE = `http://localhost:${PORT}`;
+const BASE = REMOTE ?? `http://localhost:${PORT}`;
 const ROOT = path.resolve(import.meta.dirname, "..");
 
-if (!existsSync(path.join(ROOT, "dist/index.html"))) {
-  console.error("dist/ not found — run `npm run build` first.");
-  process.exit(1);
-}
-
-const server = spawn("npx", ["vite", "preview", "--port", String(PORT), "--strictPort"], {
-  cwd: ROOT,
-  stdio: "ignore",
-});
-process.on("exit", () => server.kill());
-for (let i = 0; ; i++) {
-  try {
-    await fetch(BASE);
-    break;
-  } catch {
-    if (i > 40) throw new Error("vite preview did not start");
-    await new Promise((r) => setTimeout(r, 250));
+let server = null;
+if (!REMOTE) {
+  if (!existsSync(path.join(ROOT, "dist/index.html"))) {
+    console.error("dist/ not found — run `npm run build` first (or set SMOKE_URL for a deployed origin).");
+    process.exit(1);
+  }
+  server = spawn("npx", ["vite", "preview", "--port", String(PORT), "--strictPort"], {
+    cwd: ROOT,
+    stdio: "ignore",
+  });
+  process.on("exit", () => server?.kill());
+  for (let i = 0; ; i++) {
+    try {
+      await fetch(BASE);
+      break;
+    } catch {
+      if (i > 40) throw new Error("vite preview did not start");
+      await new Promise((r) => setTimeout(r, 250));
+    }
   }
 }
+console.log(`Target: ${BASE}${REMOTE ? "  (live)" : "  (local preview)"}\n`);
 
 let pass = 0,
   fail = 0;
@@ -68,11 +78,19 @@ async function newPage(width, height) {
   const label = (m) => `[390] ${m}`;
 
   let r = await visit("/");
+  // onboarding is a mobile-only first-launch ritual — must be PRESENT here (fresh
+  // context), and the 1280 set asserts its absence.
+  ok(/skip for now|omitir por ahora/i.test(r.text), label("onboarding overlay present on first launch"));
   await page.evaluate(() => {
     [...document.querySelectorAll("button")].find((b) => /skip for now|omitir por ahora/i.test(b.textContent))?.click();
   });
   r = await visit("/");
   ok(await page.$("nav a[href='/saved']") !== null || /home|inicio/i.test(r.text), label("bottom tab nav present"));
+  const tapH = await page.evaluate(() => {
+    const el = document.querySelector("nav a[href='/search']") ?? document.querySelector("nav a");
+    return el ? Math.round(el.getBoundingClientRect().height) : 0;
+  });
+  ok(tapH >= 44, label(`tab tap target ≥44px (${tapH}px)`));
   ok(!(await page.$("footer")), label("no desktop footer"));
   ok(r.overflowX === 0, label(`home: no horizontal overflow (${r.overflowX})`));
 
@@ -81,6 +99,10 @@ async function newPage(width, height) {
 
   r = await visit("/getting-settled");
   ok(r.title === "Getting Settled | Redmond Compass", label("guide title set"));
+  // CONTENT, not just title: the prerendered <head> keeps the title correct even
+  // when the SPA is stuck on its skeleton (the live trailing-slash bug) — only a
+  // body-text assertion catches that.
+  ok(r.text.includes("first-week checklist") && r.text.includes("Cascades East Transit"), label("guide content renders (not skeleton)"));
   ok(r.overflowX === 0, label(`guide: no horizontal overflow (${r.overflowX})`));
 
   await page.evaluate(() => localStorage.setItem("rc.lang", "es"));
@@ -125,7 +147,7 @@ async function newPage(width, height) {
   ok(cols >= 3 && cols <= 4, label(`results grid ${cols} columns`));
   ok(r.overflowX === 0, label(`results: no horizontal overflow (${r.overflowX})`));
 
-  // guides at readable max-width
+  // guides at readable max-width, with real content (see the 390 note)
   r = await visit("/getting-settled");
   const guideWidth = await page.evaluate(() => {
     const h = document.querySelector("main h2");
@@ -135,6 +157,7 @@ async function newPage(width, height) {
   });
   ok(guideWidth > 0 && guideWidth <= 700, label(`guide readable width (${guideWidth}px)`));
   ok(r.title === "Getting Settled | Redmond Compass", label("guide title set"));
+  ok(r.text.includes("first-week checklist"), label("guide content renders (not skeleton)"));
   ok(r.overflowX === 0, label(`guide: no horizontal overflow (${r.overflowX})`));
 
   // Spanish sweep (footer toggle exists; set storage directly for determinism)
