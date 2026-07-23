@@ -133,13 +133,19 @@ Deno.serve(async (req) => {
     if (!SHEET_ID) throw new Error("SHEET_ID not configured");
     const token = await getGoogleAccessToken();
     const values = await fetchSheetValues(token);
+    const cols = values[0]?.length ?? 0;
+    console.log(`sync-sheet: range=${SHEET_RANGE} rows_returned=${values.length} columns_returned=${cols}`);
     const plan = buildSyncPlan(values, SUPABASE_URL, new Date().toISOString());
     run.rows_read = Math.max(0, values.length - 1);
 
-    // Run-level abort: header/empty-sheet drift — leave existing data untouched.
+    // Run-level abort: header/empty-sheet drift — leave existing data untouched. Persist the
+    // requested range + column count alongside the reason so a header failure is fully
+    // self-diagnosing (e.g. a too-narrow SHEET_RANGE silently truncating the id column).
     if (!plan.ok) {
-      await finish({ status: "aborted", message: plan.abortReason, rows_read: run.rows_read });
-      return Response.json({ ok: false, aborted: plan.abortReason }, { status: 200 });
+      const message = `${plan.abortReason} [range=${SHEET_RANGE}, columns_returned=${cols}]`;
+      console.error(`sync-sheet aborted: ${message}`);
+      await finish({ status: "aborted", message, rows_read: run.rows_read });
+      return Response.json({ ok: false, aborted: message }, { status: 200 });
     }
 
     // Upsert in batches (keyed on the sheet's id = businesses.id).

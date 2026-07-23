@@ -12,9 +12,11 @@ with Greg before it can run.
   row's `id` is never recycled. Use `RC-0001`-style ids or the existing row ids.
   **Align sheet ids with the ids already in `businesses`** (the sheet is the
   Base44 export artifact, so most already match) to avoid creating duplicates.
-- **Locked header row** (order doesn't matter — parsed by name). Required:
-  `id, name, category, published`. Optional/mapped: `subcategories, description,
-  address, phone, website, email, hours, image, notes`.
+- **Locked header row** (order doesn't matter — parsed by name, case-insensitive).
+  Required: `id, name, category, published`. Optional/mapped: `subcategories,
+  description, address, phone, website, email, hours, image, notes`. Header aliases
+  (`transform.ts` `HEADER_ALIASES`) accept the Base44 export's spelling — currently
+  `Business ID` → `id`.
 - **`published`** (TRUE/FALSE) — draft rows (FALSE/blank) never ship.
 - **`category`** — a data-validation dropdown matching the app taxonomy.
 - **`image`** — a *filename* in the Supabase Storage `business-media` bucket

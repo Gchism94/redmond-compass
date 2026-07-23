@@ -13,6 +13,15 @@ export const KNOWN_HEADERS = [
   "phone", "website", "email", "hours", "image", "published", "notes",
 ] as const;
 
+// Header aliases → canonical field name. Every column already matches case-insensitively
+// (Name→name, Category→category, …), so the Base44 export's Title-Case headers map with no
+// edit — except `Business ID`, whose word break stops it resolving to `id`. Aliasing it
+// keeps the contract consistent (a header the parser already understands, just spelled the
+// export's way). Keys are normalized (trim+lowercase); `id` spelled literally still works.
+export const HEADER_ALIASES: Record<string, string> = {
+  "business id": "id",
+};
+
 export interface SheetBusinessRow {
   id: string;
   name: string;
@@ -40,6 +49,12 @@ export interface SyncPlan {
 }
 
 const norm = (h: string) => h.trim().toLowerCase();
+// Canonical header key: lowercase, trim, and collapse internal whitespace, then fold known
+// aliases. Case- and whitespace-insensitive, so "Business ID" / "business  id" → "id".
+const canon = (h: string): string => {
+  const n = norm(h).replace(/\s+/g, " ");
+  return HEADER_ALIASES[n] ?? n;
+};
 
 export function parseBool(v: string | undefined): boolean {
   const s = (v ?? "").trim().toLowerCase();
@@ -84,10 +99,21 @@ export function buildSyncPlan(values: string[][], supabaseUrl: string, nowIso: s
   if (!values || values.length === 0) {
     return { ...plan, ok: false, abortReason: "Sheet is empty (no header row) — aborting to protect existing data." };
   }
-  const headers = values[0].map(norm);
+  const headers = values[0].map(canon); // canonical names (aliases folded: 'Business ID' → id)
+  const rawHeaders = values[0].map((h) => (h ?? "").trim()); // untouched text, for diagnostics
   const missing = REQUIRED_HEADERS.filter((h) => !headers.includes(h));
   if (missing.length) {
-    return { ...plan, ok: false, abortReason: `Header row missing required column(s): ${missing.join(", ")} — schema drift, aborting.` };
+    // Self-diagnosing abort: name the missing columns AND echo exactly what the header
+    // row contained, so the cause (a rename, or a too-narrow read range that truncated
+    // columns) is visible from the message alone — no inference from the missing list.
+    return {
+      ...plan,
+      ok: false,
+      abortReason:
+        `Header row missing required column(s): ${missing.join(", ")}. ` +
+        `Saw ${rawHeaders.length} column(s): [${rawHeaders.join(", ")}]. ` +
+        `Schema drift or a too-narrow read range — aborting (existing data left intact).`,
+    };
   }
   const unknown = headers.filter((h) => h && !KNOWN_HEADERS.includes(h as (typeof KNOWN_HEADERS)[number]));
   if (unknown.length) plan.headerWarnings.push(`Ignoring unknown column(s): ${unknown.join(", ")}`);
@@ -118,6 +144,12 @@ export function buildSyncPlan(values: string[][], supabaseUrl: string, nowIso: s
     if (!phoneOk) plan.warnings.push({ row: n, reason: `phone "${get(row, "phone")}" not E.164-normalizable (kept as-is)` });
 
     const image = get(row, "image");
+    // The upsert payload is EXACTLY the fields below — never a ranking/boost field. Base44's
+    // `Featured` column is intentionally unmapped (absent from KNOWN_HEADERS), so it is dropped
+    // as an unknown column and can never reach the DB. Equal ranking is non-negotiable: it is
+    // enforced structurally (`businesses` has no featured/boost/rank/priority column at all) and
+    // at the query layer (no sort in SupabaseDataSource.sortBusinesses applies a paid boost).
+    // Adding any featured/rank/priority field to this payload would silently break that guarantee.
     const out: SheetBusinessRow = {
       id,
       name,
