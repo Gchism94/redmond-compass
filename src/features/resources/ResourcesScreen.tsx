@@ -10,6 +10,7 @@ import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { SearchField, EmptyState, Skeleton } from "@/components";
 import { useResources } from "@/data/queries";
 import { telHref } from "@/lib/links";
+import { guideLink } from "@/lib/siteMode";
 import type { Resource, ResourceCategory } from "@/lib/types";
 import { useI18n, type DictKey } from "@/i18n";
 
@@ -71,18 +72,27 @@ export function ResourcesScreen() {
             <BookOpen size={13} /> {t("guides.title")}
           </h2>
           <div className="grid grid-cols-2 gap-2">
-            {GUIDES.map((g) => (
-              <Link
-                key={g.slug}
-                to={`/${g.slug}`}
-                className="flex min-h-tap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5"
-              >
-                <g.icon size={16} className="shrink-0 text-positive" />
-                <span className="text-[13px] font-medium leading-tight text-foreground">
-                  {t(`guides.${g.slug}` as DictKey)}
-                </span>
-              </Link>
-            ))}
+            {GUIDES.map((g) => {
+              const { href, external } = guideLink(g.slug); // app-only → the live site serves guides
+              const inner = (
+                <>
+                  <g.icon size={16} className="shrink-0 text-positive" />
+                  <span className="text-[13px] font-medium leading-tight text-foreground">
+                    {t(`guides.${g.slug}` as DictKey)}
+                  </span>
+                </>
+              );
+              const cls = "flex min-h-tap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5";
+              return external ? (
+                <a key={g.slug} href={href} className={cls}>
+                  {inner}
+                </a>
+              ) : (
+                <Link key={g.slug} to={href} className={cls}>
+                  {inner}
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

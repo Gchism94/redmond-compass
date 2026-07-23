@@ -2,6 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "node:path";
+import { compassConfig } from "./compass.config";
+
+const appOnly = compassConfig.siteMode === "app-only";
 
 /**
  * Redmond Compass — Vite config (PWA, BUILD-BRIEF §10).
@@ -20,7 +23,9 @@ export default defineConfig({
         name: "Redmond Compass",
         short_name: "Compass",
         description: "Find local Redmond, OR businesses, events, and community news.",
-        start_url: "/",
+        // app-only mode: `/` is the marketing landing page; the INSTALLED app must
+        // open the real app home, not the pitch for the thing you already installed.
+        start_url: appOnly ? "/home" : "/",
         scope: "/",
         display: "standalone",
         orientation: "portrait",
@@ -81,7 +86,10 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "@config": path.resolve(__dirname, "./compass.config.ts"),
+    },
   },
   build: {
     rollupOptions: {

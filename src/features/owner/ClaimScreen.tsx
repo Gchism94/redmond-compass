@@ -6,6 +6,7 @@ import { Button, Field, fieldInputClass, Thumb, Skeleton, Card } from "@/compone
 import { useBusinesses, useCreateBusiness, useClaimBusiness } from "@/data/queries";
 import { useSession } from "@/features/account/session";
 import { BUSINESS_CATEGORIES } from "@/lib/taxonomy";
+import { appOnly, LIVE_SITE } from "@/lib/siteMode";
 import { useI18n } from "@/i18n";
 
 /**
@@ -44,9 +45,18 @@ export function ClaimScreen() {
         <p className="text-sm text-muted-foreground">
           {t("owner.claimFree")}
         </p>
-        <Link to="/for-business-owners" className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-positive">
-          {t("guides.forOwners")} <ChevronRight size={14} />
-        </Link>
+        {appOnly ? (
+          <a
+            href={`${LIVE_SITE}/for-business-owners`}
+            className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-positive"
+          >
+            {t("guides.forOwners")} <ChevronRight size={14} />
+          </a>
+        ) : (
+          <Link to="/for-business-owners" className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-positive">
+            {t("guides.forOwners")} <ChevronRight size={14} />
+          </Link>
+        )}
       </div>
 
       {mode === "new" ? (

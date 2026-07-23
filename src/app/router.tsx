@@ -1,7 +1,9 @@
-import { lazy, type ComponentType } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { lazy, Suspense, type ComponentType } from "react";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { RouteFallback } from "@/components/layout/RouteFallback";
 import { GUIDE_SLUGS } from "@/features/guides/registry";
+import { appOnly } from "@/lib/siteMode";
 import { ErrorPage } from "./ErrorPage";
 
 /**
@@ -34,13 +36,32 @@ const SubmitEventScreen = named(() => import("@/features/owner/SubmitEventScreen
 const GalleryPage = named(() => import("./GalleryPage"), "GalleryPage");
 const NotFoundPage = named(() => import("./pages"), "NotFoundPage");
 const GuideScreen = named(() => import("@/features/guides/GuideScreen"), "GuideScreen");
+const LandingGate = named(() => import("@/features/landing/LandingScreen"), "LandingGate");
 
 export const router = createBrowserRouter([
+  // app-only mode: `/` is the marketing landing page — its own chrome, OUTSIDE the
+  // app shells (no tab bar / WebShell / onboarding). Installed apps redirect to /home.
+  ...(appOnly
+    ? [
+        {
+          path: "/",
+          element: (
+            <Suspense fallback={<RouteFallback />}>
+              <LandingGate />
+            </Suspense>
+          ),
+          errorElement: <ErrorPage />,
+        },
+      ]
+    : []),
   {
     element: <AppLayout />,
     errorElement: <ErrorPage />,
     children: [
-      { path: "/", element: <HomeScreen /> },
+      ...(appOnly ? [] : [{ path: "/", element: <HomeScreen /> }]),
+      // Stable app-home route in both modes: app-only start_url/tabs point here;
+      // full-site collapses it back to /.
+      { path: "/home", element: appOnly ? <HomeScreen /> : <Navigate to="/" replace /> },
       { path: "/search", element: <SearchScreen /> },
       { path: "/search/results", element: <ResultsScreen /> },
       { path: "/b/:slug", element: <BusinessProfileScreen /> },

@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { Home, Search, Calendar, Bookmark, User } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { HOME_PATH } from "@/lib/siteMode";
 import { cn } from "@/lib/cn";
 
 const TABS = [
-  { to: "/", label: "nav.home", icon: Home, end: true },
+  { to: HOME_PATH, label: "nav.home", icon: Home, end: true },
   { to: "/search", label: "nav.search", icon: Search, end: false },
   { to: "/events", label: "nav.events", icon: Calendar, end: false },
   { to: "/saved", label: "nav.saved", icon: Bookmark, end: false },

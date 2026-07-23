@@ -10,6 +10,7 @@ import { OfflineBanner } from "@/pwa/OfflineBanner";
 import { useInstallPrompt } from "@/pwa/useInstallPrompt";
 import { useSession } from "@/features/account/session";
 import { useI18n, type DictKey } from "@/i18n";
+import { appOnly, HOME_PATH, LIVE_SITE } from "@/lib/siteMode";
 import { cn } from "@/lib/cn";
 
 /**
@@ -81,7 +82,7 @@ function WebHeader() {
       {/* Row 1 — white bar: logo · primary links · Get the app / Sign in */}
       <div className="border-b border-border bg-card">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6">
-          <Link to="/" className="flex items-center gap-2.5 focus-visible:outline-none">
+          <Link to={HOME_PATH} className="flex items-center gap-2.5 focus-visible:outline-none">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <Compass size={20} />
             </span>
@@ -135,20 +136,32 @@ function WebHeader() {
           aria-label="Guides"
           className="mx-auto flex max-w-6xl items-center justify-center gap-6 overflow-x-auto px-6 py-2"
         >
-          {GUIDE_LINKS.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              className={({ isActive }) =>
-                cn(
-                  "flex shrink-0 items-center gap-1.5 text-xs font-medium transition-colors hover:text-foreground",
-                  isActive ? "font-semibold text-foreground" : "text-muted-foreground",
-                )
-              }
-            >
-              <l.icon size={13} className="text-primary" /> {t(l.labelKey)}
-            </NavLink>
-          ))}
+          {GUIDE_LINKS.map((l) =>
+            appOnly ? (
+              // app-only: the guides are archived here — this content is the LIVE
+              // site's to serve, so these link out to redmondcompass.com.
+              <a
+                key={l.to}
+                href={`${LIVE_SITE}${l.to}`}
+                className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <l.icon size={13} className="text-primary" /> {t(l.labelKey)}
+              </a>
+            ) : (
+              <NavLink
+                key={l.to}
+                to={l.to}
+                className={({ isActive }) =>
+                  cn(
+                    "flex shrink-0 items-center gap-1.5 text-xs font-medium transition-colors hover:text-foreground",
+                    isActive ? "font-semibold text-foreground" : "text-muted-foreground",
+                  )
+                }
+              >
+                <l.icon size={13} className="text-primary" /> {t(l.labelKey)}
+              </NavLink>
+            ),
+          )}
         </nav>
       </div>
     </header>
@@ -229,7 +242,8 @@ function WebFooter() {
       links: [
         { labelKey: "web.footer.bulletin", to: "/community" },
         { labelKey: "web.footer.resources", to: "/resources" },
-        { labelKey: "web.footer.about", to: "/about" },
+        // app-only: About is the live site's page, not our archived copy
+        { labelKey: "web.footer.about", to: appOnly ? `${LIVE_SITE}/about` : "/about" },
       ],
     },
     {
@@ -245,7 +259,7 @@ function WebFooter() {
     <footer className="bg-foreground text-background">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-12 md:grid-cols-4">
         <div>
-          <button type="button" onClick={() => navigate("/")} className="flex items-center gap-2.5">
+          <button type="button" onClick={() => navigate(HOME_PATH)} className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <Compass size={20} />
             </span>
@@ -262,9 +276,15 @@ function WebFooter() {
             <ul className="mt-3 space-y-2">
               {col.links.map((l) => (
                 <li key={l.labelKey}>
-                  <Link to={l.to} className="text-sm text-background/85 hover:text-background">
-                    {t(l.labelKey)}
-                  </Link>
+                  {l.to.startsWith("http") ? (
+                    <a href={l.to} className="text-sm text-background/85 hover:text-background">
+                      {t(l.labelKey)}
+                    </a>
+                  ) : (
+                    <Link to={l.to} className="text-sm text-background/85 hover:text-background">
+                      {t(l.labelKey)}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

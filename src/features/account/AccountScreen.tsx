@@ -16,6 +16,7 @@ import { Switch, Chip, Button } from "@/components";
 import { Sheet } from "@/components/ui/Sheet";
 import { INTERESTS } from "@/lib/taxonomy";
 import { InstallRow } from "@/pwa/InstallPrompt";
+import { appOnly, LIVE_SITE } from "@/lib/siteMode";
 import { useSession } from "./session";
 import { useI18n } from "@/i18n";
 
@@ -153,8 +154,19 @@ export function AccountScreen() {
           </div>
         </div>
         <InstallRow />
-        <LinkRow label={t("account.aboutContact")} to="/about" />
-        <LinkRow label={t("account.help")} to="/help-essentials" />
+        {/* app-only: About/Help are the live site's pages; Privacy is always OURS
+            (the app's own policy — never points at Base44). */}
+        {appOnly ? (
+          <>
+            <LinkRow label={t("account.aboutContact")} href={`${LIVE_SITE}/about`} external />
+            <LinkRow label={t("account.help")} href={`${LIVE_SITE}/help-essentials`} external />
+          </>
+        ) : (
+          <>
+            <LinkRow label={t("account.aboutContact")} to="/about" />
+            <LinkRow label={t("account.help")} to="/help-essentials" />
+          </>
+        )}
         <LinkRow label={t("account.privacy")} to="/privacy" />
       </Section>
 
