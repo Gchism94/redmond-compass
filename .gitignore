@@ -10,5 +10,5 @@ dist-ssr
 coverage
 *.log
 *.tsbuildinfo
-.understand-anything/intermediate/
-.understand-anything/diff-overlay.json
+pre-push-data.sql
+pre-push-schema.sql
