@@ -47,7 +47,9 @@ Create the service account in Google Cloud → IAM → Service Accounts, enable 
 ```
 supabase functions deploy sync-sheet
 # then, once: run supabase/functions/sync-sheet/schedule.sql in the SQL editor
-# (substitute <REF> and <ANON_KEY>) to run it every 15 minutes via pg_cron.
+# (substitute <REF> and <SERVICE_ROLE_KEY>) to run it daily at 08:15 UTC via pg_cron.
+# 08:15 UTC lands just after the owner's Sunday-night Pacific update in both PST and PDT
+# (pg_cron is UTC-only — see the DST note in schedule.sql).
 ```
 
 Trigger a one-off run to verify: `POST /functions/v1/sync-sheet` (add the

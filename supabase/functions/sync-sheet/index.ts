@@ -19,7 +19,7 @@
 // SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are injected automatically.
 //
 // Deploy:  supabase functions deploy sync-sheet
-// Schedule (every 15 min) via pg_cron — see supabase/functions/sync-sheet/schedule.sql
+// Schedule (daily at 08:15 UTC) via pg_cron — see supabase/functions/sync-sheet/schedule.sql
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 import { buildSyncPlan, summarizePlan, type ExistingBusinesses } from "./transform.ts";
 
