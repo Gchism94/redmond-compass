@@ -375,6 +375,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(() => {
+    // Clear account-scoped local state on sign-out so (a) a signed-out ex-owner can't reach
+    // the owner dashboard — its guard keys on ownerBusinessId, which used to survive sign-out
+    // and stranded the user in write-failing screens — and (b) a shared device doesn't merge
+    // one user's saves/follows into the NEXT account on sign-in. Flip syncedRef false FIRST so
+    // the pref-push effect won't write this cleared profile back to the still-open server row
+    // (that would wipe the real saves); the server keeps them and re-merges on next sign-in.
+    syncedRef.current = false;
+    lastUserIdRef.current = null;
+    setProfile((p) => ({
+      ...p,
+      savedBusinessIds: [],
+      followedBusinessIds: [],
+      savedEventIds: [],
+      ownerBusinessId: null,
+    }));
     void getDS().then((ds) => ds.signOut());
   }, [getDS]);
 

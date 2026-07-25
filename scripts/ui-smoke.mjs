@@ -125,8 +125,27 @@ async function newPage(width, height) {
   ok(!(await page.$("footer")), label("no desktop footer in the app"));
   ok(r.overflowX === 0, label(`app home: no horizontal overflow (${r.overflowX})`));
 
+  // Tap-target guarantee (#9): every pressable control on the app surfaces must be ≥44px
+  // tall, not just the one nav link. Sweeps buttons + role=button/tab, lists any offenders.
+  const tapOffenders = () =>
+    page.evaluate(() => {
+      const out = [];
+      for (const el of document.querySelectorAll('button, [role="button"], [role="tab"]')) {
+        const rect = el.getBoundingClientRect();
+        const cs = getComputedStyle(el);
+        if (rect.width === 0 || rect.height === 0 || cs.visibility === "hidden") continue; // hidden
+        if (rect.height < 43.5)
+          out.push(`${el.tagName.toLowerCase()} "${(el.textContent || "").trim().slice(0, 16)}" ${Math.round(rect.height)}px`);
+      }
+      return out;
+    });
+  let taps = await tapOffenders();
+  ok(taps.length === 0, label(`home: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
+
   r = await visit("/search/results");
   ok(r.overflowX === 0, label(`results: no horizontal overflow (${r.overflowX})`));
+  taps = await tapOffenders();
+  ok(taps.length === 0, label(`results: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
 
   r = await visit("/getting-settled");
   ok(r.title === "Getting Settled | Redmond Compass", label("guide title set"));

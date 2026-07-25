@@ -54,7 +54,7 @@ export function InstallBanner() {
             </p>
           )}
           {canInstall && (
-            <Button size="sm" variant="primary" className="mt-2" onClick={promptInstall}>
+            <Button size="sm" variant="primary" className="mt-2 min-h-tap" onClick={promptInstall}>
               <Download size={14} /> {t("pwa.install")}
             </Button>
           )}
@@ -63,7 +63,7 @@ export function InstallBanner() {
           type="button"
           aria-label={t("common.dismiss")}
           onClick={close}
-          className="-mr-1 -mt-1 rounded-full p-1.5 text-muted-foreground hover:text-foreground"
+          className="-mr-2 -mt-2 inline-flex min-h-tap min-w-tap items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
         >
           <X size={16} />
         </button>

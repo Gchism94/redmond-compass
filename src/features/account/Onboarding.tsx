@@ -56,7 +56,7 @@ export function Onboarding() {
           <button
             type="button"
             onClick={() => setLang(lang === "en" ? "es" : "en")}
-            className="rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground"
+            className="inline-flex min-h-tap items-center rounded-pill border border-border bg-card px-4 py-1.5 text-xs font-semibold text-foreground"
           >
             {lang === "en" ? "Español" : "English"}
           </button>

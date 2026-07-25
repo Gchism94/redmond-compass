@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bookmark, UserPlus, CalendarPlus, Heart, Compass } from "lucide-react";
+import { Bookmark, UserPlus, CalendarPlus, Heart, Compass, Info } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Button } from "@/components";
 import { useSession, type AuthReason } from "./session";
@@ -215,6 +215,12 @@ export function AuthSheet() {
       </button>
       <p className="mt-2 text-center text-xs text-muted-foreground">
         {t("auth.alwaysFree")}
+      </p>
+      {/* §5 two-account seam — say it AT the sign-in moment (installed users bypass the
+          landing, so this is the only place they'd learn their website account is separate). */}
+      <p className="mt-2 flex items-start justify-center gap-1.5 text-xs leading-relaxed text-muted-foreground">
+        <Info size={13} className="mt-0.5 shrink-0 text-positive" />
+        <span>{t("auth.separateAccount")}</span>
       </p>
     </Sheet>
   );
