@@ -1,8 +1,27 @@
-<!-- Redmond Compass — passwordless sign-in (returning user). Surfaces the 6-digit
-     code the app's AuthSheet asks for, with the one-tap link as a fallback. -->
-<h2>Your Redmond Compass code</h2>
-<p>Enter this code to finish signing in:</p>
-<p style="font-size:28px;font-weight:700;letter-spacing:4px;margin:12px 0">{{ .Token }}</p>
-<p>It expires in 1 hour. Or just tap:</p>
-<p><a href="{{ .ConfirmationURL }}">Sign in to Redmond Compass</a></p>
-<p style="color:#888;font-size:12px">If you didn't request this, you can ignore this email.</p>
+<!-- Redmond Compass — returning-user passwordless sign-in (Supabase "Magic Link").
+     CODE-ONLY by design: the app verifies the 6-digit {{ .Token }} typed back into the
+     in-app AuthSheet (verifyOtp). There is deliberately NO magic link — PKCE binds the
+     code_verifier to the originating browser, so a link can't complete cross-device and is
+     pure failure surface (audit finding #2). Inline CSS only (clients strip <style>); no web
+     fonts, no media queries, no images, no scripts. Keep IDENTICAL IN SHAPE to
+     confirmation.html so both flows show the same code-first email. The hosted project does
+     NOT read this file — mirror it by hand: see supabase/templates/README.md. -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;padding:0;background-color:#FAF8F5">
+  <tr>
+    <td align="center" style="padding:32px 16px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border:1px solid #ece7df;border-radius:12px">
+        <tr>
+          <td style="padding:32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+            <p style="margin:0 0 22px;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#082954">Redmond Compass</p>
+            <h1 style="margin:0 0 10px;font-size:22px;font-weight:700;color:#082954">Your sign-in code</h1>
+            <p style="margin:0 0 18px;font-size:15px;line-height:1.5;color:#333333">Enter this code to finish signing in:</p>
+            <p style="margin:0 0 18px;font-size:40px;font-weight:700;letter-spacing:8px;color:#082954;line-height:1.1">{{ .Token }}</p>
+            <p style="margin:0 0 26px;font-size:14px;line-height:1.5;color:#555555">This code expires in 1 hour. Type it into the app to continue.</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;color:#999999">If you didn't request this, you can safely ignore this email.</p>
+          </td>
+        </tr>
+      </table>
+      <p style="max-width:480px;margin:16px auto 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:11px;line-height:1.5;color:#999999;text-align:center">Redmond Compass &middot; Redmond, Terrebonne &amp; Crooked River Ranch</p>
+    </td>
+  </tr>
+</table>

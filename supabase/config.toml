@@ -235,10 +235,13 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# OTP sign-in templates. The default magic-link template only renders the LINK; the app's
-# AuthSheet asks for the 6-digit CODE, so these templates surface {{ .Token }} too. Both the
-# "magic link" (returning users) and "confirm signup" (first-time) paths are covered.
-# On the HOSTED project, set the same templates in dashboard → Authentication → Email Templates.
+# OTP sign-in templates — CODE-ONLY (no {{ .ConfirmationURL }} link). The app's AuthSheet
+# asks for the 6-digit CODE ({{ .Token }}) and verifies it in-app (verifyOtp); the magic link
+# is omitted on purpose — PKCE binds the code_verifier to the originating browser, so a link
+# can't complete cross-device (audit finding #2). Both the "magic link" (returning users) and
+# "confirm signup" (first-time) paths are covered, kept identical in shape.
+# The HOSTED project does NOT read these files — mirror them by hand in dashboard →
+# Authentication → Email Templates. Exact copy-paste blocks: supabase/templates/README.md.
 [auth.email.template.magic_link]
 subject = "Your Redmond Compass sign-in code"
 content_path = "./supabase/templates/magic_link.html"
