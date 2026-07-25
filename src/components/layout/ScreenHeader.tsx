@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { IconButton } from "../ui/IconButton";
+import { LangToggle } from "../LangToggle";
 import { cn } from "@/lib/cn";
 
 export interface ScreenHeaderProps {
@@ -33,6 +34,8 @@ export function ScreenHeader({ title, back, action, sticky, className }: ScreenH
       )}
       <h1 className="flex-1 font-heading text-xl font-bold text-foreground">{title}</h1>
       {action}
+      {/* Persistent mobile-chrome language toggle (#5); desktop uses WebShell's own. */}
+      <LangToggle className="lg:hidden" />
     </header>
   );
 }

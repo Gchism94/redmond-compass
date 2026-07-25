@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronRight, Plus, Store, Check } from "lucide-react";
+import { ChevronRight, Plus, Store, Check, ExternalLink } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Button, Field, fieldInputClass, Thumb, Skeleton, Card } from "@/components";
 import { useBusinesses, useCreateBusiness, useClaimBusiness } from "@/data/queries";
@@ -48,9 +48,11 @@ export function ClaimScreen() {
         {appOnly ? (
           <a
             href={`${LIVE_SITE}/for-business-owners`}
+            target="_blank"
+            rel="noreferrer noopener"
             className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-positive"
           >
-            {t("guides.forOwners")} <ChevronRight size={14} />
+            {t("guides.forOwners")} <ExternalLink size={13} />
           </a>
         ) : (
           <Link to="/for-business-owners" className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-positive">

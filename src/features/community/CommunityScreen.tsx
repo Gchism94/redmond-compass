@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
+import { Newspaper } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { Toggle, FeedItem, Skeleton } from "@/components";
+import { Toggle, FeedItem, Skeleton, EmptyState } from "@/components";
 import { useNews, useBulletins, useBusinesses } from "@/data/queries";
 import { relativeTime } from "@/lib/format";
 import type { Business } from "@/lib/types";
@@ -79,6 +80,14 @@ export function CommunityScreen() {
               <Skeleton key={i} className="h-14 w-full" />
             ))}
           </div>
+        ) : entries.length === 0 ? (
+          // keys existed but were never wired — a blank feed used to render an empty div (#7)
+          <EmptyState
+            icon={<Newspaper size={20} />}
+            title={t("community.empty")}
+            message={t("community.emptyMsg")}
+            action={{ label: t("search.title"), href: "/search" }}
+          />
         ) : (
           <div className="divide-y divide-border pt-1">
             {entries.map((e) => (

@@ -15,6 +15,7 @@ import { useBusinesses, useBulletins, useEvents, useNews } from "@/data/queries"
 import { relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
 import { InstallBanner } from "@/pwa/InstallPrompt";
+import { LangToggle } from "@/components/LangToggle";
 import type { Business } from "@/lib/types";
 import { useI18n } from "@/i18n";
 import { useIsDesktop } from "@/lib/useMediaQuery";
@@ -74,7 +75,10 @@ export function HomeScreen() {
       ) : (
         <>
           <header className="bg-background px-4 pt-4 pb-2">
-            <p className="font-heading text-2xl font-bold text-foreground">Redmond Compass</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-heading text-2xl font-bold text-foreground">Redmond Compass</p>
+              <LangToggle />
+            </div>
             <div className="mt-3">
               <SearchField
                 value=""
@@ -87,7 +91,7 @@ export function HomeScreen() {
             <button
               type="button"
               onClick={() => navigate("/account")}
-              className="mt-2.5 inline-flex items-center gap-1.5 rounded-pill border border-positive/25 bg-positive/10 px-3 py-1.5 text-xs font-semibold text-positive"
+              className="mt-2.5 inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-positive/25 bg-positive/10 px-3 py-1.5 text-xs font-semibold text-positive"
             >
               <MapPin size={13} /> {t("home.nearYou")}
             </button>
