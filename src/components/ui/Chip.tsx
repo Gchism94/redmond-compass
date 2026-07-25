@@ -34,6 +34,8 @@ export function Chip({
       {...(as === "button" ? { type: "button" as const, onClick } : {})}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-pill border px-3 py-1.5 text-sm font-medium transition",
+        // interactive chips are tap targets → 44px min height (static as="span" tags stay compact)
+        as === "button" && "min-h-tap",
         active
           ? "border-positive bg-positive/10 text-positive"
           : "border-border bg-card text-foreground",
@@ -58,7 +60,7 @@ export function Chip({
               onRemove();
             }
           }}
-          className="-mr-1 ml-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full opacity-70 hover:opacity-100"
+          className="-mr-1.5 ml-1 inline-flex min-h-tap w-7 items-center justify-center rounded-full opacity-70 hover:opacity-100"
         >
           <X size={13} />
         </span>

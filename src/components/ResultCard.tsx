@@ -112,7 +112,7 @@ export function ResultCard({
             aria-disabled={!tel}
             onClick={(e) => !tel && e.preventDefault()}
             className={cn(
-              "inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition hover:brightness-95",
+              "inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition hover:brightness-95",
               !tel && "pointer-events-none opacity-40",
             )}
           >
@@ -122,7 +122,7 @@ export function ResultCard({
             href={directionsHref({ address: business.address, geo: business.geo })}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition hover:bg-muted"
+            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition hover:bg-muted"
           >
             <Navigation size={15} /> {t("common.directions")}
           </a>
@@ -132,7 +132,7 @@ export function ResultCard({
             aria-label={saved ? t("common.saved") : t("common.save")}
             onClick={() => onSave?.(business)}
             className={cn(
-              "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border transition",
+              "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border transition",
               saved
                 ? "border-positive bg-positive/10 text-positive"
                 : "border-border bg-card text-foreground hover:bg-muted",

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronRight,
+  ExternalLink,
   LogIn,
   LogOut,
   MapPin,
@@ -51,7 +52,7 @@ export function AccountScreen() {
             <button
               type="button"
               onClick={s.signOut}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+              className="inline-flex min-h-tap items-center gap-1 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
             >
               <LogOut size={13} /> {t("account.signOut")}
             </button>
@@ -144,7 +145,7 @@ export function AccountScreen() {
                 onClick={() => setLang(l)}
                 aria-pressed={lang === l}
                 className={
-                  "rounded-pill px-3 py-1 text-xs font-semibold transition " +
+                  "inline-flex min-h-tap items-center justify-center rounded-pill px-4 py-1 text-xs font-semibold transition " +
                   (lang === l ? "bg-foreground text-background" : "text-muted-foreground")
                 }
               >
@@ -250,7 +251,12 @@ function ToggleRow({
 
 function LinkRow({ label, href, to, external }: { label: string; href?: string; to?: string; external?: boolean }) {
   const className = "flex items-center justify-between py-3 text-sm text-foreground";
-  const chevron = <ChevronRight size={16} className="text-muted-foreground" />;
+  // external rows get an external-link glyph, not the same chevron as in-app rows (#6)
+  const chevron = external ? (
+    <ExternalLink size={15} className="text-muted-foreground" />
+  ) : (
+    <ChevronRight size={16} className="text-muted-foreground" />
+  );
   if (to) {
     return (
       <Link to={to} className={className}>

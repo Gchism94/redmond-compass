@@ -79,7 +79,8 @@ export const router = createBrowserRouter([
       { path: "/manage/edit", element: <EditListingScreen /> },
       { path: "/manage/bulletin/new", element: <PostBulletinScreen /> },
       { path: "/manage/event/new", element: <SubmitEventScreen /> },
-      { path: "/gallery", element: <GalleryPage /> },
+      // component gallery is a DEV-only surface — never a reachable route in production (#8)
+      ...(import.meta.env.DEV ? [{ path: "/gallery", element: <GalleryPage /> }] : []),
       // Content pages (Stage 1 Phase 2) — the live site's guides, at their original URLs.
       ...GUIDE_SLUGS.map((slug) => ({ path: `/${slug}`, element: <GuideScreen /> })),
       { path: "*", element: <NotFoundPage /> },

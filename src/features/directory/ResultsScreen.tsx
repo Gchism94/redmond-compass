@@ -98,12 +98,12 @@ export function ResultsScreen() {
               <button
                 type="button"
                 onClick={() => navigate("/search")}
-                className="min-w-0 flex-1 truncate py-2.5 text-left text-base focus-visible:outline-none"
+                className="flex min-h-tap w-full min-w-0 items-center text-left text-base focus-visible:outline-none"
               >
                 {hasQuery ? (
-                  <span className="font-medium text-foreground">{heading}</span>
+                  <span className="truncate font-medium text-foreground">{heading}</span>
                 ) : (
-                  <span className="text-muted-foreground">{t("home.searchPlaceholder")}</span>
+                  <span className="truncate text-muted-foreground">{t("home.searchPlaceholder")}</span>
                 )}
               </button>
               {hasQuery && (
@@ -140,14 +140,14 @@ export function ResultsScreen() {
                 <button
                   type="button"
                   onClick={() => setPanel((p) => (p === "sort" ? "none" : "sort"))}
-                  className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
+                  className="inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
                 >
                   <ArrowUpDown size={13} /> {t("results.sort")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setPanel((p) => (p === "filters" ? "none" : "filters"))}
-                  className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
+                  className="inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
                 >
                   <SlidersHorizontal size={13} /> {t("results.filters")}
                 </button>
@@ -172,7 +172,7 @@ export function ResultsScreen() {
                   type="button"
                   onClick={() => setTab(tb)}
                   className={
-                    "shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium transition " +
+                    "inline-flex min-h-tap shrink-0 items-center rounded-pill px-3 py-1.5 text-xs font-medium transition " +
                     (tab === tb ? "bg-foreground text-background" : "bg-muted text-muted-foreground")
                   }
                 >

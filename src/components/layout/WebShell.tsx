@@ -2,7 +2,7 @@ import { Suspense, useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Compass, LifeBuoy, Flame, ClipboardList, HeartHandshake, Mountain, PawPrint,
-  Info, Mail, Download, Share, Plus, X,
+  Info, Mail, Download, Share, Plus, X, ExternalLink,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { RouteFallback } from "./RouteFallback";
@@ -143,9 +143,12 @@ function WebHeader() {
               <a
                 key={l.to}
                 href={`${LIVE_SITE}${l.to}`}
+                target="_blank"
+                rel="noreferrer noopener"
                 className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 <l.icon size={13} className="text-primary" /> {t(l.labelKey)}
+                <ExternalLink size={11} className="text-muted-foreground/70" />
               </a>
             ) : (
               <NavLink
@@ -277,8 +280,13 @@ function WebFooter() {
               {col.links.map((l) => (
                 <li key={l.labelKey}>
                   {l.to.startsWith("http") ? (
-                    <a href={l.to} className="text-sm text-background/85 hover:text-background">
-                      {t(l.labelKey)}
+                    <a
+                      href={l.to}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="inline-flex items-center gap-1 text-sm text-background/85 hover:text-background"
+                    >
+                      {t(l.labelKey)} <ExternalLink size={11} className="text-background/50" />
                     </a>
                   ) : (
                     <Link to={l.to} className="text-sm text-background/85 hover:text-background">

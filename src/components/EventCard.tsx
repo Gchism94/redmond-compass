@@ -72,7 +72,7 @@ export function EventCard({
               aria-label={saved ? t("common.saved") : t("events.saveEvent")}
               onClick={() => onSave(event)}
               className={cn(
-                "rounded-full p-2 transition",
+                "inline-flex min-h-tap min-w-tap items-center justify-center rounded-full transition",
                 saved ? "text-positive" : "text-muted-foreground hover:text-foreground",
               )}
             >

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass } from "lucide-react";
+import { Compass, Info } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Button } from "@/components";
 import { useSession } from "./session";
@@ -94,6 +94,11 @@ export function LoginScreen() {
           ) : (
             t("auth.loginSub")
           )}
+        </p>
+        {/* §5 two-account seam — surface the separate-account note on the deep-link login too. */}
+        <p className="mx-auto mt-3 flex max-w-sm items-start justify-center gap-1.5 text-xs leading-relaxed text-muted-foreground">
+          <Info size={13} className="mt-0.5 shrink-0 text-positive" />
+          <span>{t("auth.separateAccount")}</span>
         </p>
 
         {step === "email" ? (

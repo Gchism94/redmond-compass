@@ -84,8 +84,9 @@ export function ResourcesScreen() {
               );
               const cls = "flex min-h-tap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5";
               return external ? (
-                <a key={g.slug} href={href} className={cls}>
+                <a key={g.slug} href={href} target="_blank" rel="noreferrer noopener" className={cls}>
                   {inner}
+                  <ExternalLink size={12} className="ml-auto shrink-0 text-muted-foreground" />
                 </a>
               ) : (
                 <Link key={g.slug} to={href} className={cls}>

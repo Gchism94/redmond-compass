@@ -22,7 +22,6 @@ const CANONICAL = new Set([
   "/login",
   "/claim",
   "/manage",
-  "/gallery",
   ...GUIDE_SLUGS.map((s) => `/${s}`),
 ]);
 

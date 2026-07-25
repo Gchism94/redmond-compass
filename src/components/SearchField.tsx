@@ -62,7 +62,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
             onChange("");
             onClear?.();
           }}
-          className="shrink-0 rounded-full p-1 text-muted-foreground hover:text-foreground"
+          className="inline-flex min-h-tap min-w-tap shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
         >
           <X size={16} />
         </button>
