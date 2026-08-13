@@ -21,7 +21,7 @@
 // Deploy:  supabase functions deploy sync-sheet
 // Schedule (every 15 min) via pg_cron — see supabase/functions/sync-sheet/schedule.sql
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
-import { buildSyncPlan } from "./transform.ts";
+import { buildSyncPlan, summarizePlan, type ExistingBusinesses } from "./transform.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -109,12 +109,93 @@ async function maybeFireDeployHook(changed: boolean): Promise<boolean> {
   }
 }
 
+/** Constant-time string compare — a shared secret must not be guessable byte-by-byte. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const x = enc.encode(a);
+  const y = enc.encode(b);
+  // Compare a fixed number of bytes regardless of input length, then fold in the length
+  // difference, so neither the loop count nor an early exit leaks anything.
+  let diff = x.length ^ y.length;
+  const n = Math.max(x.length, y.length);
+  for (let i = 0; i < n; i++) diff |= (x[i] ?? 0) ^ (y[i] ?? 0);
+  return diff === 0;
+}
+
+/**
+ * The current state of every row in `businesses` that the plan needs: its slug (to keep
+ * URLs stable), its published flag and whether the sync has touched it before (to work out
+ * what a run would change). Paged — PostgREST caps a plain select at 1000 — so this stays
+ * correct as the directory grows past that.
+ */
+async function loadExistingBusinesses(): Promise<ExistingBusinesses> {
+  const slugById: Record<string, string> = {};
+  const publishedById: Record<string, boolean> = {};
+  const syncedById: Record<string, boolean> = {};
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await db
+      .from("businesses")
+      .select("id,slug,published,synced_at")
+      .order("id", { ascending: true })
+      .range(from, from + PAGE - 1);
+    // A failure here would silently regenerate every slug (breaking live /b/ URLs) or
+    // collide on insert — so it aborts the run rather than proceeding on partial state.
+    if (error) throw new Error(`could not read existing businesses: ${error.message}`);
+    type Row = { id: string; slug: string; published: boolean; synced_at: string | null };
+    for (const r of (data ?? []) as Row[]) {
+      if (r.slug) slugById[r.id] = r.slug;
+      publishedById[r.id] = !!r.published;
+      syncedById[r.id] = r.synced_at != null;
+    }
+    if (!data || data.length < PAGE) break;
+  }
+  return { slugById, publishedById, syncedById };
+}
+
 Deno.serve(async (req) => {
-  // Optional shared-secret gate for manual / apps-script triggers.
-  const trigger = new URL(req.url).searchParams.get("trigger") ?? "schedule";
-  if (SYNC_SECRET) {
-    const provided = req.headers.get("x-sync-secret") ?? "";
-    if (provided !== SYNC_SECRET) return new Response("forbidden", { status: 403 });
+  const url = new URL(req.url);
+  const trigger = url.searchParams.get("trigger") ?? "schedule";
+
+  // ── Shared-secret gate — REQUIRED, fail-closed ────────────────────────────────────────
+  // Supabase's gateway accepts the PUBLISHABLE key as a bearer, and that key ships in the
+  // browser bundle by design — so gateway auth alone leaves this endpoint open to anyone
+  // who views source. Without the gate that means unauthenticated writes to `businesses`,
+  // unbounded Google Sheets API reads on our quota, and deploy-hook spam.
+  //
+  // An UNSET secret is treated as a misconfiguration, not as "no gate needed" — that was
+  // the original bug (`if (SYNC_SECRET)` silently skipped the check when the secret was
+  // missing, which is exactly when it's least safe to proceed). 503, never a silent pass.
+  if (!SYNC_SECRET) {
+    console.error("sync-sheet refused: SYNC_SECRET is not configured");
+    return Response.json(
+      { ok: false, error: "SYNC_SECRET is not configured on this function — refusing to run." },
+      { status: 503 },
+    );
+  }
+  if (!timingSafeEqual(req.headers.get("x-sync-secret") ?? "", SYNC_SECRET)) {
+    console.warn(`sync-sheet 403: bad or missing x-sync-secret (trigger=${trigger})`);
+    return Response.json({ ok: false, error: "forbidden" }, { status: 403 });
+  }
+
+  // ── Dry run ───────────────────────────────────────────────────────────────────────────
+  // `?dry=1` computes the FULL plan against the live Sheet and reports what would change,
+  // then returns without writing anything at all — no businesses upsert, no soft-unpublish,
+  // no deploy hook, and deliberately no `sync_runs` row either, so a dry run leaves zero
+  // trace in production. Use it to inspect a first run before letting it write.
+  const dryRun = url.searchParams.get("dry") === "1";
+  if (dryRun) {
+    const token = await getGoogleAccessToken();
+    const values = await fetchSheetValues(token);
+    const existing = await loadExistingBusinesses();
+    const plan = buildSyncPlan(values, SUPABASE_URL, new Date().toISOString(), existing);
+    if (!plan.ok) {
+      return Response.json(
+        { ok: false, dryRun: true, aborted: `${plan.abortReason} [range=${SHEET_RANGE}]` },
+        { status: 200 },
+      );
+    }
+    return Response.json({ ok: true, dryRun: true, wrote: false, range: SHEET_RANGE, ...summarizePlan(plan, existing) });
   }
 
   const run = { rows_read: 0, rows_upserted: 0, rows_unpublished: 0, rows_skipped: 0 };
@@ -135,7 +216,8 @@ Deno.serve(async (req) => {
     const values = await fetchSheetValues(token);
     const cols = values[0]?.length ?? 0;
     console.log(`sync-sheet: range=${SHEET_RANGE} rows_returned=${values.length} columns_returned=${cols}`);
-    const plan = buildSyncPlan(values, SUPABASE_URL, new Date().toISOString());
+    const existing = await loadExistingBusinesses();
+    const plan = buildSyncPlan(values, SUPABASE_URL, new Date().toISOString(), existing);
     run.rows_read = Math.max(0, values.length - 1);
 
     // Run-level abort: header/empty-sheet drift — leave existing data untouched. Persist the
