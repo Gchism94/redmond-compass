@@ -13,6 +13,7 @@
 // Deploy:  supabase functions deploy delete-account   (no external secrets needed)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 import { corsHeaders, preflight } from "../_shared/cors.ts";
+import { runAccountDeletion, type DeletionSteps } from "./deletion.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -36,16 +37,51 @@ Deno.serve(async (req) => {
   const uid = userData.user.id;
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+  // Each step reports failure by RETURNING a message. supabase-js resolves with
+  // `{ data, error }` rather than throwing, which is exactly how the original version lost
+  // the first two steps' errors — so every call here reads `.error` explicitly.
+  const steps: DeletionSteps = {
+    releaseListings: async (id) => {
+      const { error } = await admin.from("businesses").update({ owner_id: null, claimed: false }).eq("owner_id", id);
+      return error?.message ?? null;
+    },
+    countOwnedListings: async (id) => {
+      const { count, error } = await admin
+        .from("businesses")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", id);
+      return { count: count ?? 0, error: error?.message ?? null };
+    },
+    deleteProfile: async (id) => {
+      const { error } = await admin.from("profiles").delete().eq("id", id);
+      return error?.message ?? null;
+    },
+    deleteAuthUser: async (id) => {
+      const { error } = await admin.auth.admin.deleteUser(id);
+      return error?.message ?? null;
+    },
+  };
+
   try {
-    // 1) release owned listings (keep the public listing, drop the personal link)
-    await admin.from("businesses").update({ owner_id: null, claimed: false }).eq("owner_id", uid);
-    // 2) delete the personal profile row
-    await admin.from("profiles").delete().eq("id", uid);
-    // 3) delete the auth user
-    const { error: delErr } = await admin.auth.admin.deleteUser(uid);
-    if (delErr) throw delErr;
-    return json({ ok: true });
+    const result = await runAccountDeletion(uid, steps);
+    if (result.ok) {
+      console.log(`delete-account: completed for ${uid} [${result.completed.join(" → ")}]`);
+      return json({ ok: true });
+    }
+    // Log the resume state so a half-finished deletion is visible rather than silent.
+    console.error(
+      `delete-account: FAILED at ${result.failedStep} for ${uid} — completed [${result.completed.join(", ") || "none"}]; ` +
+        `accountDeleted=${result.accountDeleted} resumable=${result.resumable}: ${result.error}`,
+    );
+    return json(
+      { error: result.error, failedStep: result.failedStep, resumable: result.resumable, accountDeleted: result.accountDeleted },
+      500,
+    );
   } catch (e) {
-    return json({ error: String(e instanceof Error ? e.message : e) }, 500);
+    // An unexpected throw (network, client bug) — the account is untouched or partially
+    // processed, and never irreversibly so, because the guard sits before that step.
+    console.error(`delete-account: unexpected error for ${uid}:`, e);
+    return json({ error: String(e instanceof Error ? e.message : e), resumable: true, accountDeleted: false }, 500);
   }
 });
