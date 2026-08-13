@@ -1,12 +1,47 @@
-// RLS verification against local Supabase. Proves: guest read works; guest + cross-
-// owner writes denied; recommendations insert-only/positive-only; tier gating; and
-// that there is no rating/boost column. Run with the local keys from `supabase status`.
+// RLS verification. Proves the database refuses what the app assumes it refuses:
+// guest reads work; guest and CROSS-USER writes are denied; a user cannot read or write
+// another user's PROFILE (saved lists, follows, home location); an owner cannot publish
+// content under another business's name; recommendations are insert-only/positive-only;
+// tier gating holds; and no rating/boost column exists anywhere.
+//
+//   npm run test:rls                       # against the local stack (default)
+//   SUPABASE_URL=… SUPABASE_ANON_KEY=… SUPABASE_SERVICE_ROLE_KEY=… npm run test:rls
+//
+// Needs a running database. Locally:
+//   supabase start -x vector,analytics,storage-api,imgproxy,studio,edge-runtime
+//   (the full stack pulls in services this suite doesn't use and that can fail to boot;
+//    Postgres + Auth + PostgREST is all it needs)
+//
+// NOT run in CI and NOT part of `npm test`, because it needs that database — run it
+// before merging anything that touches supabase/migrations/**. It REFUSES to run against
+// production; see the guard below.
 import { createClient } from "@supabase/supabase-js";
 
 // Defaults to the LOCAL stack; override via env to run against any project (e.g. hosted):
 //   SUPABASE_URL=… SUPABASE_ANON_KEY=… SUPABASE_SERVICE_ROLE_KEY=… node scripts/rls-test.mjs
 // (Keys come from the env — never hard-coded for hosted, never committed.)
 const URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54421";
+
+// ── NEVER PRODUCTION ─────────────────────────────────────────────────────────────────────
+// This test CREATES AND DELETES real auth users and businesses. Against the live project a
+// crashed run mid-suite would leave test users and "rls-*" listings in the public directory,
+// and the cleanup sweep at the bottom deletes every @test.dev user it finds — which is fine
+// on a disposable database and unacceptable on the real one.
+//
+// Supabase branch databases would be the ideal target, but this project has none
+// (`supabase branches list` → []; branching needs a paid plan). So: local stack by default,
+// a branch database when one exists, and production only via an explicit, deliberate opt-in
+// that no one will type by accident.
+const PROD_REF = "jdrhcmkqtewlzlojixpd";
+if (URL.includes(PROD_REF) && process.env.RLS_ALLOW_PROD !== "i-understand-this-writes-to-production") {
+  console.error(
+    `\nRefusing to run against the PRODUCTION project (${PROD_REF}).\n` +
+      "This suite creates and deletes real users and businesses.\n\n" +
+      "  Local:  supabase start && npm run test:rls\n" +
+      "  Branch: SUPABASE_URL=… SUPABASE_ANON_KEY=… SUPABASE_SERVICE_ROLE_KEY=… npm run test:rls\n",
+  );
+  process.exit(1);
+}
 const ANON = process.env.SUPABASE_ANON_KEY ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
 
@@ -114,7 +149,85 @@ for (const t of ["businesses", "bulletins", "events", "news_articles", "resource
   if (adminIns.data?.id) await admin.from("sync_runs").delete().eq("id", adminIns.data.id);
 }
 
+// 9) PROFILES — own row only. The most sensitive table in the schema: saved lists,
+//    followed businesses, interests, and the user's HOME LOCATION. Until 2026-08-13 this
+//    table had ZERO coverage here — the policies read correctly, but "reads correctly" is
+//    what every bug in the August audit also looked like.
+{
+  // Both users already have a profile row (the on_auth_user_created trigger inserts one),
+  // so seed each with distinguishable data rather than creating rows.
+  await admin.from("profiles").update({ interests: ["a-private"] }).eq("id", a.id);
+  await admin.from("profiles").update({ interests: ["b-private"], location: { lat: 44.27, lng: -121.17 } }).eq("id", b.id);
+
+  const own = await a.client.from("profiles").select("*").eq("id", a.id);
+  ok(!own.error && (own.data?.length ?? 0) === 1, "profiles: A reads their OWN row");
+
+  const cross = await a.client.from("profiles").select("*").eq("id", b.id);
+  ok(!cross.error && (cross.data?.length ?? 0) === 0, "profiles: A CANNOT read B's row (0 rows)");
+
+  // The filtered read above would still pass if RLS were broken but the filter did the
+  // work. An UNFILTERED select is the real leak test — it asks the table for everything.
+  const all = await a.client.from("profiles").select("id");
+  ok(!all.error && (all.data ?? []).every((r) => r.id === a.id) && (all.data?.length ?? 0) === 1,
+     `profiles: unfiltered select returns ONLY A's row (got ${all.data?.length ?? 0})`);
+
+  const updOwn = await a.client.from("profiles").update({ onboarded: true }).eq("id", a.id).select();
+  ok(!updOwn.error && (updOwn.data?.length ?? 0) === 1, "profiles: A updates their OWN row");
+
+  const updCross = await a.client.from("profiles").update({ interests: ["HACKED"] }).eq("id", b.id).select();
+  ok(!updCross.error && (updCross.data?.length ?? 0) === 0, "profiles: A CANNOT update B's row (0 rows)");
+  const { data: bAfter } = await admin.from("profiles").select("interests").eq("id", b.id).single();
+  ok(!(bAfter?.interests ?? []).includes("HACKED"), "profiles: B's row is unchanged after A's write attempt");
+
+  // with check (auth.uid() = id) — A must not be able to create a row under B's id either.
+  const insCross = await a.client.from("profiles").insert({ id: b.id, interests: ["HACKED"] }).select();
+  ok(!!insCross.error, "profiles: A cannot INSERT a row under B's id");
+
+  // anon has no GRANT on profiles at all (the profiles migration grants only to
+  // authenticated/service_role), so this is denied a level below RLS.
+  const anonRead = await anon.from("profiles").select("id").limit(1);
+  ok(!!anonRead.error, "profiles: anon has NO access at all (grant withheld, not just RLS)");
+
+  // There is intentionally no delete policy — not even for your own row. Account deletion
+  // goes through the delete-account edge function (service role), never the client.
+  const delOwn = await a.client.from("profiles").delete().eq("id", a.id).select();
+  ok(!!delOwn.error || (delOwn.data?.length ?? 0) === 0, "profiles: A cannot DELETE even their own row");
+  const { data: survives } = await admin.from("profiles").select("id").eq("id", a.id);
+  ok((survives?.length ?? 0) === 1, "profiles: A's row survives the delete attempt");
+}
+
+// 10) CONTENT FORGERY — can owner A publish under owner B's business name?
+//     `bulletins_insert` and `events_insert` both guard on is_business_owner(business_id).
+//     A read leak exposes data; this would let someone put words in another business's
+//     mouth on a community directory, so it's tested with positive controls either side.
+{
+  const ownBul = await a.client.from("bulletins").insert({ business_id: bizA, body: "legitimate post" }).select();
+  ok(!ownBul.error && (ownBul.data?.length ?? 0) === 1, "bulletins: owner A CAN post for their own business (control)");
+
+  const forgedBul = await a.client.from("bulletins").insert({ business_id: bizB, body: "posted as B" }).select();
+  ok(!!forgedBul.error, "bulletins: owner A CANNOT post under owner B's business (forgery denied)");
+
+  const soon = new Date(Date.now() + 7 * 864e5).toISOString();
+  const ownEv = await a.client.from("events").insert({ business_id: bizA, title: "legit event", start_at: soon }).select();
+  ok(!ownEv.error && (ownEv.data?.length ?? 0) === 1, "events: owner A CAN submit for their own business (control)");
+
+  const forgedEv = await a.client.from("events").insert({ business_id: bizB, title: "event as B", start_at: soon }).select();
+  ok(!!forgedEv.error, "events: owner A CANNOT submit under owner B's business (forgery denied)");
+
+  // events_insert requires business_id not null — no anonymous community events from the
+  // client, which would otherwise be an unattributed write channel into the public feed.
+  const orphanEv = await a.client.from("events").insert({ business_id: null, title: "unattributed", start_at: soon }).select();
+  ok(!!orphanEv.error, "events: a client cannot create an unattributed (business_id null) event");
+
+  // Assert on the DATABASE, not just the API response: nothing landed under B either way.
+  const { data: bBul } = await admin.from("bulletins").select("id").eq("business_id", bizB);
+  ok((bBul?.length ?? 0) === 0, "no forged bulletin exists under B's business");
+  const { data: bEv } = await admin.from("events").select("id").eq("business_id", bizB);
+  ok((bEv?.length ?? 0) === 0, "no forged event exists under B's business");
+}
+
 // --- cleanup (test rows must never leak into the seeded app data) ---
+// Deleting the businesses cascades to their bulletins/events (both FK on delete cascade).
 await admin.from("businesses").delete().in("id", [bizA, bizB]);
 await admin.from("businesses").delete().like("slug", "rls-%"); // any leftovers from a prior crash
 await admin.auth.admin.deleteUser(a.id);
