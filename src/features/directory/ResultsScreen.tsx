@@ -1,15 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowUpDown, SlidersHorizontal, Map as MapIcon, MapPin, ChevronLeft, Search, X } from "lucide-react";
-import {
-  Chip,
-  Toggle,
-  ResultCard,
-  EventCard,
-  FeedItem,
-  EmptyState,
-  Skeleton,
-} from "@/components";
+import {   Chip, Toggle, ResultCard, EventCard, FeedItem, EmptyState, Skeleton, ErrorState } from "@/components";
 import { IconButton } from "@/components/ui/IconButton";
 import { useBusinesses, useEvents, useSearch } from "@/data/queries";
 import type { BusinessSort } from "@/data/DataSource";
@@ -245,6 +237,10 @@ export function ResultsScreen() {
           {tab === "all" || tab === "businesses" ? (
             businesses.isLoading ? (
               <ResultsSkeleton />
+            ) : businesses.isError ? (
+              // Before the no-results branch: "we couldn't search" must not read as
+              // "Redmond has no businesses matching that".
+              <ErrorState title={t("error.loadBusinesses")} onRetry={() => businesses.refetch()} />
             ) : count === 0 ? (
               <NoResults
                 query={heading}
@@ -269,7 +265,9 @@ export function ResultsScreen() {
             )
           ) : tab === "events" ? (
             <div className="divide-y divide-border">
-              {events.data?.length ? (
+              {events.isError ? (
+                <ErrorState title={t("error.loadEvents")} onRetry={() => events.refetch()} />
+              ) : events.data?.length ? (
                 events.data.map((e) => (
                   <EventCard
                     key={e.id}
@@ -291,7 +289,9 @@ export function ResultsScreen() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {community.data?.length ? (
+              {community.isError ? (
+                <ErrorState title={t("error.loadNews")} onRetry={() => community.refetch()} />
+              ) : community.data?.length ? (
                 community.data.map((r, i) => {
                   if (r.type === "news")
                     return (

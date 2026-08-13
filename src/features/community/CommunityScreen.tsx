@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
 import { Newspaper } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { Toggle, FeedItem, Skeleton, EmptyState } from "@/components";
-import { useNews, useBulletins, useBusinesses } from "@/data/queries";
+import { Toggle, FeedItem, Skeleton, EmptyState, ErrorState } from "@/components";
+import { useNews, useBulletins, useBusinessMap } from "@/data/queries";
 import { relativeTime } from "@/lib/format";
-import type { Business } from "@/lib/types";
 import { useI18n } from "@/i18n";
 
 type Tab = "all" | "news" | "bulletins";
@@ -19,13 +18,14 @@ export function CommunityScreen() {
   const [tab, setTab] = useState<Tab>("all"); // default All (BUILD-BRIEF §14 — flagged)
   const news = useNews();
   const bulletins = useBulletins();
-  const allBiz = useBusinesses({ limit: 50 });
-
-  const bizById = useMemo(() => {
-    const m = new Map<string, Business>();
-    allBiz.data?.items.forEach((b) => m.set(b.id, b));
-    return m;
-  }, [allBiz.data]);
+  // Attribute each bulletin to its business by fetching exactly the businesses the feed
+  // references. This used to read from a `limit: 50` page, so a bulletin from a business
+  // ranked 51st+ lost its name and its link and rendered as a generic "a local business".
+  const bulletinBizIds = useMemo(
+    () => (bulletins.data ?? []).map((bl) => bl.businessId),
+    [bulletins.data],
+  );
+  const { map: bizById } = useBusinessMap(bulletinBizIds);
 
   const entries = useMemo<Entry[]>(() => {
     const n: Entry[] = (news.data ?? []).map((a) => ({
@@ -56,6 +56,8 @@ export function CommunityScreen() {
   }, [news.data, bulletins.data, bizById, tab]);
 
   const loading = news.isLoading || bulletins.isLoading;
+  // Both feeds must fail before the whole screen errors; one alone just contributes less.
+  const failed = news.isError && bulletins.isError;
 
   return (
     <div className="pb-4">
@@ -80,6 +82,14 @@ export function CommunityScreen() {
               <Skeleton key={i} className="h-14 w-full" />
             ))}
           </div>
+        ) : failed ? (
+          <ErrorState
+            title={t("error.loadNews")}
+            onRetry={() => {
+              news.refetch();
+              bulletins.refetch();
+            }}
+          />
         ) : entries.length === 0 ? (
           // keys existed but were never wired — a blank feed used to render an empty div (#7)
           <EmptyState

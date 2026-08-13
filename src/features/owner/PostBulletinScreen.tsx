@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { CalendarClock, Megaphone } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { Field, fieldInputClass, Button, Card, Skeleton } from "@/components";
+import { Field, fieldInputClass, Button, Card, Skeleton, ErrorState } from "@/components";
 import { useOwnerBusiness } from "./useOwnerBusiness";
+import { MutationError } from "./MutationError";
 import { useBulletinCount, useCreateBulletin } from "@/data/queries";
 import { bulletinAllowance, LIMITS } from "@/lib/entitlements";
 import { useI18n, getLocale } from "@/i18n";
@@ -18,8 +19,9 @@ const MAX = 280;
 export function PostBulletinScreen() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { ownerBusinessId, data: business, isLoading } = useOwnerBusiness();
+  const { ownerBusinessId, data: business, isLoading, isError, refetch } = useOwnerBusiness();
   const count = useBulletinCount(ownerBusinessId ?? undefined);
+  const [submitError, setSubmitError] = useState<unknown>(null);
   const create = useCreateBulletin();
 
   const [body, setBody] = useState("");
@@ -27,6 +29,9 @@ export function PostBulletinScreen() {
   const [linkUrl, setLinkUrl] = useState("");
 
   if (!ownerBusinessId) return <Navigate to="/claim" replace />;
+  // See EditListingScreen: without this, an error leaves the skeleton up permanently.
+  if (isError || count.isError)
+    return <ErrorState title={t("error.loadProfile")} onRetry={() => { refetch(); count.refetch(); }} />;
   if (isLoading || !business || count.isLoading) {
     return (
       <>
@@ -54,13 +59,20 @@ export function PostBulletinScreen() {
   const linkCta = linkLabel.trim() && linkUrl.trim() ? { label: linkLabel.trim(), url: linkUrl.trim() } : undefined;
 
   const submit = async (schedule: boolean) => {
-    await create.mutateAsync({
-      businessId: ownerBusinessId,
-      body: body.trim(),
-      linkCta,
-      ...(schedule ? { scheduledFor: resetISO, status: "scheduled" as const } : { status: "live" as const }),
-    });
-    navigate("/manage");
+    // A bulletin is real work to write — the draft must survive a failed post, so the
+    // error is surfaced next to the button and the textarea is left exactly as typed.
+    setSubmitError(null);
+    try {
+      await create.mutateAsync({
+        businessId: ownerBusinessId,
+        body: body.trim(),
+        linkCta,
+        ...(schedule ? { scheduledFor: resetISO, status: "scheduled" as const } : { status: "live" as const }),
+      });
+      navigate("/manage");
+    } catch (e) {
+      setSubmitError(e);
+    }
   };
 
   return (
@@ -98,6 +110,10 @@ export function PostBulletinScreen() {
             </Field>
           </div>
         </Card>
+
+        {/* Above the branch: both paths below (post now / schedule for next month) go
+            through `submit`, so one error slot serves both. Retry mirrors the branch. */}
+        <MutationError error={submitError} onRetry={() => submit(!allowance.canPostNow)} />
 
         {allowance.canPostNow ? (
           <Button variant="primary" size="lg" fullWidth disabled={!valid || create.isPending} onClick={() => submit(false)}>

@@ -1,19 +1,7 @@
 import { useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock, Heart, Check } from "lucide-react";
-import {
-  ActionBar,
-  Button,
-  EventCard,
-  FeedItem,
-  StatusBadge,
-  VerifiedBadge,
-  OpenStatusLabel,
-  Chip,
-  Thumb,
-  Skeleton,
-  EmptyState,
-} from "@/components";
+import { ActionBar, Button, EventCard, FeedItem, StatusBadge, VerifiedBadge, OpenStatusLabel, Chip, Thumb, Skeleton, EmptyState, ErrorState } from "@/components";
 import { IconButton } from "@/components/ui/IconButton";
 import {
   useBusiness,
@@ -40,7 +28,7 @@ export function BusinessProfileScreen() {
   const { t } = useI18n();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { data: business, isLoading, isFetched } = useBusiness(slug);
+  const { data: business, isLoading, isFetched, isError, refetch } = useBusiness(slug);
   const bulletins = useBulletins({ businessId: business?.id, limit: 5 });
   const events = useEvents({ businessId: business?.id });
   const session = useSession();
@@ -53,6 +41,15 @@ export function BusinessProfileScreen() {
   }, [businessId, addRecentlyViewed]);
 
   if (isLoading) return <ProfileSkeleton />;
+  // isError BEFORE the not-found branch. React Query sets `isFetched` after a FAILED fetch
+  // too, so without this a dropped connection fell through to "not found" — telling the user
+  // this listing doesn't exist when in truth we just couldn't reach the server.
+  if (isError)
+    return (
+      <div className="pt-10">
+        <ErrorState title={t("error.loadProfile")} onRetry={() => refetch()} />
+      </div>
+    );
   if (isFetched && !business)
     return (
       <div className="pt-10">

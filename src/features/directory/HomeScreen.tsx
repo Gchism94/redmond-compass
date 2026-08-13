@@ -10,8 +10,9 @@ import {
   SectionHeader,
   CategoryGrid,
   Skeleton,
+  ErrorState,
 } from "@/components";
-import { useBusinesses, useBulletins, useEvents, useNews } from "@/data/queries";
+import { useBusinesses, useBulletins, useEvents, useNews, useBusinessMap } from "@/data/queries";
 import { relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
 import { InstallBanner } from "@/pwa/InstallPrompt";
@@ -37,21 +38,22 @@ export function HomeScreen() {
   const bulletins = useBulletins();
   const events = useEvents({ limit: 3, origin });
   const news = useNews({ limit: 2 });
-  const allBiz = useBusinesses({ limit: 50, origin });
-
-  const bizById = useMemo(() => {
-    const m = new Map<string, Business>();
-    allBiz.data?.items.forEach((b) => m.set(b.id, b));
-    return m;
-  }, [allBiz.data]);
+  // The rail only ever shows 8 — ask for 8, not for a 50-row page we then slice. (The old
+  // `limit: 50` query was doing double duty as the rail fallback AND as the lookup table for
+  // recently-viewed + bulletin attribution, which is what capped those two at 50.)
+  const nearby = useBusinesses({ sort: "distance", limit: 8, origin });
 
   // Never an empty module: if nothing's open right now (e.g. late night), the rail
   // degrades from "Open now" to "Nearby in Redmond" rather than going blank.
   const openItems = openNow.data?.items ?? [];
   const hasOpen = openItems.length > 0;
   const railTitle = hasOpen ? t("home.openNow") : t("home.nearbyIn");
-  const railItems = hasOpen ? openItems : (allBiz.data?.items ?? []).slice(0, 8);
-  const railLoading = openNow.isLoading || (!hasOpen && allBiz.isLoading);
+  const railItems = hasOpen ? openItems : (nearby.data?.items ?? []).slice(0, 8);
+  const railLoading = openNow.isLoading || (!hasOpen && nearby.isLoading);
+  // Home is a dashboard of independent sections: one failed query must degrade only its own
+  // section, never blank the screen. The rail needs BOTH queries to fail — an empty
+  // "open now" is a normal late-night result, not an error, and falls back to "nearby".
+  const railFailed = openNow.isError && nearby.isError;
 
   // Personalization (BUILD-BRIEF §12 step 6). Follow-feed when following anyone,
   // else t("home.popular"). Recently-viewed rail appears for returning users.
@@ -60,6 +62,13 @@ export function HomeScreen() {
   const usingFollowFeed = followBulletins.length > 0;
   const feedTitle = usingFollowFeed ? t("home.fromFollowed") : t("home.popular");
   const feedBulletins = (usingFollowFeed ? followBulletins : (bulletins.data ?? [])).slice(0, 4);
+
+  // Resolve recently-viewed + bulletin attribution by id, so neither is capped by a page.
+  const lookupIds = useMemo(
+    () => [...session.recentlyViewedIds, ...feedBulletins.map((bl) => bl.businessId)],
+    [session.recentlyViewedIds, feedBulletins],
+  );
+  const { map: bizById } = useBusinessMap(lookupIds);
 
   const recentlyViewed = session.recentlyViewedIds
     .map((id) => bizById.get(id))
@@ -103,7 +112,9 @@ export function HomeScreen() {
 
       {/* Open now near you — degrades to "Nearby" when nothing is open */}
       <Rail title={railTitle} seeAllHref={hasOpen ? "/search/results?openNow=1" : "/search/results?sort=distance"}>
-        {railLoading
+        {railFailed ? (
+          <ErrorState compact className="w-full" title={t("error.loadBusinesses")} onRetry={() => { openNow.refetch(); nearby.refetch(); }} />
+        ) : railLoading
           ? Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="w-36 shrink-0">
                 <Skeleton className="h-20 w-full rounded-lg" />
@@ -123,7 +134,9 @@ export function HomeScreen() {
       <section className="px-4 py-2">
         <SectionHeader title={feedTitle} seeAllHref="/community" />
         <div className="-my-1 divide-y divide-border">
-          {bulletins.isLoading
+          {bulletins.isError ? (
+            <ErrorState compact title={t("error.loadNews")} onRetry={() => bulletins.refetch()} />
+          ) : bulletins.isLoading
             ? Array.from({ length: 4 }).map((_, i) => <FeedRowSkeleton key={i} />)
             : feedBulletins.map((bl) => {
                 const biz = bizById.get(bl.businessId);
@@ -152,7 +165,9 @@ export function HomeScreen() {
       <section className="px-4 py-2">
         <SectionHeader title={t("home.upcomingEvents")} seeAllHref="/events" />
         <div className="-my-1 divide-y divide-border">
-          {events.isLoading
+          {events.isError ? (
+            <ErrorState compact title={t("error.loadEvents")} onRetry={() => events.refetch()} />
+          ) : events.isLoading
             ? Array.from({ length: 3 }).map((_, i) => <FeedRowSkeleton key={i} />)
             : events.data?.map((e) => <EventCard key={e.id} event={e} />)}
         </div>
@@ -162,7 +177,9 @@ export function HomeScreen() {
       <section className="px-4 py-2">
         <SectionHeader title={t("home.localNews")} seeAllHref="/community" />
         <div className="-my-1 divide-y divide-border">
-          {news.isLoading
+          {news.isError ? (
+            <ErrorState compact title={t("error.loadNews")} onRetry={() => news.refetch()} />
+          ) : news.isLoading
             ? Array.from({ length: 2 }).map((_, i) => <FeedRowSkeleton key={i} />)
             : null}
           {news.data?.map((n) => (

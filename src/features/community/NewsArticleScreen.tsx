@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { Newspaper } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { Thumb, EmptyState, Skeleton } from "@/components";
+import { Thumb, EmptyState, Skeleton, ErrorState } from "@/components";
 import { useNewsArticle } from "@/data/queries";
 import { relativeTime } from "@/lib/format";
 import { useI18n } from "@/i18n";
@@ -10,7 +10,7 @@ import { useI18n } from "@/i18n";
 export function NewsArticleScreen() {
   const { t } = useI18n();
   const { slug } = useParams<{ slug: string }>();
-  const { data: article, isLoading, isFetched } = useNewsArticle(slug);
+  const { data: article, isLoading, isFetched, isError, refetch } = useNewsArticle(slug);
 
   if (isLoading) {
     return (
@@ -24,6 +24,15 @@ export function NewsArticleScreen() {
       </>
     );
   }
+  // isError BEFORE the not-found branch. React Query sets `isFetched` after a FAILED fetch
+  // too, so without this a dropped connection fell through to "not found" — telling the user
+  // this listing doesn't exist when in truth we just couldn't reach the server.
+  if (isError)
+    return (
+      <div className="pt-10">
+        <ErrorState title={t("error.loadNews")} onRetry={() => refetch()} />
+      </div>
+    );
   if (isFetched && !article)
     return (
       <>

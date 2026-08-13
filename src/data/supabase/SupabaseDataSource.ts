@@ -63,6 +63,7 @@ class SupabaseDataSource implements DataSource {
       qb = qb.in("category", includes.length ? includes : ["__none__"]);
     }
     if (query.amenityTags?.length) qb = qb.contains("amenity_tags", query.amenityTags);
+    if (query.claimed != null) qb = qb.eq("claimed", query.claimed);
 
     const { data, error } = await qb;
     if (error) throw error;
@@ -113,6 +114,24 @@ class SupabaseDataSource implements DataSource {
     const { data, error } = await this.sb.from("businesses").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     return data ? rowToBusiness(data) : null;
+  }
+
+  async listBusinessesByIds(ids: ID[]): Promise<Business[]> {
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (!unique.length) return []; // no round-trip for an empty list
+    // Chunked so a long id list can't blow the URL length limit on the GET PostgREST
+    // builds — a heavy saver with hundreds of saves still resolves in a few requests.
+    const CHUNK = 100;
+    const out: Business[] = [];
+    for (let i = 0; i < unique.length; i += CHUNK) {
+      const { data, error } = await this.sb
+        .from("businesses")
+        .select("*")
+        .in("id", unique.slice(i, i + CHUNK));
+      if (error) throw error;
+      out.push(...(data ?? []).map(rowToBusiness));
+    }
+    return out;
   }
 
   async listCategories(): Promise<CategoryCount[]> {

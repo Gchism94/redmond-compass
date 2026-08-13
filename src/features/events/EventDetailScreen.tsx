@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { MapPin, Clock, Bookmark, Navigation } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { Button, Thumb, StatusBadge, EmptyState, Skeleton, AddToCalendar } from "@/components";
+import { Button, Thumb, StatusBadge, EmptyState, Skeleton, AddToCalendar, ErrorState } from "@/components";
 import { useEvent, useBusinessById } from "@/data/queries";
 import { eventDateBadge, eventTimeShort } from "@/lib/format";
 import { useI18n } from "@/i18n";
@@ -12,7 +12,7 @@ import { useSession } from "@/features/account/session";
 export function EventDetailScreen() {
   const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
-  const { data: event, isLoading, isFetched } = useEvent(id);
+  const { data: event, isLoading, isFetched, isError, refetch } = useEvent(id);
   const host = useBusinessById(event?.businessId);
   const session = useSession();
 
@@ -28,6 +28,15 @@ export function EventDetailScreen() {
       </>
     );
   }
+  // isError BEFORE the not-found branch. React Query sets `isFetched` after a FAILED fetch
+  // too, so without this a dropped connection fell through to "not found" — telling the user
+  // this listing doesn't exist when in truth we just couldn't reach the server.
+  if (isError)
+    return (
+      <div className="pt-10">
+        <ErrorState title={t("error.loadEvents")} onRetry={() => refetch()} />
+      </div>
+    );
   if (isFetched && !event)
     return (
       <>

@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { SearchField, EmptyState, Skeleton } from "@/components";
+import { SearchField, EmptyState, Skeleton, ErrorState } from "@/components";
 import { useResources } from "@/data/queries";
 import { telHref } from "@/lib/links";
 import { guideLink } from "@/lib/siteMode";
@@ -46,7 +46,7 @@ const GROUPS: { category: ResourceCategory; icon: LucideIcon }[] = [
 export function ResourcesScreen() {
   const { t } = useI18n();
   const [text, setText] = useState("");
-  const { data, isLoading } = useResources({ text: text || undefined });
+  const { data, isLoading, isError, refetch } = useResources({ text: text || undefined });
 
   const byCategory = useMemo(() => {
     const m = new Map<ResourceCategory, Resource[]>();
@@ -104,6 +104,8 @@ export function ResourcesScreen() {
             <Skeleton key={i} className="h-12 w-full" />
           ))}
         </div>
+      ) : isError ? (
+        <ErrorState title={t("error.loadResources")} onRetry={() => refetch()} />
       ) : (data?.length ?? 0) === 0 ? (
         <EmptyState
           icon={<LifeBuoy size={20} />}

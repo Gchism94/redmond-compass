@@ -83,6 +83,14 @@ interface AuthPrompt {
 interface SessionValue extends Profile {
   user: SessionUser | null;
   isAuthed: boolean;
+  /**
+   * True when the sign-in profile merge failed, i.e. the user IS signed in but their
+   * saves/follows are not reaching the server. Surfaced so this can never fail silently
+   * again; `retryProfileSync` is the escape hatch (also retried automatically on the
+   * user's next pref change).
+   */
+  profileSyncFailed: boolean;
+  retryProfileSync: () => void;
 
   // gated actions (fire JIT auth when guest)
   isSaved: (id: string) => boolean;
@@ -191,6 +199,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   profileRef.current = profile;
   const syncedRef = useRef(false); // server-merge done → safe to push prefs back
   const lastUserIdRef = useRef<string | null>(null);
+  const syncingRef = useRef(false); // a merge is in flight → don't start a second one
+  /** The sign-in profile merge failed; prefs are NOT reaching the server. */
+  const [profileSyncFailed, setProfileSyncFailed] = useState(false);
 
   // persist local-first prefs (works for guests and authed users alike)
   useEffect(() => {
@@ -203,13 +214,58 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   // ---- auth wiring: reflect the DataSource session + merge prefs on sign-in ----
   const syncProfileOnSignIn = useCallback(async () => {
-    const ds = await getDS();
-    const server = await ds.getProfile();
-    const merged = mergeProfiles(profileRef.current, server);
-    setProfile(merged);
-    await ds.saveProfile(toPersisted(merged));
-    syncedRef.current = true;
+    if (syncingRef.current) return; // a retry raced the initial attempt
+    syncingRef.current = true;
+    try {
+      const ds = await getDS();
+      const server = await ds.getProfile();
+      const merged = mergeProfiles(profileRef.current, server);
+      setProfile(merged);
+      await ds.saveProfile(toPersisted(merged));
+      syncedRef.current = true;
+      setProfileSyncFailed(false);
+    } finally {
+      syncingRef.current = false;
+    }
   }, [getDS]);
+
+  /**
+   * Retry the sign-in merge. Exposed on the session so a surface can offer it, and called
+   * automatically when the user next changes a pref (see the pref-push effect).
+   */
+  const retryProfileSync = useCallback(() => {
+    // lastUserIdRef (not authedRef) — it's set in the same place the sync is triggered, so
+    // this can't disagree with whether a merge is owed.
+    if (!lastUserIdRef.current || syncedRef.current || syncingRef.current) return;
+    void syncProfileOnSignIn().catch((err) => {
+      console.error("[session] profile sync retry failed; prefs still local-only", err);
+    });
+  }, [syncProfileOnSignIn]);
+
+  /**
+   * Drop everything that belongs to the account rather than the device.
+   *
+   * Shared by explicit sign-out (PR #4) and by session LOSS — an expired or revoked token
+   * leaves exactly the same stale state behind, and until item 6 only the first path
+   * cleared it. `ownerBusinessId` is the one with teeth: it gates the owner dashboard, so
+   * leaving it set routes a signed-out user into screens whose every write fails.
+   *
+   * syncedRef is flipped false FIRST so the pref-push effect can't write this cleared
+   * profile back over the real server row; the server keeps it and re-merges on next
+   * sign-in.
+   */
+  const clearAccountScopedState = useCallback(() => {
+    syncedRef.current = false;
+    lastUserIdRef.current = null;
+    setProfileSyncFailed(false);
+    setProfile((p) => ({
+      ...p,
+      savedBusinessIds: [],
+      followedBusinessIds: [],
+      savedEventIds: [],
+      ownerBusinessId: null,
+    }));
+  }, []);
 
   // Replay a gated action that was stashed before an OAuth redirect (so a save/follow
   // started as a guest completes once they land back signed-in). Add-only = idempotent.
@@ -251,11 +307,37 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (u) {
         if (lastUserIdRef.current !== u.id) {
           lastUserIdRef.current = u.id;
-          void syncProfileOnSignIn().then(replayIntent);
+          // A rejection here used to be swallowed: replayIntent never ran, syncedRef stayed
+          // false, and the pref-push effect below then silently no-op'd for the WHOLE
+          // session — every save/follow stayed on the device while the UI showed success.
+          // Now it's logged, flagged, and retried on the user's next pref change.
+          void syncProfileOnSignIn()
+            .then(replayIntent)
+            .catch((err) => {
+              console.error("[session] sign-in profile sync failed; saves are local-only until it succeeds", err);
+              setProfileSyncFailed(true);
+              // Still replay the pending intent — it writes to local state, which works
+              // regardless of whether the server merge landed.
+              try {
+                replayIntent();
+              } catch {
+                /* ignore */
+              }
+            });
         }
       } else {
+        // Session ENDED. If we previously had a user this is a sign-out or, more
+        // importantly, a silently expired/revoked token — the case PR #4's explicit
+        // sign-out fix didn't cover. Account-scoped state must not outlive the session:
+        // `ownerBusinessId` in particular would keep routing the owner into /manage, a
+        // screen that cannot work without a session (item 6).
+        //
+        // Guarded on having HAD a user, so a guest's local-first saves are never wiped on
+        // a normal cold start (where apply(null) fires before the session restores).
+        const hadUser = lastUserIdRef.current !== null;
         lastUserIdRef.current = null;
         syncedRef.current = false;
+        if (hadUser) clearAccountScopedState();
       }
     };
     // resolve the (lazily-loaded) source, then reflect its session
@@ -273,8 +355,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   // once signed in (and merged), push later pref changes to the server row
   useEffect(() => {
-    if (user && syncedRef.current) void getDS().then((ds) => ds.saveProfile(toPersisted(profile)));
-  }, [profile, user, getDS]);
+    if (!user) return;
+    if (syncedRef.current) {
+      void getDS()
+        .then((ds) => ds.saveProfile(toPersisted(profile)))
+        .catch((err) => {
+          // One failed push is not fatal — the local profile is still the source of truth
+          // and the next change re-pushes the whole object — but it must not be silent.
+          console.error("[session] could not push prefs to the server row", err);
+        });
+      return;
+    }
+    // The initial merge never landed. Rather than dropping every subsequent save on the
+    // floor for the rest of the session, use this pref change as the trigger to retry.
+    retryProfileSync();
+  }, [profile, user, getDS, retryProfileSync]);
 
   const isAuthed = !!user;
   const authedRef = useRef(isAuthed);
@@ -375,30 +470,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(() => {
-    // Clear account-scoped local state on sign-out so (a) a signed-out ex-owner can't reach
-    // the owner dashboard — its guard keys on ownerBusinessId, which used to survive sign-out
-    // and stranded the user in write-failing screens — and (b) a shared device doesn't merge
-    // one user's saves/follows into the NEXT account on sign-in. Flip syncedRef false FIRST so
-    // the pref-push effect won't write this cleared profile back to the still-open server row
-    // (that would wipe the real saves); the server keeps them and re-merges on next sign-in.
-    syncedRef.current = false;
-    lastUserIdRef.current = null;
-    setProfile((p) => ({
-      ...p,
-      savedBusinessIds: [],
-      followedBusinessIds: [],
-      savedEventIds: [],
-      ownerBusinessId: null,
-    }));
+    // Same clearing as a lost session — see clearAccountScopedState. (a) a signed-out
+    // ex-owner can't reach the owner dashboard, and (b) a shared device doesn't merge one
+    // user's saves/follows into the NEXT account on sign-in.
+    clearAccountScopedState();
     void getDS().then((ds) => ds.signOut());
-  }, [getDS]);
+  }, [getDS, clearAccountScopedState]);
 
   const deleteAccount = useCallback(async () => {
     const ds = await getDS();
     await ds.deleteAccount(); // server delete + signOut (Supabase); mock signs out
     // account is gone — this device must not keep its saves/follows/interests.
-    syncedRef.current = false;
-    lastUserIdRef.current = null;
+    clearAccountScopedState();
     setProfile(DEFAULT_PROFILE);
     try {
       localStorage.removeItem(PROFILE_KEY);
@@ -406,13 +489,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-  }, [getDS]);
+  }, [getDS, clearAccountScopedState]);
 
   const value = useMemo<SessionValue>(
     () => ({
       ...profile,
       user,
       isAuthed,
+      profileSyncFailed,
+      retryProfileSync,
       isSaved: (id) => profile.savedBusinessIds.includes(id),
       toggleSaveBusiness,
       isFollowing: (id) => profile.followedBusinessIds.includes(id),
@@ -441,6 +526,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       profile,
       user,
       isAuthed,
+      profileSyncFailed,
+      retryProfileSync,
       toggleSaveBusiness,
       toggleFollow,
       toggleSaveEvent,

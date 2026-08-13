@@ -2,18 +2,9 @@ import { useEffect, useState } from "react";
 import { Navigate, useNavigate, Link } from "react-router-dom";
 import { Check, X, Plus, ArrowRight } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import {
-  Field,
-  fieldInputClass,
-  CompletenessMeter,
-  Chip,
-  Switch,
-  Thumb,
-  Button,
-  Card,
-  Skeleton,
-} from "@/components";
+import { Field, fieldInputClass, CompletenessMeter, Chip, Switch, Thumb, Button, Card, Skeleton, ErrorState } from "@/components";
 import { useOwnerBusiness } from "./useOwnerBusiness";
+import { MutationError } from "./MutationError";
 import { useUpdateBusiness } from "@/data/queries";
 import { listingCompleteness } from "@/lib/completeness";
 import { WEEKDAY_ORDER, dayLabel } from "@/lib/hours";
@@ -62,15 +53,19 @@ function fromBusiness(b: Business): FormState {
 export function EditListingScreen() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { ownerBusinessId, data: business, isLoading } = useOwnerBusiness();
+  const { ownerBusinessId, data: business, isLoading, isError, refetch } = useOwnerBusiness();
   const update = useUpdateBusiness();
   const [form, setForm] = useState<FormState | null>(null);
+  const [saveError, setSaveError] = useState<unknown>(null);
 
   useEffect(() => {
     if (business && !form) setForm(fromBusiness(business));
   }, [business, form]);
 
   if (!ownerBusinessId) return <Navigate to="/claim" replace />;
+  // Before the loading guard: `isLoading || !business` stays TRUE on error (isLoading goes
+  // false, business stays undefined), so the screen used to show a skeleton forever.
+  if (isError) return <ErrorState title={t("error.loadProfile")} onRetry={() => refetch()} />;
   if (isLoading || !form || !business) {
     return (
       <>
@@ -111,22 +106,29 @@ export function EditListingScreen() {
     );
 
   const save = async () => {
-    await update.mutateAsync({
-      id: business.id,
-      patch: {
-        name: form.name.trim(),
-        category: form.category,
-        subcategories: preview.subcategories,
-        description: form.description.trim(),
-        address: form.address.trim(),
-        phone: form.phone.trim() || undefined,
-        website: form.website.trim() || undefined,
-        photos: form.photos,
-        amenityTags: form.amenityTags,
-        hours: { week: form.week },
-      },
-    });
-    navigate("/manage");
+    // Edits are lost work if they vanish — the form state is deliberately NOT reset on
+    // failure, so the owner can fix the cause (reconnect, sign in) and press Save again.
+    setSaveError(null);
+    try {
+      await update.mutateAsync({
+        id: business.id,
+        patch: {
+          name: form.name.trim(),
+          category: form.category,
+          subcategories: preview.subcategories,
+          description: form.description.trim(),
+          address: form.address.trim(),
+          phone: form.phone.trim() || undefined,
+          website: form.website.trim() || undefined,
+          photos: form.photos,
+          amenityTags: form.amenityTags,
+          hours: { week: form.week },
+        },
+      });
+      navigate("/manage");
+    } catch (e) {
+      setSaveError(e);
+    }
   };
 
   return (
@@ -257,6 +259,8 @@ export function EditListingScreen() {
 
       {/* Sticky save bar */}
       <div className="fixed inset-x-0 bottom-[calc(58px+env(safe-area-inset-bottom))] z-20 mx-auto max-w-content border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
+        <MutationError error={saveError} onRetry={save} />
+
         <Button variant="primary" size="lg" fullWidth disabled={update.isPending || !form.name.trim() || !form.address.trim()} onClick={save}>
           {update.isPending ? t("owner.saving") : t("owner.saveChanges")}
         </Button>

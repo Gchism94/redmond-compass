@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Bookmark, UserPlus, CalendarPlus, LogIn } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { Toggle, ResultCard, EventCard, EmptyState, Skeleton, Button } from "@/components";
-import { useBusinesses, useEvents } from "@/data/queries";
+import { Toggle, ResultCard, EventCard, EmptyState, Skeleton, Button, ErrorState } from "@/components";
+import { useBusinessMap, useEvents } from "@/data/queries";
 import { useSession } from "@/features/account/session";
 import { eventsToICS, downloadICS } from "@/lib/calendar";
 import type { Business } from "@/lib/types";
@@ -15,15 +15,20 @@ export function SavedScreen() {
   const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("businesses");
   const session = useSession();
-  const allBiz = useBusinesses({ limit: 50 });
+
+  // Fetch EXACTLY the businesses this user saved/follows, by id. This screen used to
+  // resolve those ids against `useBusinesses({ limit: 50 })`, so with 133 listings anything
+  // ranked 51st+ silently vanished from the user's own Saved list while still sitting
+  // correctly in their profile. Scoping the query to the ids removes the ceiling entirely:
+  // the cost tracks how much the user saved, not how big the directory grows.
+  const ids = useMemo(
+    () => [...session.savedBusinessIds, ...session.followedBusinessIds],
+    [session.savedBusinessIds, session.followedBusinessIds],
+  );
+  const { map: bizById, isLoading: bizLoading, isError: bizError, refetch: refetchBiz } = useBusinessMap(ids);
   const allEvents = useEvents({ includePast: true });
 
-  const bizById = useMemo(() => {
-    const m = new Map<string, Business>();
-    allBiz.data?.items.forEach((b) => m.set(b.id, b));
-    return m;
-  }, [allBiz.data]);
-
+  // Ordered by the user's own list (the query gives no ordering guarantee).
   const saved = session.savedBusinessIds
     .map((id) => bizById.get(id))
     .filter((b): b is Business => !!b);
@@ -62,7 +67,19 @@ export function SavedScreen() {
       )}
 
       <div className="px-4 pt-2">
-        {allBiz.isLoading ? (
+        {bizError || allEvents.isError ? (
+          // Saved is the one screen where an empty state is genuinely alarming — it reads
+          // as "your saves are gone". Say plainly that the list is intact and we just
+          // couldn't fetch it.
+          <ErrorState
+            title={t("error.loadSaved")}
+            message={t("error.savedNote")}
+            onRetry={() => {
+              if (bizError) refetchBiz();
+              if (allEvents.isError) allEvents.refetch();
+            }}
+          />
+        ) : bizLoading ? (
           <div className="space-y-3 pt-2">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-20 w-full" />

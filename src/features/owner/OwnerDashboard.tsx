@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Repeat, Megaphone, CalendarPlus, Pencil, ArrowRight } from "lucide-react";
-import { Thumb, VerifiedBadge, StatusBadge, CompletenessMeter, Card, Skeleton } from "@/components";
+import { Thumb, VerifiedBadge, StatusBadge, CompletenessMeter, Card, Skeleton, ErrorState } from "@/components";
 import { useOwnerBusiness } from "./useOwnerBusiness";
 import { useBulletinCount } from "@/data/queries";
 import { useSession } from "@/features/account/session";
@@ -17,12 +17,17 @@ import { useI18n } from "@/i18n";
 export function OwnerDashboard() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { ownerBusinessId, data: business, isLoading } = useOwnerBusiness();
+  const { ownerBusinessId, data: business, isLoading, isError, refetch } = useOwnerBusiness();
   const { setOwnerBusinessId } = useSession();
   const bulletinCount = useBulletinCount(ownerBusinessId ?? undefined);
 
   if (!ownerBusinessId) return <Navigate to="/claim" replace />;
   if (isLoading) return <DashboardSkeleton />;
+  // MUST precede the !business branch below. That branch treats a missing listing as
+  // "deleted" and CLEARS ownerBusinessId — so before this check, one dropped request wiped
+  // the owner's link to their own listing and dumped them back into the claim flow.
+  if (isError)
+    return <ErrorState title={t("error.loadProfile")} onRetry={() => refetch()} />;
   if (!business) {
     // Owner id points at a listing that no longer exists — reset and re-claim.
     setOwnerBusinessId(null);

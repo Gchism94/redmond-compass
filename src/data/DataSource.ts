@@ -112,6 +112,9 @@ export interface BusinessQuery {
   categorySlug?: string;
   /** amenity facets — AND semantics (must have all) */
   amenityTags?: string[];
+  /** restrict to claimed / unclaimed listings (the Claim intake wants unclaimed only).
+   *  Filtering server-side keeps `total` honest, so paging over it can't drift. */
+  claimed?: boolean;
   /** keep only businesses open at `now` */
   openNow?: boolean;
   /** origin for distance calc/sort; defaults to Redmond center if omitted */
@@ -165,6 +168,18 @@ export interface DataSource {
   listBusinesses(query?: BusinessQuery): Promise<Paged<Business>>;
   getBusinessBySlug(slug: string): Promise<Business | null>;
   getBusinessById(id: ID): Promise<Business | null>;
+  /**
+   * Fetch exactly these businesses, by id. Unbounded by any page size — this is how a
+   * screen resolves a user-held list of ids (saves, follows, recently-viewed, bulletin
+   * attribution).
+   *
+   * Resolving such a list against a capped `listBusinesses()` page is a silent-data-loss
+   * bug: an id outside the page vanishes from the user's own screen even though it is
+   * stored correctly. Use this instead. Ids missing from the DB are simply absent from the
+   * result (a listing can be unpublished or deleted after it was saved), and the result
+   * order is NOT guaranteed — order by your own id list.
+   */
+  listBusinessesByIds(ids: ID[]): Promise<Business[]>;
   /** category counts for the browse grid (S3) */
   listCategories(): Promise<CategoryCount[]>;
 

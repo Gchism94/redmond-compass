@@ -2,15 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, List, CalendarDays } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import {
-  SearchField,
-  Chip,
-  EventCard,
-  EmptyState,
-  Skeleton,
-  SegmentedToggle,
-  EventCalendar,
-} from "@/components";
+import { SearchField, Chip, EventCard, EmptyState, Skeleton, SegmentedToggle, EventCalendar, ErrorState } from "@/components";
 import { useEvents } from "@/data/queries";
 import { eventGroup, eventGroupLabel, type EventGroup } from "@/lib/format";
 import { useI18n } from "@/i18n";
@@ -34,7 +26,7 @@ export function EventsScreen() {
   const [quick, setQuick] = useState<Quick>("all");
   const [view, setView] = useState<"list" | "calendar">("list");
   const session = useSession();
-  const { data, isLoading } = useEvents({ text: text || undefined });
+  const { data, isLoading, isError, refetch } = useEvents({ text: text || undefined });
 
   const grouped = useMemo(() => {
     const buckets: Record<EventGroup, EventItem[]> = { today: [], weekend: [], later: [], past: [] };
@@ -87,6 +79,9 @@ export function EventsScreen() {
             <Skeleton key={i} className="h-14 w-full" />
           ))}
         </div>
+      ) : isError ? (
+        // Checked BEFORE the empty branch: a failed fetch must never read as "no events".
+        <ErrorState title={t("error.loadEvents")} onRetry={() => refetch()} />
       ) : total === 0 ? (
         <EmptyState
           icon={<Calendar size={20} />}
