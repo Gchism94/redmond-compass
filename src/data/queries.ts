@@ -5,6 +5,7 @@
  * loading state until the (lazily-loaded) source resolves. Query keys are structured
  * for easy cache invalidation by the owner-path + recommend mutations.
  */
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDataSource } from "./DataProvider";
 import type {
@@ -44,6 +45,37 @@ export function useBusiness(slug: string | undefined) {
     queryFn: async () => (await getDS()).getBusinessBySlug(slug!),
     enabled: !!slug,
   });
+}
+
+/**
+ * Resolve a caller-held list of business ids (saves, follows, recently-viewed, bulletin
+ * attribution) — the correct way to turn ids into businesses.
+ *
+ * Do NOT resolve such a list against `useBusinesses({ limit: N })`: an id ranked outside
+ * that page silently disappears from the user's own screen even though it is stored
+ * correctly. The query key is the SORTED ids, so the same set shares one cache entry
+ * regardless of the order the user saved things in.
+ */
+export function useBusinessesByIds(ids: string[]) {
+  const getDS = useDataSource();
+  const unique = useMemo(() => [...new Set(ids.filter(Boolean))], [ids]);
+  const key = useMemo(() => [...unique].sort(), [unique]);
+  return useQuery({
+    queryKey: ["businesses-by-ids", key] as const,
+    queryFn: async () => (await getDS()).listBusinessesByIds(unique),
+    enabled: unique.length > 0,
+  });
+}
+
+/** `useBusinessesByIds` as an id→Business map, for attribution lookups. */
+export function useBusinessMap(ids: string[]) {
+  const q = useBusinessesByIds(ids);
+  const map = useMemo(() => {
+    const m = new Map<string, Business>();
+    q.data?.forEach((b) => m.set(b.id, b));
+    return m;
+  }, [q.data]);
+  return { map, isLoading: q.isLoading, isError: q.isError, refetch: q.refetch };
 }
 
 export function useBusinessById(id: string | undefined) {

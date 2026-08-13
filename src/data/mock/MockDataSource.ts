@@ -174,6 +174,7 @@ export class MockDataSource implements DataSource {
     if (query.amenityTags?.length) {
       items = items.filter((b) => query.amenityTags!.every((t) => b.amenityTags.includes(t)));
     }
+    if (query.claimed != null) items = items.filter((b) => b.claimed === query.claimed);
     if (query.openNow) items = items.filter((b) => getOpenStatus(b.hours).open);
     if (query.maxDistanceMi != null) {
       items = items.filter((b) => distanceMiles(origin, b.geo) <= query.maxDistanceMi!);
@@ -207,6 +208,15 @@ export class MockDataSource implements DataSource {
           return distanceMiles(origin, a.geo) - distanceMiles(origin, b.geo);
         });
     }
+  }
+
+  async listBusinessesByIds(ids: ID[]): Promise<Business[]> {
+    const want = new Set(ids.filter(Boolean));
+    if (!want.size) return delay([]);
+    // No page cap by design — the caller holds the id list, so the result is already bounded
+    // by it. Order is deliberately NOT the caller's id order (matching the real source, whose
+    // `in` query gives no ordering guarantee), so a screen that needs an order must impose it.
+    return delay(this.businessList().filter((b) => want.has(b.id)));
   }
 
   async getBusinessBySlug(slug: string): Promise<Business | null> {
