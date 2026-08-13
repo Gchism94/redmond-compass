@@ -11,6 +11,7 @@ export { StatusBadge, VerifiedBadge } from "./ui/StatusBadge";
 export { OpenStatusLabel } from "./ui/OpenStatusLabel";
 export { CompletenessMeter } from "./ui/CompletenessMeter";
 export { EmptyState } from "./ui/EmptyState";
+export { ErrorState } from "./ui/ErrorState";
 export { Thumb } from "./ui/Thumb";
 export { Field, fieldInputClass } from "./ui/Field";
 export { Sheet } from "./ui/Sheet";

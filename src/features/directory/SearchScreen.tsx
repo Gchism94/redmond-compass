@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, TrendingUp, CircleDot, Sparkles, Users, Moon, ChevronRight } from "lucide-react";
-import { SearchField, Chip, SectionHeader, CategoryGrid, Thumb } from "@/components";
+import { SearchField, Chip, SectionHeader, CategoryGrid, Thumb, ErrorState } from "@/components";
 import { useSearch } from "@/data/queries";
 import { addRecentSearch, getRecentSearches } from "@/lib/recents";
 import { eventTimeShort } from "@/lib/format";
@@ -105,6 +105,13 @@ export function SearchScreen() {
               {t("common.suggestion")}
             </span>
           </button>
+          {/* Autocomplete failing must not look like "no such business exists" — the
+              free-text "search for …" row above still works, so this stays compact. */}
+          {ac.isError && (
+            <div className="py-2">
+              <ErrorState compact title={t("error.loadBusinesses")} onRetry={() => ac.refetch()} />
+            </div>
+          )}
           {ac.data?.map((r, i) => {
             const m = acMeta(r);
             const tag = TAG_LABEL[r.type];

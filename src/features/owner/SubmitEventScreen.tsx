@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { CalendarPlus } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { Field, fieldInputClass, Button, Card, Skeleton } from "@/components";
+import { Field, fieldInputClass, Button, Card, Skeleton, ErrorState } from "@/components";
 import { useOwnerBusiness } from "./useOwnerBusiness";
+import { MutationError } from "./MutationError";
 import { useCreateEvent } from "@/data/queries";
 import { useI18n } from "@/i18n";
 
@@ -13,8 +14,9 @@ const CATEGORIES = ["Music", "Community", "Family", "Festival", "Outdoors", "Wor
 export function SubmitEventScreen() {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { ownerBusinessId, data: business, isLoading } = useOwnerBusiness();
+  const { ownerBusinessId, data: business, isLoading, isError, refetch } = useOwnerBusiness();
   const create = useCreateEvent();
+  const [submitError, setSubmitError] = useState<unknown>(null);
 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -27,6 +29,8 @@ export function SubmitEventScreen() {
   const [description, setDescription] = useState("");
 
   if (!ownerBusinessId) return <Navigate to="/claim" replace />;
+  // See EditListingScreen: without this, an error leaves the skeleton up permanently.
+  if (isError) return <ErrorState title={t("error.loadProfile")} onRetry={() => refetch()} />;
   if (isLoading || !business) {
     return (
       <>
@@ -44,19 +48,27 @@ export function SubmitEventScreen() {
 
   const submit = async () => {
     if (!valid) return;
-    await create.mutateAsync({
-      businessId: ownerBusinessId,
-      title: title.trim(),
-      startAt: `${date}T${start}:00`,
-      endAt: end ? `${date}T${end}:00` : undefined,
-      venueName: venue.trim() || business.name,
-      address: address.trim() || business.address,
-      geo: business.geo,
-      description: description.trim() || undefined,
-      category,
-      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-    });
-    navigate("/manage");
+    // The form state is untouched on failure, so the owner's typing survives and the same
+    // button is the retry. `mutateAsync` rejecting used to be an unhandled rejection: the
+    // button re-enabled, nothing navigated, and nothing explained why.
+    setSubmitError(null);
+    try {
+      await create.mutateAsync({
+        businessId: ownerBusinessId,
+        title: title.trim(),
+        startAt: `${date}T${start}:00`,
+        endAt: end ? `${date}T${end}:00` : undefined,
+        venueName: venue.trim() || business.name,
+        address: address.trim() || business.address,
+        geo: business.geo,
+        description: description.trim() || undefined,
+        category,
+        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      });
+      navigate("/manage");
+    } catch (e) {
+      setSubmitError(e);
+    }
   };
 
   return (
@@ -105,6 +117,8 @@ export function SubmitEventScreen() {
             <textarea id="ev-desc" rows={3} className={fieldInputClass} value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("owner.eventDescPlaceholder")} />
           </Field>
         </Card>
+
+        <MutationError error={submitError} onRetry={submit} />
 
         <Button variant="primary" size="lg" fullWidth disabled={!valid || create.isPending} onClick={submit}>
           {create.isPending ? t("owner.submitting") : <><CalendarPlus size={16} /> {t("owner.submitEventBtn")}</>}
