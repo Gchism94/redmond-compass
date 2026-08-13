@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "node:path";
@@ -7,12 +7,78 @@ import { compassConfig } from "./compass.config";
 const appOnly = compassConfig.siteMode === "app-only";
 
 /**
+ * Fail a PRODUCTION build that isn't wired to real data, instead of silently shipping the
+ * fictional mock directory (audit 2026-08-13, item 7).
+ *
+ * `src/data/source.ts` used to fall through to MockDataSource whenever VITE_DATA_SOURCE was
+ * unset — so a build missing its env would produce a perfectly functional-looking app full
+ * of invented businesses. Nothing anywhere said "this isn't real". Cloudflare Pages
+ * currently HAS all three variables set on both Production and Preview (verified against
+ * the deployed bundles), so this guard should never fire today; it exists for the day a
+ * variable is deleted, renamed, or a new environment is added without them.
+ *
+ * Deliberately fails the build rather than warning: a broken build is a five-minute fix,
+ * a live directory of fictional businesses is a credibility problem.
+ */
+function requireRealDataSource(): Plugin {
+  return {
+    name: "compass:require-real-data-source",
+    apply: "build",
+    config(_config, { mode }) {
+      if (mode !== "production") return;
+      // Reads .env files AND Cloudflare Pages' injected build variables (process.env).
+      // Values are trimmed before every check: a variable pasted into a dashboard with a
+      // trailing space or newline is a configuration wart, not a reason to block a deploy,
+      // and this guard failing the build over one would be worse than the thing it guards.
+      const raw = loadEnv(mode, process.cwd(), "");
+      const env = Object.fromEntries(
+        Object.entries(raw).map(([k, v]) => [k, typeof v === "string" ? v.trim() : v]),
+      ) as Record<string, string>;
+      if (env.VITE_ALLOW_MOCK === "1") {
+        console.warn("\n⚠️  VITE_ALLOW_MOCK=1 — building with MOCK data on purpose. Do not deploy this to production.\n");
+        return;
+      }
+      const missing = [
+        ["VITE_DATA_SOURCE", env.VITE_DATA_SOURCE],
+        ["VITE_SUPABASE_URL", env.VITE_SUPABASE_URL],
+        ["VITE_SUPABASE_ANON_KEY", env.VITE_SUPABASE_ANON_KEY],
+      ].filter(([, v]) => !v).map(([k]) => k as string);
+
+      if (env.VITE_DATA_SOURCE && env.VITE_DATA_SOURCE !== "supabase") {
+        throw new Error(
+          `[compass] Production build blocked: VITE_DATA_SOURCE is "${env.VITE_DATA_SOURCE}", expected "supabase". ` +
+            "Shipping this would serve the fictional seed directory as if it were Redmond's real listings. " +
+            "Set VITE_ALLOW_MOCK=1 if you genuinely want a mock build.",
+        );
+      }
+      if (missing.length) {
+        throw new Error(
+          `[compass] Production build blocked: missing ${missing.join(", ")}.\n` +
+            "  • Cloudflare Pages: Settings → Variables and Secrets (set for BOTH Production and Preview).\n" +
+            "  • Local build: .env.production.local (gitignored — see .env.example).\n" +
+            "Without these the app falls back to mock data and looks like it works.",
+        );
+      }
+      // Cheap shape checks — a truncated or wrong-kind key is as broken as a missing one,
+      // and the service-role key must NEVER reach a browser bundle.
+      if (!/^https:\/\/[a-z0-9]+\.supabase\.co\/?$/.test(env.VITE_SUPABASE_URL)) {
+        throw new Error(`[compass] VITE_SUPABASE_URL doesn't look like a hosted Supabase URL: "${env.VITE_SUPABASE_URL}"`);
+      }
+      if (/service_role|^sb_secret_/.test(env.VITE_SUPABASE_ANON_KEY)) {
+        throw new Error("[compass] VITE_SUPABASE_ANON_KEY looks like a SERVICE-ROLE/secret key. Never ship that to the browser.");
+      }
+    },
+  };
+}
+
+/**
  * Redmond Compass — Vite config (PWA, BUILD-BRIEF §10).
  * Installable, app-shell precache + offline. SW is disabled in dev (avoids caching
  * surprises while building); it builds + registers for production/preview.
  */
 export default defineConfig({
   plugins: [
+    requireRealDataSource(),
     react(),
     VitePWA({
       registerType: "autoUpdate",
