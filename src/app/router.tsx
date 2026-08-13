@@ -33,10 +33,14 @@ const OwnerDashboard = named(() => import("@/features/owner/OwnerDashboard"), "O
 const EditListingScreen = named(() => import("@/features/owner/EditListingScreen"), "EditListingScreen");
 const PostBulletinScreen = named(() => import("@/features/owner/PostBulletinScreen"), "PostBulletinScreen");
 const SubmitEventScreen = named(() => import("@/features/owner/SubmitEventScreen"), "SubmitEventScreen");
-const GalleryPage = named(() => import("./GalleryPage"), "GalleryPage");
 const NotFoundPage = named(() => import("./pages"), "NotFoundPage");
 const GuideScreen = named(() => import("@/features/guides/GuideScreen"), "GuideScreen");
 const LandingGate = named(() => import("@/features/landing/LandingScreen"), "LandingGate");
+
+/** DEV-only: resolved lazily so the gallery chunk never enters a production build. */
+const GalleryDevRoute = import.meta.env.DEV
+  ? named(() => import("./GalleryPage"), "GalleryPage")
+  : () => null;
 
 export const router = createBrowserRouter([
   // app-only mode: `/` is the marketing landing page — its own chrome, OUTSIDE the
@@ -79,8 +83,14 @@ export const router = createBrowserRouter([
       { path: "/manage/edit", element: <EditListingScreen /> },
       { path: "/manage/bulletin/new", element: <PostBulletinScreen /> },
       { path: "/manage/event/new", element: <SubmitEventScreen /> },
-      // component gallery is a DEV-only surface — never a reachable route in production (#8)
-      ...(import.meta.env.DEV ? [{ path: "/gallery", element: <GalleryPage /> }] : []),
+      // Component gallery: a DEV-only surface, never a reachable route in production (#8).
+      // The lazy() lives INSIDE this branch on purpose — declared at module scope it was a
+      // top-level call Rollup couldn't prove pure, so the 14.7 KB gallery chunk shipped to
+      // every production build even though the route was already gated. Inside the folded
+      // branch the dynamic import is dead code and the chunk is never emitted.
+      ...(import.meta.env.DEV
+        ? [{ path: "/gallery", element: <GalleryDevRoute /> }]
+        : []),
       // Content pages (Stage 1 Phase 2) — the live site's guides, at their original URLs.
       ...GUIDE_SLUGS.map((slug) => ({ path: `/${slug}`, element: <GuideScreen /> })),
       { path: "*", element: <NotFoundPage /> },
