@@ -30,6 +30,31 @@
 -- daily no-op rebuilds are undesirable.
 -- ───────────────────────────────────────────────────────────────────────────────────────
 
+-- ── x-sync-secret is now MANDATORY ─────────────────────────────────────────────────────
+-- The function's gate is fail-closed as of the slug/secret fix: no `x-sync-secret` header,
+-- or a wrong one, returns 403; an UNSET secret on the function returns 503. A cron job that
+-- posts without the header does not "mostly work" — it fails every single night, silently,
+-- because nobody reads cron output.
+--
+-- The function reads SYNC_SECRET from its Deno environment (`supabase secrets set`).
+-- Postgres CANNOT read those — pg_cron/pg_net run inside the database, which has no access
+-- to Function secrets. So the same value has to be reachable from SQL, and Vault is where
+-- this project keeps it: encrypted at rest, and the cron command stores only a NAME rather
+-- than the secret itself. That matters because `cron.job.command` is plain text readable by
+-- anyone who can query it — inlining would put both the service-role key and the sync
+-- secret in a table.
+--
+-- ONE-TIME SETUP (SQL editor, once — the values must match what the function has):
+--
+--   select vault.create_secret('<SYNC_SECRET>',      'sync_secret',           'sync-sheet shared secret');
+--   select vault.create_secret('<SERVICE_ROLE_KEY>', 'sync_service_role_key', 'sync-sheet cron bearer');
+--
+--   -- to rotate later (no need to touch the cron job — it reads by name):
+--   select vault.update_secret((select id from vault.secrets where name = 'sync_secret'), '<NEW>');
+--
+-- If Vault is unavailable, see the INLINE FALLBACK at the bottom of this file.
+-- ───────────────────────────────────────────────────────────────────────────────────────
+
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
@@ -38,20 +63,83 @@ select cron.schedule(
   '15 8 * * *',                          -- 08:15 UTC daily (UTC-only; see DST note above)
   $$
   select net.http_post(
-    url     := 'https://<REF>.supabase.co/functions/v1/sync-sheet',
+    url     := 'https://<REF>.supabase.co/functions/v1/sync-sheet?trigger=schedule',
     headers := jsonb_build_object(
-      -- Service-role bearer (NOT anon): a trusted server-to-server invocation. Keep this key
-      -- secret — it lives only in the cron job definition (cron.job), never in the repo. For a
-      -- hardened setup, store it in Vault and read vault.decrypted_secrets instead of inlining.
-      'Authorization', 'Bearer <SERVICE_ROLE_KEY>',
-      'Content-Type',  'application/json'
-      -- If you set the optional SYNC_SECRET, also send it (uncomment, incl. the leading comma):
-      -- , 'x-sync-secret', '<SYNC_SECRET>'
+      -- Service-role bearer (NOT anon): a trusted server-to-server invocation.
+      'Authorization',  'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'sync_service_role_key'),
+      'Content-Type',   'application/json',
+      -- REQUIRED. Without this the function returns 403 and the sync never runs.
+      'x-sync-secret',  (select decrypted_secret from vault.decrypted_secrets where name = 'sync_secret')
     ),
     timeout_milliseconds := 30000          -- headroom for Google auth + sheet fetch + upserts
   );
   $$
 );
 
+-- ── VERIFY WITHOUT FIRING IT ────────────────────────────────────────────────────────────
+-- Confirms the job would construct a correct request, without invoking the function.
+--
+-- 1) Both secrets exist and are readable (expect both_secrets_present = true):
+--
+--   select
+--     (select count(*) from vault.decrypted_secrets
+--       where name in ('sync_secret','sync_service_role_key')) = 2 as both_secrets_present;
+--
+-- 2) Preview the exact URL/method/headers the job builds, with the values MASKED — this
+--    evaluates the same expressions the cron command uses, so a missing or misnamed Vault
+--    entry shows up here as an empty value rather than as a silent 403 at 08:15:
+--
+--   select
+--     'POST' as method,
+--     'https://<REF>.supabase.co/functions/v1/sync-sheet?trigger=schedule' as url,
+--     jsonb_build_object(
+--       'Authorization', 'Bearer ' || left(coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'sync_service_role_key'), ''), 8) || '…',
+--       'Content-Type',  'application/json',
+--       'x-sync-secret', left(coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'sync_secret'), ''), 8) || '…'
+--     ) as headers_preview;
+--
+-- 3) Confirm the SCHEDULED job actually carries the header (guards against re-running an
+--    older copy of this file — expect sends_sync_secret = true):
+--
+--   select jobname, schedule, active,
+--          command like '%x-sync-secret%' as sends_sync_secret
+--     from cron.job where jobname = 'sync-sheet-daily';
+--
+-- 4) After the first real firing, read what the function actually answered — pg_net stores
+--    every response, so you never have to guess:
+--
+--   select r.status_code, r.content, r.created
+--     from net._http_response r order by r.created desc limit 5;
+--
+--   403 → the header is missing/wrong (check step 3, then that Vault matches the function's
+--         SYNC_SECRET).  503 → SYNC_SECRET is not set ON THE FUNCTION.  200 → ran.
+
+-- ── SAFE MODE: dry-run schedule ─────────────────────────────────────────────────────────
+-- The sync must NOT be allowed to write until the 3 drifted Business ID cells are corrected
+-- in the Sheet (see RECONCILIATION-2026-07-23.md) — until then a real run inserts 3
+-- duplicates and orphans an owner-claimed listing.
+--
+-- To schedule it now but keep it harmless, add `&dry=1` to the url above. The function then
+-- computes the full plan and returns what it WOULD change, writing nothing at all — no
+-- upsert, no soft-unpublish, no deploy hook, not even a sync_runs row. Because pg_net logs
+-- responses, the nightly dry-run output is readable with query (4) above, which is a useful
+-- way to watch for `"newIds": 0` without touching anything. Drop `&dry=1` to go live.
+
 -- To change the time:  select cron.unschedule('sync-sheet-daily');  then re-run with a new cron.
 -- To remove:           select cron.unschedule('sync-sheet-daily');
+
+-- ── INLINE FALLBACK (only if Vault is unavailable) ──────────────────────────────────────
+-- Functionally identical, but stores BOTH secrets as plain text in cron.job.command. Prefer
+-- the Vault form above; if you use this, treat `cron.job` as secret-bearing.
+--
+--   select cron.schedule('sync-sheet-daily', '15 8 * * *', $$
+--     select net.http_post(
+--       url     := 'https://<REF>.supabase.co/functions/v1/sync-sheet?trigger=schedule',
+--       headers := jsonb_build_object(
+--         'Authorization', 'Bearer <SERVICE_ROLE_KEY>',
+--         'Content-Type',  'application/json',
+--         'x-sync-secret', '<SYNC_SECRET>'
+--       ),
+--       timeout_milliseconds := 30000
+--     );
+--   $$);
