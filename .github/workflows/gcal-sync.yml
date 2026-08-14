@@ -19,6 +19,13 @@ jobs:
           node-version: 22 # supabase-js needs Node's native WebSocket (22+)
           cache: npm
       - run: npm ci
+      # Verify the transform BEFORE it can touch production. This job runs unattended every
+      # 6 hours, so "someone remembers to run the tests" is not a control. A failing step
+      # fails the job and GitHub Actions skips every later step by default, so the sync
+      # below cannot run on a broken transform — verified by dispatching this workflow with
+      # a deliberately failing assertion and confirming the sync step was skipped.
+      - name: Write-contract + guard tests (must pass before any write)
+        run: npm run test:gcal
       - name: Sync calendar into hosted events
         run: node scripts/sync-gcal-events.mjs
         env:
