@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n";
 
 const TRENDING = ["Farmers market", "New cafes", "Live music", "Gluten-free"];
 import type { DictKey } from "@/i18n";
+import { categoryLabelFor } from "@/lib/taxonomy";
 interface Collection {
   labelKey: DictKey;
   descKey: DictKey;
@@ -220,7 +221,7 @@ function buildAutocomplete(r: SearchResult): { title: string; sub: string; image
     case "business":
       return {
         title: r.item.name,
-        sub: [r.item.category, ...(r.item.subcategories ?? [])].slice(0, 2).join(" · "),
+        sub: [categoryLabelFor(r.item.category), ...(r.item.subcategories ?? [])].slice(0, 2).join(" · "),
         image: r.item.photos[0],
       };
     case "event":

@@ -17,6 +17,7 @@ import { relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
 import type { Business } from "@/lib/types";
 import { useI18n, tGlobal } from "@/i18n";
+import { categoryLabelFor } from "@/lib/taxonomy";
 
 /**
  * Business Profile (S5) — the anchor screen. A FREE listing must read COMPLETE:
@@ -90,7 +91,7 @@ export function BusinessProfileScreen() {
           {business.name}
         </h1>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          {[business.category, ...(business.subcategories ?? [])].join(" · ")}
+          {[categoryLabelFor(business.category), ...(business.subcategories ?? [])].join(" · ")}
         </p>
         <div className="mt-2">
           <OpenStatusLabel hours={business.hours} />

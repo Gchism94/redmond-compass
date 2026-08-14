@@ -29,7 +29,7 @@ await build({
   bundle: true, format: "esm", platform: "node", outfile: path.join(tmp, "tax.mjs"),
   logLevel: "error", absWorkingDir: ROOT, nodePaths: [path.join(ROOT, "node_modules")],
 });
-const { TOP_CATEGORIES, KNOWN_CATEGORY_VALUES, UNCATEGORIZED_VALUES, BUSINESS_CATEGORIES, topCategoryFor, categoryValuesFor } =
+const { TOP_CATEGORIES, KNOWN_CATEGORY_VALUES, UNCATEGORIZED_VALUES, BUSINESS_CATEGORIES, topCategoryFor, categoryValuesFor, categoryLabelFor } =
   await import(path.join(tmp, "tax.mjs"));
 
 let pass = 0, fail = 0;
@@ -64,6 +64,29 @@ const ok = (c, m) => { console.log(`${c ? "PASS" : "FAIL"}  ${m}`); c ? pass++ :
 
   ok(UNCATEGORIZED_VALUES.every((v) => topCategoryFor(v) === "more"),
      "explicitly-uncategorised values resolve to the 'more' tile");
+}
+
+// ── 1b. Display labels — the stored value must never reach a visitor raw ─────────────────
+// `businesses.category` holds the SHEET's vocabulary ("food-drink"), and four surfaces
+// render it verbatim (result cards, profile header, Claim intake, search autocomplete).
+// After the first Sheet sync the directory was telling people a business was in
+// "food-drink" instead of "Food & Drink".
+{
+  ok(categoryLabelFor("food-drink") === "Food & Drink", `slug → display ("${categoryLabelFor("food-drink")}")`);
+  ok(categoryLabelFor("bars-breweries") === "Bars & Breweries",
+     `an alias maps to ITS OWN label, not the tile's ("${categoryLabelFor("bars-breweries")}")`);
+  ok(categoryLabelFor("beauty-personal-care") === "Beauty & Personal Care",
+     `ampersands restored ("${categoryLabelFor("beauty-personal-care")}")`);
+  ok(categoryLabelFor("Food & Drink") === "Food & Drink", "an existing display value passes through untouched");
+  ok(categoryLabelFor("Education") === "Education", "owner-entered Title Case is never rewritten");
+  ok(categoryLabelFor("community-markets") === "Community & Markets",
+     `uncategorised values get labels too ("${categoryLabelFor("community-markets")}")`);
+  ok(categoryLabelFor("artisan-crafts") === "Artisan Crafts",
+     `an UNKNOWN slug is still title-cased, never shown raw ("${categoryLabelFor("artisan-crafts")}")`);
+  ok(categoryLabelFor("") === "", "empty input is passed through");
+  // Every value the live data can hold must produce a human-readable label.
+  const raw = KNOWN_CATEGORY_VALUES.filter((v) => categoryLabelFor(v) !== v && /^[a-z0-9-]+$/.test(categoryLabelFor(v)));
+  ok(raw.length === 0, `no known value renders as raw slug-case (${raw.join(", ") || "none"})`);
 }
 
 // ── 2. Coverage against real data ────────────────────────────────────────────────────────
