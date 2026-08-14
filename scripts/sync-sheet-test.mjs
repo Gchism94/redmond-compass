@@ -102,6 +102,16 @@ ok(p.ok && p.upserts.length === 1, "Featured row still parses");
 ok(!outKeys.some((k) => RANK_KEYS.includes(k.toLowerCase())), `no ranking/boost field in payload (keys: ${outKeys.join(",")})`);
 ok(p.headerWarnings.some((w) => /featured/i.test(w)), "Featured seen but ignored (unmapped column)");
 
+// 7c) `published` is fail-closed for a public directory: a blank/new row stays HIDDEN, and
+//     only an explicit truthy value publishes. A Google Sheets checkbox serializes to the
+//     string TRUE/FALSE via the values API, so a checked box === "TRUE".
+const pubOf = (cell) =>
+  buildSyncPlan([HEADERS, ["RC-P", "N", "food-drink", "", "", "", "", "", "", cell, ""]], URL, NOW).upserts[0]?.published;
+ok(pubOf("") === false, "published: blank → hidden (fail-closed; still upserted, just not-published)");
+ok(pubOf("FALSE") === false, "published: FALSE → hidden");
+ok(pubOf("No") === false, "published: No → hidden");
+ok(pubOf("TRUE") === true, "published: TRUE / checked checkbox → visible");
+
 // 8) primitives
 ok(parseBool("TRUE") && parseBool("yes") && !parseBool("") && !parseBool("no"), "parseBool");
 ok(normalizePhone("(541) 640-3800").phone === "+15416403800", "normalizePhone US 10-digit");

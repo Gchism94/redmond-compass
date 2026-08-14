@@ -1,7 +1,7 @@
 # Redmond Compass — Business Directory Sheet setup (for the owner)
 
-This Google Sheet is the **source of truth** for the app's business directory. Every 15
-minutes the app reads this Sheet and updates the directory to match. You edit the Sheet;
+This Google Sheet is the **source of truth** for the app's business directory. Once a day
+(overnight) the app reads this Sheet and updates the directory to match. You edit the Sheet;
 the app follows. No code, no logins — just this Sheet.
 
 The app connects with a Google **service account** that has **Viewer (read-only)** access.
@@ -32,6 +32,13 @@ matter, and extra columns you keep for your own notes are ignored.
 
 **The `published` checkbox:** to add a checkbox in Google Sheets, select the column →
 *Insert ▸ Checkbox*. Check it for every listing that should be live.
+
+**Hidden by default (important).** A listing is live **only** when `published` is explicitly
+checked (or the cell literally says `TRUE`). **Blank, `FALSE`, or `No` all mean hidden** — so a
+**brand-new row you add stays hidden until you check its box.** This is deliberate: nothing
+goes public by accident. To take a listing down, uncheck the box (don't delete the row or reuse
+its id). And the sync is **one-way** — the app reads this Sheet but **never writes back to it**,
+so `published` only ever changes when *you* change it here.
 
 ---
 
@@ -65,7 +72,7 @@ blank to keep the listing's current photo** — blank never erases an existing i
 > **Redmond Compass — Business Directory**
 >
 > This sheet is the source of truth for the app's business directory. The app reads it
-> automatically every 15 minutes and updates itself to match. Edit here; the app follows.
+> automatically once a day (overnight) and updates itself to match. Edit here; the app follows.
 >
 > **Tab:** the directory lives on the tab named `Businesses`. Don't rename it.
 >
@@ -78,9 +85,11 @@ blank to keep the listing's current photo** — blank never erases an existing i
 > **`id`** (a.k.a. `Business ID`) — each listing's permanent ID. NEVER change it and NEVER
 > reuse an old one. Retyping or reusing an id creates a duplicate listing in the app.
 >
-> **`published`** — a checkbox. Checked = the listing is live in the app. Unchecked or blank =
-> hidden (draft). To take a listing down, uncheck this box — do not delete the row or reuse
-> its id.
+> **`published`** — a checkbox. Live ONLY when explicitly checked (or the cell says `TRUE`).
+> Blank, `FALSE`, or `No` all = hidden, so a NEW row stays hidden until you check its box —
+> nothing goes public by accident. To take a listing down, uncheck this box — do not delete the
+> row or reuse its id. The sync is one-way: the app never writes back to this sheet, so
+> `published` only changes when you change it here.
 >
 > **`category`** — must be an app category slug (use the dropdown): e.g. `home-services`,
 > `beauty-wellness`, `shopping`, `sports-fitness`, `food-drink`.

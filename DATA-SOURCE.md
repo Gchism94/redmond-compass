@@ -13,7 +13,7 @@ the public Google Calendar (`sync-gcal-events`). **GoHighLevel is OUT of the dat
 path** — it may persist as a human-side CRM, but the platform never reads from it.
 
 ```
-Google Sheet ──sync-sheet (15 min)──▶ Supabase (canonical read store, RLS) ──▶ App (PWA + prerendered pages)
+Google Sheet ──sync-sheet (daily)──▶ Supabase (canonical read store, RLS) ──▶ App (PWA + prerendered pages)
 Google Calendar ──sync-gcal-events──▶     ▲ News · Resources · Bulletins authored here
 ```
 
@@ -152,7 +152,7 @@ Business Profile (`RecommendRow`). It's **JIT-gated** like save/follow (AuthReas
 ## Sheet sync (`supabase/functions/sync-sheet`)
 
 The Google Sheet is the source of truth for directory data. The `sync-sheet` edge
-function (scheduled every 15 min via `schedule.sql`) reads it with a Google service
+function (scheduled daily at 08:15 UTC via `schedule.sql`) reads it with a Google service
 account, validates the header row (missing required column or empty sheet → **abort**,
 never a partial write), upserts on the sheet's `id` = `businesses.id`, soft-unpublishes
 rows that left the sheet (`published=false`, never a hard delete), logs each run to
