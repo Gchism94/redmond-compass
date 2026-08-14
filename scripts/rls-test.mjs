@@ -226,6 +226,102 @@ for (const t of ["businesses", "bulletins", "events", "news_articles", "resource
   ok((bEv?.length ?? 0) === 0, "no forged event exists under B's business");
 }
 
+// 11) claim_business — the main privilege-escalation surface.
+//     It is `security definer`, so it runs with the FUNCTION OWNER's rights and bypasses
+//     RLS entirely: whatever it permits, it permits absolutely. Its only protection is
+//     `where id = b_id and owner_id is null`. That was reasoned about and never tested.
+{
+  const mkUnclaimed = async (slug) => {
+    const { data } = await admin.from("businesses")
+      .insert({ name: slug, slug, category: "Cafe", tier: "free" }).select("id").single();
+    return data.id;
+  };
+
+  // A claims a genuinely unowned listing → succeeds, and ownership actually lands.
+  const free1 = await mkUnclaimed(`rls-claim-free-${Date.now()}`);
+  const claimOk = await a.client.rpc("claim_business", { b_id: free1 });
+  ok(!claimOk.error, `claim_business: A CAN claim an unowned listing (${claimOk.error?.message ?? "ok"})`);
+  const { data: after1 } = await admin.from("businesses").select("owner_id, claimed").eq("id", free1).single();
+  ok(after1.owner_id === a.id && after1.claimed === true,
+     "claim_business: the claim actually sets owner_id + claimed");
+
+  // THE ESCALATION: A tries to claim a listing already owned by B. Must fail, and B's
+  // ownership must be untouched — a security-definer function that let this through would
+  // hand any authenticated user any business on the platform.
+  const steal = await a.client.rpc("claim_business", { b_id: bizB });
+  ok(!!steal.error, `claim_business: A CANNOT claim a listing owned by B (${steal.error?.message ?? "NO ERROR ← escalation"})`);
+  const { data: bStill } = await admin.from("businesses").select("owner_id").eq("id", bizB).single();
+  ok(bStill.owner_id === b.id, "claim_business: B still owns their listing after A's attempt");
+
+  // Double-claim by the SAME user. Correct behaviour is a clean rejection (the row no
+  // longer matches `owner_id is null`), and — the part that actually matters — ownership
+  // must survive unchanged rather than being disturbed by the second call.
+  const twice = await a.client.rpc("claim_business", { b_id: free1 });
+  ok(!!twice.error, `claim_business: a second claim is cleanly REJECTED, not silently re-applied (${twice.error?.message ?? "NO ERROR"})`);
+  ok(/already claimed|not found/i.test(twice.error?.message ?? ""),
+     "claim_business: the rejection says why (already claimed)");
+  const { data: after2 } = await admin.from("businesses").select("owner_id, claimed").eq("id", free1).single();
+  ok(after2.owner_id === a.id && after2.claimed === true,
+     "claim_business: A's ownership survives the double-claim intact (no corruption)");
+
+  // And B cannot take it afterwards either — the same guard, from the other direction.
+  const bSteal = await b.client.rpc("claim_business", { b_id: free1 });
+  ok(!!bSteal.error, "claim_business: B cannot claim what A already owns");
+
+  // A guest must not reach it at all (the function raises before touching a row).
+  const guestClaim = await anon.rpc("claim_business", { b_id: free1 });
+  ok(!!guestClaim.error, `claim_business: a GUEST cannot claim anything (${guestClaim.error?.message ?? "NO ERROR"})`);
+
+  // A nonexistent id must be rejected cleanly rather than erroring in a way that leaks.
+  const ghost = await a.client.rpc("claim_business", { b_id: "does-not-exist" });
+  ok(!!ghost.error, "claim_business: an unknown id is cleanly rejected");
+
+  await admin.from("businesses").delete().eq("id", free1);
+}
+
+// 12) businesses_insert — `with check (auth.uid() = owner_id and tier = 'free')`.
+//     Two ways a client could escalate through it, neither previously tested: insert a
+//     listing owned by SOMEONE ELSE, or self-assign a paid tier.
+{
+  const base = (over) => ({
+    name: "rls-ins", slug: `rls-ins-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    category: "Cafe", ...over,
+  });
+
+  // Positive control — the legitimate path must still work.
+  const good = await a.client.from("businesses").insert(base({ owner_id: a.id, tier: "free" })).select();
+  ok(!good.error && (good.data?.length ?? 0) === 1, `businesses_insert: A CAN create their own free listing (${good.error?.message ?? "ok"})`);
+  const createdId = good.data?.[0]?.id;
+
+  // ESCALATION 1: create a listing owned by another user.
+  const foreignOwner = await a.client.from("businesses").insert(base({ owner_id: b.id, tier: "free" })).select();
+  ok(!!foreignOwner.error, `businesses_insert: A CANNOT insert a listing owned by B (${foreignOwner.error?.message ?? "NO ERROR ← escalation"})`);
+
+  // ESCALATION 2: self-assign a paid tier. Tier gates Member-only fields elsewhere, so
+  // granting it to yourself at insert time would buy the entitlements for free.
+  for (const tier of ["member", "pro"]) {
+    const paid = await a.client.from("businesses").insert(base({ owner_id: a.id, tier })).select();
+    ok(!!paid.error, `businesses_insert: A CANNOT self-assign tier '${tier}' (${paid.error?.message ?? "NO ERROR ← escalation"})`);
+  }
+
+  // Ownerless insert — auth.uid() = null is not true, so the check must reject it.
+  const noOwner = await a.client.from("businesses").insert(base({ tier: "free" })).select();
+  ok(!!noOwner.error, `businesses_insert: A CANNOT insert a listing with no owner (${noOwner.error?.message ?? "NO ERROR"})`);
+
+  // A guest must not be able to insert at all.
+  const guestIns = await anon.from("businesses").insert(base({ owner_id: a.id, tier: "free" })).select();
+  ok(!!guestIns.error, "businesses_insert: a GUEST cannot create a listing");
+
+  // Assert on the DATABASE, not just the API responses: only the legitimate row exists.
+  const { data: leaked } = await admin.from("businesses").select("id, owner_id, tier").like("slug", "rls-ins-%");
+  ok((leaked?.length ?? 0) === 1, `businesses_insert: exactly ONE row was actually created (${leaked?.length ?? 0})`);
+  ok((leaked ?? []).every((r) => r.owner_id === a.id && r.tier === "free"),
+     "businesses_insert: the surviving row is A's own, free-tier — no escalated row landed");
+
+  await admin.from("businesses").delete().like("slug", "rls-ins-%");
+  if (createdId) await admin.from("businesses").delete().eq("id", createdId);
+}
+
 // --- cleanup (test rows must never leak into the seeded app data) ---
 // Deleting the businesses cascades to their bulletins/events (both FK on delete cascade).
 await admin.from("businesses").delete().in("id", [bizA, bizB]);
