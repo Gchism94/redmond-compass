@@ -3,14 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Redmond Compass — mobile-first installable PWA. Hyperlocal directory + community hub for Redmond, OR.",
+  "description": "Redmond Compass \u2014 mobile-first installable PWA. Hyperlocal directory + community hub for Redmond, OR.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "prerender": "node scripts/prerender.mjs",
     "typecheck": "tsc -b --noEmit",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "npm run test:sync && npm run test:scale && npm run test:errors && npm run test:delete-account",
+    "test:sync": "node scripts/sync-sheet-test.mjs",
+    "test:scale": "node scripts/saved-list-scale-test.mjs",
+    "test:errors": "node scripts/error-state-test.mjs",
+    "test:delete-account": "node scripts/delete-account-test.mjs",
+    "test:rls": "node scripts/rls-test.mjs",
+    "check:bundle": "node scripts/check-prod-bundle.mjs",
+    "check:base44": "node scripts/check-no-base44.mjs",
+    "smoke": "node scripts/ui-smoke.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
