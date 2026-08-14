@@ -20,7 +20,7 @@ await build({
   bundle: true, format: "esm", platform: "node",
   outfile: path.join(tmp, "transform.mjs"), logLevel: "error",
 });
-const { buildSyncPlan, summarizePlan, normalizePhone, parseBool, slugify, uniqueSlug } =
+const { buildSyncPlan, summarizePlan, groupByKeySet, normalizePhone, parseBool, slugify, uniqueSlug } =
   await import(path.join(tmp, "transform.mjs"));
 
 const URL = "https://demo.supabase.co";
@@ -277,6 +277,71 @@ const sabotaged = { ...p.upserts[0] };
 delete sabotaged.slug;
 ok(required.some((r) => !(r in sabotaged)),
    "contract check detects a payload missing slug (the exact 2026-08-13 production failure)");
+
+// ───────────────────────────────────────────────────────────────────────────────────────
+// 10b) BATCH KEY-SET CONTRACT — the check §10 was missing, which let run #15 fail.
+//
+// §10 derives "required" as not-null-WITHOUT-default, so `address` (not null default '')
+// was classified safe. That reasoning is correct for ONE row and wrong for a BATCH:
+// PostgREST builds a single INSERT from the UNION of keys across the batch and sends NULL
+// for whatever a row omitted. A DEFAULT only applies to an OMITTED column, so the
+// addressless rows were sent an explicit NULL:
+//
+//     upsert failed: null value in column "address" of relation "businesses"
+//                    violates not-null constraint
+//
+// The property the writer actually depends on is therefore not "no required column is
+// missing" but "every row in a request supplies exactly the same columns". That is what
+// this section asserts — the class of bug being "safe alone, unsafe beside a row that
+// supplies different keys".
+// ───────────────────────────────────────────────────────────────────────────────────────
+{
+  // Columns that are NOT NULL but carry a default, AND that the transform sets
+  // conditionally. These are exactly the ones a heterogeneous batch turns into NULL.
+  const nullableByBatching = [...schema.entries()]
+    .filter(([, c]) => c.notNull && c.hasDefault)
+    .map(([n]) => n);
+  ok(nullableByBatching.includes("address") && nullableByBatching.includes("photos"),
+     `not-null-WITH-default columns are the exposed ones (${nullableByBatching.join(", ")})`);
+
+  // The representative fixture must actually contain the hazard, or this proves nothing.
+  const sigs = new Set(p.upserts.map((u) => Object.keys(u).sort().join("|")));
+  ok(sigs.size > 1,
+     `the fixture genuinely has MIXED key-sets — the hazard is present, not hypothetical (${sigs.size} distinct)`);
+  const union = new Set(p.upserts.flatMap((u) => Object.keys(u)));
+  const short = p.upserts.filter((u) => Object.keys(u).length < union.size);
+  ok(short.length > 0,
+     `at least one row omits a column another row supplies (${short.length}/${p.upserts.length} rows)`);
+  const wouldBeNulled = [...union].filter((k) => short.some((u) => !(k in u)) && nullableByBatching.includes(k));
+  ok(wouldBeNulled.length > 0,
+     `UNGROUPED, these not-null columns would receive NULL: [${wouldBeNulled.join(", ")}] ← the production failure`);
+
+  // The fix: every group is internally homogeneous, and grouping loses nothing.
+  const groups = groupByKeySet(p.upserts);
+  ok(groups.length === sigs.size, `groupByKeySet produces one group per key-set (${groups.length})`);
+  ok(groups.every((g) => new Set(g.map((r) => Object.keys(r).sort().join("|"))).size === 1),
+     "every group is internally homogeneous — no row in a request omits a column another supplies");
+  ok(groups.reduce((n, g) => n + g.length, 0) === p.upserts.length,
+     `grouping preserves every row (${groups.reduce((n, g) => n + g.length, 0)}/${p.upserts.length})`);
+  const regrouped = new Set(groups.flat().map((r) => r.id));
+  ok(regrouped.size === new Set(p.upserts.map((r) => r.id)).size, "grouping loses no ids");
+
+  // Per group, no not-null column is ever absent-in-one-row-present-in-another.
+  const offenders = [];
+  for (const g of groups) {
+    const u = new Set(g.flatMap((r) => Object.keys(r)));
+    for (const r of g) for (const k of u) if (!(k in r) && schema.get(k)?.notNull) offenders.push(`${r.id}.${k}`);
+  }
+  ok(offenders.length === 0, `no row would be sent NULL for a not-null column (${offenders.join(", ") || "none"})`);
+
+  // Edge cases the grouper must not fall over on.
+  ok(groupByKeySet([]).length === 0, "groupByKeySet: empty input → no groups");
+  ok(groupByKeySet([{ a: 1 }]).length === 1, "groupByKeySet: single row → one group");
+  ok(groupByKeySet([{ a: 1, b: 2 }, { b: 2, a: 1 }]).length === 1,
+     "groupByKeySet: key ORDER doesn't split a group (signature is sorted)");
+  ok(groupByKeySet([{ a: 1 }, { a: 1, b: 2 }]).length === 2,
+     "groupByKeySet: a genuinely different key-set DOES split");
+}
 
 // ───────────────────────────────────────────────────────────────────────────────────────
 // 11) slug primitives

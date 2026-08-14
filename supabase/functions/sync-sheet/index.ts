@@ -21,7 +21,7 @@
 // Deploy:  supabase functions deploy sync-sheet
 // Schedule (daily at 08:15 UTC) via pg_cron — see supabase/functions/sync-sheet/schedule.sql
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
-import { buildSyncPlan, summarizePlan, type ExistingBusinesses } from "./transform.ts";
+import { buildSyncPlan, summarizePlan, groupByKeySet, type ExistingBusinesses } from "./transform.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -230,12 +230,19 @@ Deno.serve(async (req) => {
       return Response.json({ ok: false, aborted: message }, { status: 200 });
     }
 
-    // Upsert in batches (keyed on the sheet's id = businesses.id).
-    for (let i = 0; i < plan.upserts.length; i += 200) {
-      const batch = plan.upserts.slice(i, i + 200);
-      const { error } = await db.from("businesses").upsert(batch, { onConflict: "id" });
-      if (error) throw new Error(`upsert failed: ${error.message}`);
-      run.rows_upserted += batch.length;
+    // Upsert in batches (keyed on the sheet's id = businesses.id), grouped so that every
+    // row in a single request supplies EXACTLY the same columns. PostgREST unions the keys
+    // across a batch and sends NULL for whatever a row omitted, which both violates the
+    // not-null-with-default columns (run #15 died on `address`) and would overwrite the
+    // editorial content this transform deliberately preserves by omission. See
+    // groupByKeySet in transform.ts.
+    for (const group of groupByKeySet(plan.upserts)) {
+      for (let i = 0; i < group.length; i += 200) {
+        const batch = group.slice(i, i + 200);
+        const { error } = await db.from("businesses").upsert(batch, { onConflict: "id" });
+        if (error) throw new Error(`upsert failed: ${error.message}`);
+        run.rows_upserted += batch.length;
+      }
     }
 
     // Soft-unpublish: rows the sync has touched before (synced_at not null) that are

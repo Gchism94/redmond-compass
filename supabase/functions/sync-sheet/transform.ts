@@ -89,6 +89,47 @@ export interface PlanSummary {
   warnings: number;
 }
 
+/** The set of columns a row supplies, as a stable signature. */
+export function keySetSignature(row: Record<string, unknown>): string {
+  return Object.keys(row).sort().join("|");
+}
+
+/**
+ * Split rows into groups that all supply EXACTLY the same columns.
+ *
+ * PostgREST builds one INSERT per request using the UNION of keys across every row in the
+ * batch, and injects NULL for any row that didn't supply one of them. That defeats two
+ * things at once:
+ *
+ *  1. NOT NULL. `address`/`description` are `not null default ''` and `subcategories`/
+ *     `photos` are `not null default '{}'`. A DEFAULT only applies to an OMITTED column —
+ *     an explicit NULL violates the constraint. Because some Sheet rows have an address
+ *     and others don't, `address` entered the column list and the addressless rows were
+ *     sent NULL: "null value in column \"address\" … violates not-null constraint",
+ *     which is what run #15 died on.
+ *  2. The preserve-on-omission contract this transform deliberately relies on ("only set
+ *     photos when the sheet names an image — otherwise leave any existing photos
+ *     untouched"). ON CONFLICT DO UPDATE assigns every column in the union, so a row that
+ *     omitted `photos` would have had its existing photos overwritten anyway.
+ *
+ * Grouping by key-set keeps an omitted column out of the statement entirely, so both hold.
+ *
+ * NOTE: `defaultToNull: false` is NOT the fix. It stops the crash by substituting column
+ * defaults, then silently blanks exactly the editorial content the contract above protects
+ * — verified: an existing address "2 Second St" became "" and photos ["b-editorial.jpg"]
+ * became []. Grouping preserved both untouched.
+ */
+export function groupByKeySet<T extends Record<string, unknown>>(rows: T[]): T[][] {
+  const groups = new Map<string, T[]>();
+  for (const row of rows) {
+    const sig = keySetSignature(row);
+    const g = groups.get(sig);
+    if (g) g.push(row);
+    else groups.set(sig, [row]);
+  }
+  return [...groups.values()];
+}
+
 /**
  * Diff a plan against current DB state. Pure — no network — so the dry-run numbers are
  * unit-tested rather than only ever observed in production.
