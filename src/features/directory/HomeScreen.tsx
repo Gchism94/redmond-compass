@@ -83,6 +83,28 @@ export function HomeScreen() {
         <WebHero />
       ) : (
         <>
+          {/* "Greetings From Redmond" mural — the app's visual identity, which mobile was
+              missing entirely while desktop led with it. IMAGE ONLY: the desktop hero's
+              headline and four CTAs are deliberately not repeated here, because they already
+              exist on this screen as the shortcut rails and the tab bar below.
+
+              Reuses the SAME self-hosted asset as WebHero (/web/hero.jpg, 1200×600) — not a
+              re-export — cropped to a short strip rather than its native 2:1, which at 437px
+              would be 218px tall and push search well down the screen. Search is the primary
+              mobile task, so the mural gets a band and the search field stays in reach. */}
+          <div className="h-36 w-full overflow-hidden bg-foreground">
+            <img
+              src="/web/hero.jpg"
+              alt=""
+              /* 30% rather than centre: the mural's lettering sits in its upper-middle band,
+                 and a centred crop of a 2:1 image cut "Greetings From" off the top. This
+                 keeps the whole "Greetings From REDMOND Oregon" wordmark — the point of
+                 including it — while the sky and grasses take the trim. */
+              style={{ objectPosition: "center 30%" }}
+              className="h-full w-full object-cover"
+            />
+          </div>
+
           <header className="bg-background px-4 pt-4 pb-2">
             <div className="flex items-center justify-between gap-2">
               <p className="font-heading text-2xl font-bold text-foreground">Redmond Compass</p>
