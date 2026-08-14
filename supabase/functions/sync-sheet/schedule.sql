@@ -1,8 +1,9 @@
 -- Schedule the sync-sheet edge function — DAILY at 08:15 UTC (sheet-sync-spec §1).
 --
--- SHIPS IN DRY-RUN MODE (`&dry=1`): the job computes the plan and writes NOTHING until the
--- Sheet's 3 drifted Business IDs are corrected. Going live is a separate deliberate step —
--- see "GOING LIVE" near the bottom. Do not remove &dry=1 as part of setup.
+-- HOLD RELEASED 2026-08-14. This file now schedules a LIVE sync. The dry-run hold existed
+-- until the Sheet's 3 drifted Business IDs were corrected; they were, and a real run then
+-- completed cleanly (sync_runs #16: 132 read, 132 upserted, 0 unpublished, 0 skipped,
+-- owner-claimed rows byte-identical). `&dry=1` remains documented below as a diagnostic.
 -- NOT a migration — run once by hand in the SQL editor AFTER the function is deployed and
 -- its secrets are set, because it hard-codes the project ref + a service-role bearer.
 -- Needs pg_cron + pg_net (Dashboard → Database → Extensions).
@@ -62,17 +63,14 @@
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
 
--- ⚠️ SHIPS IN DRY-RUN MODE — `&dry=1` is DELIBERATE, do not remove it to "finish setup".
--- The job computes the full plan nightly and writes NOTHING: no upsert, no soft-unpublish,
--- no deploy hook, not even a sync_runs row. Going live is a separate, deliberate act by the
--- owner — see "GOING LIVE" below. It must not happen as a side effect of merging or of
--- running this file.
+-- LIVE: this writes. Verified end-to-end on 2026-08-14 before the hold was released.
+-- To go back to a no-write diagnostic run at any time, append `&dry=1` to the url.
 select cron.schedule(
   'sync-sheet-daily',
   '15 8 * * *',                          -- 08:15 UTC daily (UTC-only; see DST note above)
   $$
   select net.http_post(
-    url     := 'https://<REF>.supabase.co/functions/v1/sync-sheet?trigger=schedule&dry=1',
+    url     := 'https://<REF>.supabase.co/functions/v1/sync-sheet?trigger=schedule',
     headers := jsonb_build_object(
       -- Service-role bearer (NOT anon): a trusted server-to-server invocation.
       'Authorization',  'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'sync_service_role_key'),
@@ -100,7 +98,7 @@ select cron.schedule(
 --
 --   select
 --     'POST' as method,
---     'https://<REF>.supabase.co/functions/v1/sync-sheet?trigger=schedule&dry=1' as url,  -- mirror the job
+--     'https://<REF>.supabase.co/functions/v1/sync-sheet?trigger=schedule' as url,  -- mirror the job
 --     jsonb_build_object(
 --       'Authorization', 'Bearer ' || left(coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'sync_service_role_key'), ''), 8) || '…',
 --       'Content-Type',  'application/json',
@@ -123,32 +121,25 @@ select cron.schedule(
 --   403 → the header is missing/wrong (check step 3, then that Vault matches the function's
 --         SYNC_SECRET).  503 → SYNC_SECRET is not set ON THE FUNCTION.  200 → ran.
 
--- ── GOING LIVE — a deliberate, separate action ──────────────────────────────────────────
--- The job above ships with `&dry=1` and stays that way until a human removes it. It is NOT
--- a setup step to complete; it is a hold.
+-- ── DRY RUN — the no-write diagnostic ──────────────────────────────────────────────────
+-- Append `&dry=1` to the url and the function computes the FULL plan and writes nothing at
+-- all: no upsert, no soft-unpublish, no deploy hook, not even a sync_runs row. Use it
+-- before any change that could move a lot of rows.
 --
--- WHY THE HOLD EXISTS: three Business ID cells in the Sheet still carry ids that don't match
--- Supabase (see RECONCILIATION-2026-07-23.md). A real run today would insert 3 duplicate
--- listings and orphan Wilson's owner-claimed listing. As of the last dry run the Sheet is
--- still uncorrected — `newIds: 3`.
+-- Because pg_net logs every response, the numbers are readable straight from SQL:
 --
--- Watch it without touching anything. The nightly dry run's full response is in
--- net._http_response (query 4 above); newIds is the number to watch:
---
---   select (r.content::jsonb)->'newIds'->>'count' as new_ids,
---          (r.content::jsonb)->'wouldUnpublish'->>'total' as would_unpublish,
+--   select (r.content::jsonb)->'newIds'->>'count'          as new_ids,
+--          (r.content::jsonb)->'wouldUnpublish'->>'total'  as would_unpublish,
 --          r.status_code, r.created
 --     from net._http_response r
 --    where r.content::jsonb ? 'dryRun'
 --    order by r.created desc limit 7;
 --
--- RELEASE THE HOLD only when that reads new_ids = 0 (and would_unpublish is a number you
--- have consciously accepted). Then re-schedule WITHOUT `&dry=1`:
+-- new_ids > 0 means the Sheet carries ids the database has never seen — usually id drift,
+-- which is what held this cron in dry mode until 2026-08-14. Investigate before letting a
+-- live run create them as duplicates.
 --
---   select cron.unschedule('sync-sheet-daily');
---   -- then re-run this file's cron.schedule block with `&dry=1` removed from the url
---
--- Confirm which mode is actually scheduled at any time:
+-- Which mode is scheduled right now:
 --
 --   select jobname,
 --          case when command like '%dry=1%' then 'DRY RUN (writes nothing)'
@@ -165,7 +156,7 @@ select cron.schedule(
 --   select cron.schedule('sync-sheet-daily', '15 8 * * *', $$
 --     select net.http_post(
 --       -- keep &dry=1 here too; the hold applies to this form identically
---       url     := 'https://<REF>.supabase.co/functions/v1/sync-sheet?trigger=schedule&dry=1',
+--       url     := 'https://<REF>.supabase.co/functions/v1/sync-sheet?trigger=schedule',
 --       headers := jsonb_build_object(
 --         'Authorization', 'Bearer <SERVICE_ROLE_KEY>',
 --         'Content-Type',  'application/json',

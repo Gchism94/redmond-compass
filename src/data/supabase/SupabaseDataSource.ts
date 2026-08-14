@@ -19,7 +19,7 @@ import type {
 } from "@/lib/types";
 import { REDMOND_CENTER, distanceMiles } from "@/lib/geo";
 import { getOpenStatus } from "@/lib/hours";
-import { TOP_CATEGORIES, topCategoryFor } from "@/lib/taxonomy";
+import { TOP_CATEGORIES, topCategoryFor, categoryValuesFor } from "@/lib/taxonomy";
 import { eventStartToUtc } from "@/lib/calendar";
 import type {
   DataSource,
@@ -59,8 +59,11 @@ class SupabaseDataSource implements DataSource {
     const origin = query.origin ?? REDMOND_CENTER;
     let qb = this.sb.from("businesses").select("*");
     if (query.categorySlug && query.categorySlug !== "more") {
-      const includes = TOP_CATEGORIES.find((c) => c.slug === query.categorySlug)?.includes ?? [];
-      qb = qb.in("category", includes.length ? includes : ["__none__"]);
+      // categoryValuesFor, NOT `.includes` — the stored value may be the Sheet's slug-case
+      // spelling ("food-drink") rather than the display one ("Food & Drink"). Filtering on
+      // `.includes` alone emptied every browse tile after the first Sheet sync.
+      const values = categoryValuesFor(query.categorySlug);
+      qb = qb.in("category", values.length ? values : ["__none__"]);
     }
     if (query.amenityTags?.length) qb = qb.contains("amenity_tags", query.amenityTags);
     if (query.claimed != null) qb = qb.eq("claimed", query.claimed);
