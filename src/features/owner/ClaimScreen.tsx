@@ -5,7 +5,7 @@ import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Button, Field, fieldInputClass, Thumb, Skeleton, Card, SearchField, EmptyState, ErrorState } from "@/components";
 import { useBusinesses, useCreateBusiness, useClaimBusiness } from "@/data/queries";
 import { useSession } from "@/features/account/session";
-import { BUSINESS_CATEGORIES } from "@/lib/taxonomy";
+import { BUSINESS_CATEGORIES, categoryLabelFor } from "@/lib/taxonomy";
 import { appOnly, LIVE_SITE } from "@/lib/siteMode";
 import { MutationError } from "./MutationError";
 import { useI18n } from "@/i18n";
@@ -175,7 +175,7 @@ export function ClaimScreen() {
                       <Thumb src={b.photos[0]} seed={b.name} alt={b.name} className="h-11 w-11" rounded="rounded-lg" />
                       <div className="min-w-0 flex-1">
                         <p className="font-heading text-sm font-semibold leading-tight text-foreground">{b.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{b.category} · {b.address}</p>
+                        <p className="truncate text-xs text-muted-foreground">{categoryLabelFor(b.category)} · {b.address}</p>
                       </div>
                       <Button
                         size="sm"

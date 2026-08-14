@@ -76,6 +76,45 @@ export const UNCATEGORIZED_VALUES: string[] = [
   "Lodging", "lodging",
 ];
 
+/** Canonical slug form of a display category — "Beauty & Personal Care" → "beauty-personal-care". */
+const toSlugForm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+/** Every display-vocabulary category the app knows, across every tile plus the catch-all. */
+const DISPLAY_VALUES: string[] = [
+  ...new Set([
+    ...TOP_CATEGORIES.flatMap((c) => c.includes),
+    ...UNCATEGORIZED_VALUES.filter((v) => v !== toSlugForm(v)), // the Title-Case half of each pair
+  ]),
+];
+
+/**
+ * A category value as it should be SHOWN to a person.
+ *
+ * `businesses.category` holds whatever the Google Sheet says, and the Sheet's vocabulary is
+ * slug-case ("food-drink"). That value is rendered verbatim in four places — result cards,
+ * the profile header, the Claim intake list and search autocomplete — so after the first
+ * Sheet sync the directory started telling visitors a business was in "food-drink" rather
+ * than "Food & Drink".
+ *
+ * Resolution order, deliberately: an exact display value passes through untouched (so
+ * owner-entered categories are never rewritten), a known slug maps to its Title-Case
+ * counterpart, and anything unrecognised is title-cased as a last resort rather than shown
+ * raw — a visitor should never see "artisan-crafts". Drift is caught by
+ * scripts/category-vocab-test.mjs, not by leaking it into the UI.
+ */
+export function categoryLabelFor(value: string): string {
+  if (!value) return value;
+  if (DISPLAY_VALUES.includes(value)) return value;
+  const slug = toSlugForm(value);
+  const match = DISPLAY_VALUES.find((d) => toSlugForm(d) === slug);
+  if (match) return match;
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 /** Every stored category value that rolls up under `slug` — the list queries must filter on. */
 export function categoryValuesFor(slug: string): string[] {
   const c = TOP_CATEGORIES.find((t) => t.slug === slug);

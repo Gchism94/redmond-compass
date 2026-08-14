@@ -9,6 +9,7 @@ import { OpenStatusLabel } from "./ui/OpenStatusLabel";
 import { Thumb } from "./ui/Thumb";
 import { VerifiedBadge } from "./ui/StatusBadge";
 import { useI18n } from "@/i18n";
+import { categoryLabelFor } from "@/lib/taxonomy";
 
 export interface ResultCardProps {
   business: Business;
@@ -38,7 +39,7 @@ export function ResultCard({
 }: ResultCardProps) {
   const { t } = useI18n();
   const dist = formatDistance(distanceMiles(origin, business.geo));
-  const catLine = [business.category, ...(business.subcategories ?? [])].slice(0, 3).join(" · ");
+  const catLine = [categoryLabelFor(business.category), ...(business.subcategories ?? [])].slice(0, 3).join(" · ");
   const tel = telHref(business.phone);
 
   if (variant === "rail") {
