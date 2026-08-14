@@ -380,9 +380,26 @@ class SupabaseDataSource implements DataSource {
 
   async deleteAccount(): Promise<void> {
     // supabase-js attaches the session JWT; the edge function verifies it, releases
-    // owned listings, deletes the profile, and deletes the auth user.
+    // owned listings, deletes the profile, and deletes the auth user — in that order,
+    // refusing the irreversible step unless the earlier ones are verified done.
     const { data, error } = await this.sb.functions.invoke("delete-account", { method: "POST" });
-    if (error) throw new Error(error.message ?? "Account deletion failed");
+    if (error) {
+      // On a non-2xx, invoke() reports only "Edge Function returned a non-2xx status
+      // code" and puts the real body on error.context. Read it, so which step failed and
+      // whether it's resumable is diagnosable from the browser and not just from the
+      // function logs.
+      let detail = error.message ?? "Account deletion failed";
+      try {
+        const ctx = (error as { context?: Response }).context;
+        const body = ctx ? await ctx.clone().json() : null;
+        if (body?.error) {
+          detail = body.failedStep ? `${body.error} (failed at: ${body.failedStep})` : body.error;
+        }
+      } catch {
+        /* body wasn't JSON — keep the generic message */
+      }
+      throw new Error(detail);
+    }
     if (data && (data as { error?: string }).error) throw new Error((data as { error: string }).error);
     await this.sb.auth.signOut();
   }
