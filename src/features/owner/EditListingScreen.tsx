@@ -8,7 +8,7 @@ import { MutationError } from "./MutationError";
 import { useUpdateBusiness } from "@/data/queries";
 import { listingCompleteness } from "@/lib/completeness";
 import { WEEKDAY_ORDER, dayLabel } from "@/lib/hours";
-import { AMENITY_FACETS, BUSINESS_CATEGORIES } from "@/lib/taxonomy";
+import { AMENITY_FACETS, BUSINESS_CATEGORIES, categoryLabelFor } from "@/lib/taxonomy";
 import { LIMITS } from "@/lib/entitlements";
 import type { Business, DayHours, Weekday } from "@/lib/types";
 import { useI18n } from "@/i18n";
@@ -27,6 +27,32 @@ interface FormState {
   amenityTags: string[];
   week: Week;
 }
+
+/**
+ * The <select>'s options for a listing whose stored category may be the SHEET's vocabulary.
+ *
+ * `form.category` deliberately keeps the STORED value ("food-drink"). A <select> whose
+ * `value` matches no <option> renders with nothing selected, so an owner editing a synced
+ * listing saw a blank category box. The fix is display-only, mirroring categoryLabelFor():
+ * the select is driven by the resolved LABEL, and if that label isn't already one of the
+ * offered options (an uncategorised value like "Entertainment") it is appended so the owner
+ * sees their real category instead of a blank — still a label, never raw slug-case.
+ */
+function categoryOptions(storedValue: string): string[] {
+  const label = categoryLabelFor(storedValue);
+  return label && !BUSINESS_CATEGORIES.includes(label)
+    ? [...BUSINESS_CATEGORIES, label]
+    : BUSINESS_CATEGORIES;
+}
+
+/**
+ * Did the owner actually pick a DIFFERENT category, or is this the same one spelled the
+ * other way? Compared by label, so re-selecting "Food & Drink" on a listing stored as
+ * "food-drink" counts as untouched — otherwise an idle click would rewrite the value and
+ * the next Sheet sync would immediately flip it back, churning the row for nothing.
+ */
+const categoryChanged = (picked: string, stored: string) =>
+  categoryLabelFor(picked) !== categoryLabelFor(stored);
 
 const blankWeek = (): Week =>
   Object.fromEntries(WEEKDAY_ORDER.map((d) => [d, { open: "", close: "", closed: true }])) as Week;
@@ -114,7 +140,10 @@ export function EditListingScreen() {
         id: business.id,
         patch: {
           name: form.name.trim(),
-          category: form.category,
+          // Only written when the owner genuinely picked a different category. Otherwise
+          // it is omitted from the patch entirely, so the synced value passes through
+          // untouched and the next sync has nothing to fight.
+          ...(categoryChanged(form.category, business.category) ? { category: form.category } : {}),
           subcategories: preview.subcategories,
           description: form.description.trim(),
           address: form.address.trim(),
@@ -184,8 +213,14 @@ export function EditListingScreen() {
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("owner.category")} htmlFor="e-cat">
-              <select id="e-cat" className={fieldInputClass} value={form.category} onChange={(e) => setForm((f) => f && { ...f, category: e.target.value })}>
-                {BUSINESS_CATEGORIES.map((c) => (
+              <select
+                id="e-cat"
+                className={fieldInputClass}
+                /* the LABEL drives the selected state; form.category keeps the stored value */
+                value={categoryLabelFor(form.category)}
+                onChange={(e) => setForm((f) => f && { ...f, category: e.target.value })}
+              >
+                {categoryOptions(form.category).map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
