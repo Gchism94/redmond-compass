@@ -20,7 +20,7 @@ import type {
 } from "@/lib/types";
 import { REDMOND_CENTER, distanceMiles } from "@/lib/geo";
 import { getOpenStatus } from "@/lib/hours";
-import { TOP_CATEGORIES, topCategoryFor } from "@/lib/taxonomy";
+import { topCategoryFor, tallyByTile } from "@/lib/taxonomy";
 import type {
   DataSource,
   BusinessQuery,
@@ -168,7 +168,9 @@ export class MockDataSource implements DataSource {
     let items = this.businessList();
 
     if (query.text) items = items.filter((b) => textMatch(b, query.text!));
-    if (query.categorySlug && query.categorySlug !== "more") {
+    // No "more" exemption: topCategoryFor() returns "more" for anything unplaced, so the
+    // catch-all filters to its real members instead of falling through to every business.
+    if (query.categorySlug) {
       items = items.filter((b) => topCategoryFor(b.category) === query.categorySlug);
     }
     if (query.amenityTags?.length) {
@@ -228,12 +230,7 @@ export class MockDataSource implements DataSource {
   }
 
   async listCategories(): Promise<CategoryCount[]> {
-    const list = this.businessList();
-    const counts: CategoryCount[] = TOP_CATEGORIES.map((c) => ({
-      slug: c.slug,
-      label: c.label,
-      count: c.slug === "more" ? 0 : list.filter((b) => topCategoryFor(b.category) === c.slug).length,
-    }));
+    const counts: CategoryCount[] = tallyByTile(this.businessList().map((b) => b.category));
     return delay(counts);
   }
 

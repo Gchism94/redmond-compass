@@ -19,7 +19,7 @@ import type {
 } from "@/lib/types";
 import { REDMOND_CENTER, distanceMiles } from "@/lib/geo";
 import { getOpenStatus } from "@/lib/hours";
-import { TOP_CATEGORIES, topCategoryFor, categoryValuesFor } from "@/lib/taxonomy";
+import { topCategoryFor, categoryValuesFor, tallyByTile } from "@/lib/taxonomy";
 import { eventStartToUtc } from "@/lib/calendar";
 import type {
   DataSource,
@@ -71,6 +71,13 @@ class SupabaseDataSource implements DataSource {
     const { data, error } = await qb;
     if (error) throw error;
     let items = (data ?? []).map(rowToBusiness);
+
+    // The catch-all is a COMPLEMENT, so it can't be a server-side `.in(...)` like the other
+    // tiles — it has to catch values the app has never seen. Filtered here, next to the
+    // other predicates that can't be pushed down, rather than as a `not.in` list that would
+    // have to hand-quote every value containing "&" or a space.
+    if (query.categorySlug === "more")
+      items = items.filter((b) => topCategoryFor(b.category) === "more");
 
     if (query.text) items = items.filter((b) => textMatch(b, query.text!));
     if (query.openNow) items = items.filter((b) => getOpenStatus(b.hours).open);
@@ -140,12 +147,7 @@ class SupabaseDataSource implements DataSource {
   async listCategories(): Promise<CategoryCount[]> {
     const { data, error } = await this.sb.from("businesses").select("category");
     if (error) throw error;
-    const cats = (data ?? []).map((r: { category: string }) => r.category);
-    return TOP_CATEGORIES.map((c) => ({
-      slug: c.slug,
-      label: c.label,
-      count: c.slug === "more" ? 0 : cats.filter((cat) => topCategoryFor(cat) === c.slug).length,
-    }));
+    return tallyByTile((data ?? []).map((r: { category: string }) => r.category));
   }
 
   // ---- Bulletins ----

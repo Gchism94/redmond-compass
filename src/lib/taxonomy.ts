@@ -44,7 +44,11 @@ export const TOP_CATEGORIES: TopCategory[] = [
     aliases: ["services", "professionals", "education", "pet-services"] },
   { slug: "retail", label: "Retail", icon: "ShoppingBag",
     includes: ["Retail", "Grocery", "Boutique", "Shopping"],
-    aliases: ["retail", "shopping"] },
+    // "Community & Markets" is the Sheet's label for farmers/producer markets (Schoolhouse
+    // Produce). A market IS retail from a resident's point of view — you go there to buy
+    // things — so it rolls up here rather than sitting in the catch-all. Aliased, not
+    // `includes`d, so it stays a storage spelling and never appears in the owner dropdown.
+    aliases: ["retail", "shopping", "community-markets", "Community & Markets"] },
   { slug: "health", label: "Health", icon: "HeartPulse",
     includes: ["Health", "Fitness", "Wellness", "Medical", "Beauty & Wellness", "Beauty & Personal Care", "Sports & Fitness"],
     aliases: ["health", "beauty-wellness", "beauty-personal-care", "sports-fitness"] },
@@ -57,7 +61,30 @@ export const TOP_CATEGORIES: TopCategory[] = [
   { slug: "outdoors", label: "Outdoors", icon: "Mountain",
     includes: ["Outdoors", "Recreation", "Sports"],
     aliases: ["outdoors", "recreation"] },
-  { slug: "more", label: "More categories", icon: "Grid3x3", includes: [] },
+  /**
+   * The catch-all. Not a category anyone is IN — the complement of the seven above, so its
+   * membership is defined by `PLACED_CATEGORY_VALUES` rather than by a list of its own.
+   *
+   * It was labelled "More categories", which promised a second screen of tiles, and it
+   * routed to unfiltered results — so a resident tapping it landed on all 133 businesses
+   * captioned "133 places", with nothing marking it as a leftovers bin. Now it filters to
+   * its actual members and carries their real count.
+   */
+  { slug: "more", label: "Everything else", icon: "Grid3x3", includes: [] },
+];
+
+/**
+ * Every stored value that rolls up under a REAL tile. "more" is the complement of this set,
+ * which is why it can't be expressed as an `includes`/`aliases` list: it must also catch
+ * values nobody has seen yet (a new Sheet category, a typo), not just the known strays.
+ */
+export const PLACED_CATEGORY_VALUES: string[] = [
+  ...new Set(
+    TOP_CATEGORIES.filter((c) => c.slug !== "more").flatMap((c) => [
+      ...c.includes,
+      ...(c.aliases ?? []),
+    ]),
+  ),
 ];
 
 /**
@@ -72,7 +99,6 @@ export const TOP_CATEGORIES: TopCategory[] = [
  */
 export const UNCATEGORIZED_VALUES: string[] = [
   "Entertainment", "entertainment",
-  "Community & Markets", "community-markets",
   "Lodging", "lodging",
 ];
 
@@ -83,6 +109,12 @@ const toSlugForm = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, "-").re
 const DISPLAY_VALUES: string[] = [
   ...new Set([
     ...TOP_CATEGORIES.flatMap((c) => c.includes),
+    // An alias that isn't already slug-form is a DISPLAY spelling the Sheet may hold —
+    // "Community & Markets" alongside "community-markets". It belongs here so the label
+    // survives, but NOT in `includes`, which would offer it in the owner dropdown. Without
+    // this, categoryLabelFor() would fall through to its title-caser and quietly drop the
+    // ampersand ("Community Markets").
+    ...TOP_CATEGORIES.flatMap((c) => (c.aliases ?? []).filter((v) => v !== toSlugForm(v))),
     ...UNCATEGORIZED_VALUES.filter((v) => v !== toSlugForm(v)), // the Title-Case half of each pair
   ]),
 ];
@@ -119,6 +151,25 @@ export function categoryLabelFor(value: string): string {
 export function categoryValuesFor(slug: string): string[] {
   const c = TOP_CATEGORIES.find((t) => t.slug === slug);
   return c ? [...c.includes, ...(c.aliases ?? [])] : [];
+}
+
+/**
+ * Tile counts for a list of stored category values — the ONE implementation both data
+ * sources use.
+ *
+ * It exists because there were two: Mock and Supabase each had their own copy, and each
+ * copy carried the same `c.slug === "more" ? 0 : …` special case. Duplicated logic is how a
+ * wrong answer survives — fixing one would have left the other lying. There is no special
+ * case now: topCategoryFor() already routes unplaced values to "more", so the catch-all
+ * tallies like every other tile.
+ */
+export function tallyByTile(categories: string[]): { slug: string; label: string; count: number }[] {
+  const byTile = new Map<string, number>();
+  for (const c of categories) {
+    const slug = topCategoryFor(c);
+    byTile.set(slug, (byTile.get(slug) ?? 0) + 1);
+  }
+  return TOP_CATEGORIES.map((c) => ({ slug: c.slug, label: c.label, count: byTile.get(c.slug) ?? 0 }));
 }
 
 /** Reverse lookup: a business category → its top category slug. */

@@ -75,7 +75,9 @@ export const en = {
   "cat.home": "Home",
   "cat.auto": "Auto",
   "cat.outdoors": "Outdoors",
-  "cat.more": "More categories",
+  // Not "More categories" — there is no second screen of tiles to go to. This is the
+  // leftovers bin (see TOP_CATEGORIES "more"), so it says so.
+  "cat.more": "Everything else",
 
   // ---- home ----
   "home.searchPlaceholder": "Search Redmond…",
@@ -605,7 +607,7 @@ export const es: Record<DictKey, string> = {
   "cat.home": "Hogar",
   "cat.auto": "Autos",
   "cat.outdoors": "Aire libre",
-  "cat.more": "Más categorías",
+  "cat.more": "Todo lo demás",
 
   "home.searchPlaceholder": "Busca en Redmond…",
   "home.nearYou": "Redmond, OR · Cerca de ti",

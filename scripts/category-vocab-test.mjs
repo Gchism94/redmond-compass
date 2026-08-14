@@ -29,7 +29,7 @@ await build({
   bundle: true, format: "esm", platform: "node", outfile: path.join(tmp, "tax.mjs"),
   logLevel: "error", absWorkingDir: ROOT, nodePaths: [path.join(ROOT, "node_modules")],
 });
-const { TOP_CATEGORIES, KNOWN_CATEGORY_VALUES, UNCATEGORIZED_VALUES, BUSINESS_CATEGORIES, topCategoryFor, categoryValuesFor, categoryLabelFor } =
+const { TOP_CATEGORIES, KNOWN_CATEGORY_VALUES, UNCATEGORIZED_VALUES, BUSINESS_CATEGORIES, PLACED_CATEGORY_VALUES, tallyByTile, topCategoryFor, categoryValuesFor, categoryLabelFor } =
   await import(path.join(tmp, "tax.mjs"));
 
 let pass = 0, fail = 0;
@@ -87,6 +87,72 @@ const ok = (c, m) => { console.log(`${c ? "PASS" : "FAIL"}  ${m}`); c ? pass++ :
   // Every value the live data can hold must produce a human-readable label.
   const raw = KNOWN_CATEGORY_VALUES.filter((v) => categoryLabelFor(v) !== v && /^[a-z0-9-]+$/.test(categoryLabelFor(v)));
   ok(raw.length === 0, `no known value renders as raw slug-case (${raw.join(", ") || "none"})`);
+}
+
+// ── 1c. The catch-all tile tells the truth ───────────────────────────────────────────────
+// "more" used to be a trap: labelled "More categories" (promising a second screen of tiles),
+// routed to UNFILTERED results, and reported count 0 from listCategories(). So it rendered
+// as an 8th tile that led to all 133 businesses captioned "133 places", with nothing marking
+// it as leftovers — while simultaneously claiming to hold none.
+//
+// The invariant that keeps it honest: the number the tile REPORTS must equal the number of
+// businesses you actually LAND on. Those are computed by different code paths (listCategories
+// vs listBusinesses), which is exactly why they can drift apart.
+{
+  const more = TOP_CATEGORIES.find((t) => t.slug === "more");
+  ok(!!more, "the 'more' tile still exists");
+  ok(!/more categor/i.test(more.label),
+     `the catch-all is not labelled as a route to more tiles ("${more.label}")`);
+  ok(more.includes.length === 0,
+     "'more' has no includes of its own — it is a complement, not a list");
+
+  // PLACED_CATEGORY_VALUES is what "more" is the complement OF.
+  ok(!PLACED_CATEGORY_VALUES.some((v) => topCategoryFor(v) === "more"),
+     "no placed value resolves to 'more'");
+  const missing = TOP_CATEGORIES.filter((t) => t.slug !== "more")
+    .flatMap((t) => [...t.includes, ...(t.aliases ?? [])])
+    .filter((v) => !PLACED_CATEGORY_VALUES.includes(v));
+  ok(missing.length === 0, `PLACED_CATEGORY_VALUES covers every tile value (${missing.join(", ") || "complete"})`);
+
+  // The count/destination agreement, over a table containing knowns, strays and a
+  // never-before-seen value — the case a hardcoded list would miss.
+  //
+  // `tallyByTile` IS the function both data sources call for their counts, so this is the
+  // real path, not a re-implementation of it. The landing side is the predicate both
+  // listBusinesses implementations filter on.
+  const sample = ["food-drink", "shopping", "community-markets", "entertainment", "lodging", "brand-new-thing"];
+  const tally = tallyByTile(sample);
+  const reported = tally.find((t) => t.slug === "more").count;              // listCategories path
+  const landed = sample.filter((v) => topCategoryFor(v) === "more").length; // listBusinesses path
+  ok(reported === landed && reported === 3,
+     `'more' counts what it shows: reports ${reported}, lands on ${landed} (expect 3: entertainment, lodging, brand-new-thing)`);
+  ok(topCategoryFor("brand-new-thing") === "more",
+     "an unseen value falls into the catch-all rather than vanishing");
+  ok(!PLACED_CATEGORY_VALUES.includes("brand-new-thing"),
+     "…and is absent from the placed set, so the two paths agree on it");
+
+  // Every tile is accounted for, and nothing is double-counted or dropped.
+  ok(tally.reduce((n, t) => n + t.count, 0) === sample.length,
+     `every business lands on exactly one tile (${tally.reduce((n, t) => n + t.count, 0)}/${sample.length})`);
+  ok(tally.length === TOP_CATEGORIES.length, "a count is reported for every tile, including empty ones");
+  ok(tally.find((t) => t.slug === "retail").count === 2,
+     `community-markets is counted under Retail (retail=${tally.find((t) => t.slug === "retail").count})`);
+}
+
+// ── 1d. community-markets rolls up under Retail ──────────────────────────────────────────
+// A farmers/producer market is retail from a resident's point of view — you go there to buy
+// things. Aliased rather than `includes`d, so it never reaches the owner dropdown.
+{
+  ok(topCategoryFor("community-markets") === "retail",
+     `community-markets → ${topCategoryFor("community-markets")}`);
+  ok(topCategoryFor("Community & Markets") === "retail",
+     `both spellings roll up together (${topCategoryFor("Community & Markets")})`);
+  ok(categoryValuesFor("retail").includes("community-markets"),
+     "the Retail tile's query filters on the Sheet's spelling");
+  ok(!BUSINESS_CATEGORIES.includes("Community & Markets"),
+     "the alias did not leak into the owner dropdown");
+  ok(!UNCATEGORIZED_VALUES.includes("community-markets"),
+     "community-markets is no longer listed as deliberately uncategorised");
 }
 
 // ── 2. Coverage against real data ────────────────────────────────────────────────────────
