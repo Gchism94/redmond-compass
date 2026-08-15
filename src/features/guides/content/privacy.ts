@@ -33,7 +33,6 @@ export const guide: Guide = {
         body: "Browsing is local-first. These live in your browser's storage on your device, not on our servers, until you sign in:",
         bullets: [
           "Places you save or follow, events you save, and recently viewed listings.",
-          "Your notification preferences.",
           "Your language choice (English/Español).",
           "Your location, if you turn it on. It is used to sort results by distance and is never stored on our servers. It's optional, and you can turn it off any time in Account.",
         ],
@@ -132,7 +131,6 @@ export const guide: Guide = {
         body: "La app funciona primero en local. Esto vive en el almacenamiento de tu navegador, en tu dispositivo, no en nuestros servidores, hasta que inicies sesión:",
         bullets: [
           "Los lugares que guardas o sigues, los eventos que guardas y los listados vistos recientemente.",
-          "Tus preferencias de notificaciones.",
           "Tu idioma (English/Español).",
           "Tu ubicación, si la activas. Se usa para ordenar los resultados por distancia y nunca se guarda en nuestros servidores. Es opcional y puedes apagarla cuando quieras en Cuenta.",
         ],

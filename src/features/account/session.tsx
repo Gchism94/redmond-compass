@@ -29,6 +29,26 @@ import type { AuthUser, PersistedProfile, OAuthProvider } from "@/data/DataSourc
 
 export type SessionUser = AuthUser;
 
+/**
+ * Notification preferences — STORED BUT NOT EDITABLE (2026-08-14).
+ *
+ * The Account toggles were removed because nothing delivers: no VAPID keys, no
+ * PushManager registration, no notification-sending Edge Function. A switch that
+ * configures mail which cannot arrive is a promise the app does not keep.
+ *
+ * The model is kept ON PURPOSE, unlike `interests` which was deleted outright in the same
+ * pass. The difference is that interests had a broken vocabulary — 6 of its 10 values
+ * mapped to no browse tile, so it could not be wired up without being redesigned first,
+ * and there was nothing worth preserving. These three keys have no such defect: they name
+ * things the app already has (bulletins from followed businesses, saved events, local
+ * news), and a delivery feature would reuse them verbatim.
+ *
+ * `notifChanged` below stays for the same reason. It is correct logic with no live input
+ * right now — "prefer this device's explicit choice over another device's defaults".
+ * Deleting it would mean whoever ships delivery has to re-derive it, and if they miss it,
+ * one device's defaults silently overwrite another device's real settings. That is a bug
+ * worth not planting.
+ */
 export interface NotificationPrefs {
   followedBulletins: boolean;
   savedEvents: boolean;
@@ -101,6 +121,8 @@ interface SessionValue extends Profile {
 
   // local prefs (no auth)
   addRecentlyViewed: (id: string) => void;
+  /** No UI calls this today — the Account toggles are hidden pending delivery. See
+   *  NotificationPrefs above; kept so reinstating is additive. */
   setNotificationPref: (key: keyof NotificationPrefs, value: boolean) => void;
   setLocation: (loc: GeoPoint | null) => void;
   completeOnboarding: (patch?: Partial<Pick<Profile, "location">>) => void;
