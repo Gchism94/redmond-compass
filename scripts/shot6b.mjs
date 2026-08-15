@@ -5,7 +5,7 @@ const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const OUT = process.argv[2] || ".";
 const BASE = "http://localhost:5173";
 
-const ONBOARDED = { onboarded: true, savedBusinessIds: [], followedBusinessIds: [], savedEventIds: [], recentlyViewedIds: [], interests: [], location: null, notificationPrefs: { followedBulletins: true, savedEvents: true, localNews: false } };
+const ONBOARDED = { onboarded: true, savedBusinessIds: [], followedBusinessIds: [], savedEventIds: [], recentlyViewedIds: [], location: null, notificationPrefs: { followedBulletins: true, savedEvents: true, localNews: false } };
 const SAVED = { ...ONBOARDED, savedEventIds: ["e_1", "e_2", "e_4"] };
 const USER = { id: "u_demo", email: "dana@example.com", name: "Dana" };
 

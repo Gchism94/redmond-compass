@@ -152,7 +152,6 @@ export interface User {
   email: string;
   name: string;
   role: "resident" | "owner" | "admin";
-  interests: string[];
   location?: GeoPoint;
   savedBusinessIds: ID[];
   followedBusinessIds: ID[];

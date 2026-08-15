@@ -6,27 +6,23 @@ import {
   LogIn,
   LogOut,
   MapPin,
-  Plus,
   Store,
-  Check,
   Globe,
   Trash2,
 } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { Switch, Chip, Button } from "@/components";
+import { Switch, Button } from "@/components";
 import { Sheet } from "@/components/ui/Sheet";
-import { INTERESTS } from "@/lib/taxonomy";
 import { InstallRow } from "@/pwa/InstallPrompt";
 import { appOnly, LIVE_SITE } from "@/lib/siteMode";
 import { useSession } from "./session";
 import { useI18n } from "@/i18n";
 
-/** Account (S8). Status, interests, notification prefs, location, switch-to-business. */
+/** Account (S8). Status, notification prefs, location, switch-to-business. */
 export function AccountScreen() {
   const { t, lang, setLang } = useI18n();
   const s = useSession();
   const navigate = useNavigate();
-  const [editInterests, setEditInterests] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Switch to Business → dashboard if they manage a listing, else claim/list (B0).
@@ -71,29 +67,6 @@ export function AccountScreen() {
         )}
       </section>
 
-      {/* Interests */}
-      <Section title={t("account.interests")} onAction={() => setEditInterests(true)} actionLabel={t("common.edit")}>
-        {s.interests.length ? (
-          <div className="flex flex-wrap gap-2">
-            {s.interests.map((i) => (
-              <Chip key={i} active as="span">
-                {i}
-              </Chip>
-            ))}
-            <Chip leadingIcon={<Plus size={12} />} onClick={() => setEditInterests(true)}>
-              {t("account.add")}
-            </Chip>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setEditInterests(true)}
-            className="text-sm font-medium text-positive"
-          >
-            {t("account.addInterests")}
-          </button>
-        )}
-      </Section>
 
       {/* Notifications */}
       <Section title={t("account.notifications")}>
@@ -188,20 +161,6 @@ export function AccountScreen() {
 
       <DeleteAccountSheet open={confirmDelete} onClose={() => setConfirmDelete(false)} />
 
-      {/* Interest editor */}
-      <Sheet open={editInterests} onClose={() => setEditInterests(false)} title={t("account.interests")}>
-        <p className="mb-3 text-sm text-muted-foreground">{t("account.interestsSheetMsg")}</p>
-        <div className="flex flex-wrap gap-2">
-          {INTERESTS.map((i) => (
-            <Chip key={i} active={s.interests.includes(i)} onClick={() => s.toggleInterest(i)}>
-              {s.interests.includes(i) && <Check size={12} />} {i}
-            </Chip>
-          ))}
-        </div>
-        <Button variant="primary" size="lg" fullWidth className="mt-5" onClick={() => setEditInterests(false)}>
-          {t("common.done")}
-        </Button>
-      </Sheet>
     </div>
   );
 }

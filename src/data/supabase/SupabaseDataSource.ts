@@ -331,7 +331,6 @@ class SupabaseDataSource implements DataSource {
       email: u.email ?? "",
       name: (u.user_metadata?.name as string) ?? u.email?.split("@")[0] ?? "You",
       role: "resident",
-      interests: [],
       savedBusinessIds: [],
       followedBusinessIds: [],
       savedEventIds: [],
@@ -437,7 +436,6 @@ class SupabaseDataSource implements DataSource {
       followedBusinessIds: row.followed_business_ids ?? [],
       savedEventIds: row.saved_event_ids ?? [],
       recentlyViewedIds: row.recently_viewed_ids ?? [],
-      interests: row.interests ?? [],
       notificationPrefs: row.notification_prefs ?? undefined,
       location: row.location ?? null,
       onboarded: row.onboarded ?? false,
@@ -454,7 +452,6 @@ class SupabaseDataSource implements DataSource {
     if ("followedBusinessIds" in patch) row.followed_business_ids = patch.followedBusinessIds;
     if ("savedEventIds" in patch) row.saved_event_ids = patch.savedEventIds;
     if ("recentlyViewedIds" in patch) row.recently_viewed_ids = patch.recentlyViewedIds;
-    if ("interests" in patch) row.interests = patch.interests;
     if ("notificationPrefs" in patch) row.notification_prefs = patch.notificationPrefs;
     if ("location" in patch) row.location = patch.location;
     if ("onboarded" in patch) row.onboarded = patch.onboarded;

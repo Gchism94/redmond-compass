@@ -85,7 +85,6 @@ export interface PersistedProfile {
   followedBusinessIds: ID[];
   savedEventIds: ID[];
   recentlyViewedIds: ID[];
-  interests: string[];
   notificationPrefs: NotificationPrefs;
   location: GeoPoint | null;
   onboarded: boolean;

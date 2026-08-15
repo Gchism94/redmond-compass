@@ -1,7 +1,7 @@
 /**
  * Client session + personalization store (BUILD-BRIEF §12 step 6, §10).
  *
- * Local-first by design: onboarding prefs (location, interests, notifications) and
+ * Local-first by design: onboarding prefs (location, notifications) and
  * recently-viewed work with NO account — stored in localStorage until/unless the user
  * signs in. Save / Follow / Save-event are local-first TOO: a guest's tap writes straight
  * to local state and is merged into their account on first sign-in. Only `recommend` (a
@@ -40,7 +40,6 @@ interface Profile {
   followedBusinessIds: string[];
   savedEventIds: string[];
   recentlyViewedIds: string[];
-  interests: string[];
   location: GeoPoint | null;
   notificationPrefs: NotificationPrefs;
   onboarded: boolean;
@@ -53,7 +52,6 @@ const DEFAULT_PROFILE: Profile = {
   followedBusinessIds: [],
   savedEventIds: [],
   recentlyViewedIds: [],
-  interests: [],
   location: null,
   notificationPrefs: { followedBulletins: true, savedEvents: true, localNews: false },
   onboarded: false,
@@ -103,11 +101,9 @@ interface SessionValue extends Profile {
 
   // local prefs (no auth)
   addRecentlyViewed: (id: string) => void;
-  toggleInterest: (interest: string) => void;
-  setInterests: (interests: string[]) => void;
   setNotificationPref: (key: keyof NotificationPrefs, value: boolean) => void;
   setLocation: (loc: GeoPoint | null) => void;
-  completeOnboarding: (patch?: Partial<Pick<Profile, "interests" | "location">>) => void;
+  completeOnboarding: (patch?: Partial<Pick<Profile, "location">>) => void;
   setOwnerBusinessId: (id: string | null) => void;
 
   // auth (passwordless email; Supabase = OTP code, mock = instant)
@@ -155,7 +151,6 @@ function toPersisted(p: Profile): PersistedProfile {
     followedBusinessIds: p.followedBusinessIds,
     savedEventIds: p.savedEventIds,
     recentlyViewedIds: p.recentlyViewedIds,
-    interests: p.interests,
     notificationPrefs: p.notificationPrefs,
     location: p.location,
     onboarded: p.onboarded,
@@ -175,7 +170,6 @@ function mergeProfiles(local: Profile, server: Partial<PersistedProfile> | null)
     followedBusinessIds: uniq(local.followedBusinessIds, server.followedBusinessIds),
     savedEventIds: uniq(local.savedEventIds, server.savedEventIds),
     recentlyViewedIds: uniq(local.recentlyViewedIds, server.recentlyViewedIds).slice(0, MAX_RECENT),
-    interests: uniq(local.interests, server.interests),
     // The server row is auto-created with DEFAULT notification prefs, so it's always
     // truthy — prefer the guest's choice when they actually changed it (migrate it),
     // else keep the server's (don't clobber another device's settings with defaults).
@@ -428,8 +422,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
    *
    * These three used to go through `requireAuth`, which opened the auth sheet and deferred
    * the tap until the user signed in. That contradicted the rest of the app: onboarding
-   * collects a guest's interests and home location with no account at all (see
-   * `toggleInterest` below, which has never been gated), the landing page sells "optional
+   * collected a guest's home location with no account at all, the landing page sells "optional"
    * accounts", and the privacy policy documents local-first guest prefs. So the app asked a
    * first-time visitor what they liked, then demanded an account to bookmark a coffee shop.
    *
@@ -454,15 +447,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const next = [id, ...p.recentlyViewedIds.filter((x) => x !== id)].slice(0, MAX_RECENT);
       return { ...p, recentlyViewedIds: next };
     });
-  }, []);
-
-  const toggleInterest = useCallback((interest: string) => {
-    setProfile((p) => ({
-      ...p,
-      interests: p.interests.includes(interest)
-        ? p.interests.filter((x) => x !== interest)
-        : [...p.interests, interest],
-    }));
   }, []);
 
   const startSignIn = useCallback(
@@ -511,7 +495,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const deleteAccount = useCallback(async () => {
     const ds = await getDS();
     await ds.deleteAccount(); // server delete + signOut (Supabase); mock signs out
-    // account is gone — this device must not keep its saves/follows/interests. Unlike
+    // account is gone — this device must not keep its saves/follows. Unlike
     // sign-out, this clears unconditionally: there is no server row left to recover from,
     // but there is also no account left that these lists could belong to.
     clearAccountScopedState(true);
@@ -538,8 +522,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       isSavedEvent: (id) => profile.savedEventIds.includes(id),
       toggleSaveEvent,
       addRecentlyViewed,
-      toggleInterest,
-      setInterests: (interests) => setProfile((p) => ({ ...p, interests })),
       setNotificationPref: (key, val) =>
         setProfile((p) => ({ ...p, notificationPrefs: { ...p.notificationPrefs, [key]: val } })),
       setLocation: (loc) => setProfile((p) => ({ ...p, location: loc })),
@@ -565,7 +547,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       toggleFollow,
       toggleSaveEvent,
       addRecentlyViewed,
-      toggleInterest,
       startSignIn,
       verifyOtp,
       signInWithProvider,

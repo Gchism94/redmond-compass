@@ -1,31 +1,34 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Compass, MapPin, Check } from "lucide-react";
-import { Button, Chip } from "@/components";
-import { INTERESTS } from "@/lib/taxonomy";
+import { Button } from "@/components";
 import { useSession } from "./session";
 import { useI18n } from "@/i18n";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 /**
- * First-launch lite onboarding (BUILD-BRIEF §10). Location framed as a benefit +
- * interest chips — everything skippable, stored locally (no account needed).
- * Shows only until completed/skipped once.
+ * First-launch lite onboarding (BUILD-BRIEF §10). Location framed as a benefit —
+ * skippable, stored locally (no account needed). Shows only until completed/skipped once.
+ *
+ * The interest chips that used to sit here were REMOVED (2026-08-14). They were collected
+ * on first launch and then read by nothing: no query, sort, or feed ever consulted them,
+ * so the screen promised "we'll personalize your feed" and silently didn't. Wiring them up
+ * would have needed a vocabulary reconciliation first — only 4 of the 10 chips mapped to a
+ * browse tile ("Live music", "Family", "Arts & culture" and three others resolved to the
+ * catch-all) — which is more work than the value justified for a feature nobody had asked
+ * for. If a real "follow this category" feature is scoped later it should define its own
+ * vocabulary against the tiles that exist, not inherit this one.
  */
 export function Onboarding() {
   const { t, lang, setLang } = useI18n();
   const { onboarded, completeOnboarding, setLocation } = useSession();
   const desktop = useIsDesktop();
-  const [picked, setPicked] = useState<string[]>([]);
   const [locating, setLocating] = useState(false);
   const [locGranted, setLocGranted] = useState(false);
 
   // Mobile-app ritual only: the desktop site (WebShell) opens like the original
-  // website — no full-screen overlay. Guests can still set interests in Account.
+  // website — no full-screen overlay.
   if (onboarded || desktop) return null;
-
-  const toggle = (i: string) =>
-    setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
 
   const useLocation = () => {
     if (!("geolocation" in navigator)) {
@@ -46,8 +49,7 @@ export function Onboarding() {
     );
   };
 
-  const finish = (withInterests: boolean) =>
-    completeOnboarding(withInterests ? { interests: picked } : undefined);
+  const finish = () => completeOnboarding();
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex flex-col overflow-y-auto bg-background">
@@ -104,28 +106,15 @@ export function Onboarding() {
               )}
             </Button>
           </div>
-
-          {/* Interests */}
-          <div className="mt-6">
-            <p className="font-heading text-sm font-semibold text-foreground">{t("onboarding.whatInto")}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{t("onboarding.whatIntoMsg")}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {INTERESTS.map((i) => (
-                <Chip key={i} active={picked.includes(i)} onClick={() => toggle(i)}>
-                  {i}
-                </Chip>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="mt-8 space-y-2">
-          <Button variant="primary" size="lg" fullWidth onClick={() => finish(true)}>
+          <Button variant="primary" size="lg" fullWidth onClick={() => finish()}>
             {t("onboarding.start")}
           </Button>
           <button
             type="button"
-            onClick={() => finish(false)}
+            onClick={() => finish()}
             className="w-full py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             {t("onboarding.skip")}
