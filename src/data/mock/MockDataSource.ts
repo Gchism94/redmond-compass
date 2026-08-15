@@ -10,6 +10,7 @@ import type {
   Business,
   Bulletin,
   BusinessClass,
+  CommunityNotice,
   EventItem,
   NewsArticle,
   Resource,
@@ -44,6 +45,7 @@ import {
   news,
   resources,
   businessClasses,
+  communityNotices,
 } from "./seed";
 
 const LATENCY_MS = 180;
@@ -245,6 +247,13 @@ export class MockDataSource implements DataSource {
     if (params.businessId) items = items.filter((b) => b.businessId === params.businessId);
     items = items.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
     if (params.limit != null) items = items.slice(0, params.limit);
+    return delay(items);
+  }
+
+  async listCommunityNotices(): Promise<CommunityNotice[]> {
+    const items = [...communityNotices].sort(
+      (a, b) => Number(b.pinned) - Number(a.pinned) || +new Date(b.createdAt) - +new Date(a.createdAt),
+    );
     return delay(items);
   }
 

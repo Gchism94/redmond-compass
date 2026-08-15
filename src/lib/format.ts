@@ -83,3 +83,34 @@ export function formatClassDate(ymd: string, lang: "en" | "es" = "en"): string {
     day: "numeric",
   });
 }
+
+/**
+ * Absolute date for a town notice — "Jul 3, 2026".
+ *
+ * Deliberately NOT `relativeTime`. Notices are read to decide whether guidance still
+ * applies, and "6 weeks ago" makes the reader do arithmetic against a year they have to
+ * assume. The year is always included for the same reason: it is what separates a notice
+ * that is merely old from one that is a year old.
+ *
+ * `createdAt` is a `timestamptz`, so it IS an instant and parses correctly — unlike a
+ * date-only column, which must be parsed from parts (see formatClassDate).
+ *
+ * Rendered in REDMOND's time zone, not the viewer's. This is a hyperlocal town board: the
+ * date that matters is the day the town was told, and it must read the same to someone
+ * checking from out of state. Without pinning the zone, the live fire-danger notice
+ * (2026-07-03T05:41:30Z = 10:41 PM Pacific on July 2) renders as July 2 in Redmond and
+ * July 3 in New York — the same notice, two dates, neither obviously wrong. The app
+ * already makes exactly this choice for event times (lib/calendar.ts, mappers.toEventLocal).
+ */
+const REDMOND_TZ = "America/Los_Angeles";
+
+export function formatNoticeDate(iso: string, lang: "en" | "es" = "en"): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(lang === "es" ? "es-US" : "en-US", {
+    timeZone: REDMOND_TZ,
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}

@@ -2,8 +2,8 @@ import { useMemo, useState } from "react";
 import { Newspaper } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Toggle, FeedItem, Skeleton, EmptyState, ErrorState } from "@/components";
-import { useNews, useBulletins, useBusinessMap } from "@/data/queries";
-import { relativeTime } from "@/lib/format";
+import { useNews, useBulletins, useBusinessMap, useCommunityNotices } from "@/data/queries";
+import { relativeTime, formatNoticeDate } from "@/lib/format";
 import { useI18n } from "@/i18n";
 
 type Tab = "all" | "news" | "bulletins";
@@ -14,10 +14,11 @@ type Entry =
 
 /** Community / News (C). Blended feed of admin news + business bulletins, type-tagged. */
 export function CommunityScreen() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [tab, setTab] = useState<Tab>("all"); // default All (BUILD-BRIEF §14 — flagged)
   const news = useNews();
   const bulletins = useBulletins();
+  const notices = useCommunityNotices();
   // Attribute each bulletin to its business by fetching exactly the businesses the feed
   // references. This used to read from a `limit: 50` page, so a bulletin from a business
   // ranked 51st+ lost its name and its link and rendered as a generic "a local business".
@@ -62,6 +63,46 @@ export function CommunityScreen() {
   return (
     <div className="pb-4">
       <ScreenHeader title={t("community.title")} />
+      {/* Town notices — the community board.
+          A SEPARATE SECTION rather than a fourth tab, for two reasons. "Bulletins" already
+          means owner posts on this very screen, and two different things under one word is
+          how a reader learns to distrust both. And notices sort PINNED-first, which would
+          fight the feed's reverse-chronological order if they shared it.
+
+          Every notice shows an ABSOLUTE DATE, always, in REDMOND's time zone. These are
+          read to decide whether guidance still applies, and a notice that is quietly six
+          weeks old reads as current. There is deliberately NO staleness threshold in code:
+          one row is not enough to invent a cutoff from and any cutoff is wrong for the next
+          notice — a road closure is stale in a week, a memorial never is. The date lets the
+          reader judge; a magic number would make that judgement for them, wrongly.
+
+          Images and support links are not rendered in v1: the only live row's image is on
+          the expiring base44 CDN, and a donation link is a trust surface that deserves its
+          own design rather than arriving as a side effect. */}
+      {(notices.data?.length ?? 0) > 0 && (
+        <section className="px-4 pt-2">
+          <h2 className="font-heading text-sm font-semibold text-foreground">{t("community.notices")}</h2>
+          <ul className="mt-2 space-y-2">
+            {notices.data!.map((n) => (
+              <li key={n.id} className="rounded-lg border border-border bg-card p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="font-heading text-sm font-semibold leading-tight text-foreground">
+                    {n.title}
+                  </p>
+                  {n.pinned && (
+                    <span className="mt-0.5 shrink-0 rounded-pill border border-border px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                      {t("community.pinned")}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{formatNoticeDate(n.createdAt, lang)}</p>
+                <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-foreground">{n.body}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <div className="px-4 pt-1">
         <Toggle
           ariaLabel={t("community.filter")}

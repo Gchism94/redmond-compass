@@ -17,6 +17,7 @@
 import type {
   Business,
   BusinessClass,
+  CommunityNotice,
   Bulletin,
   EventItem,
   Hours,
@@ -185,6 +186,9 @@ export interface DataSource {
 
   // ---- Bulletins (business posts) ----
   listBulletins(params?: { businessId?: ID; limit?: number; status?: "live" | "all" }): Promise<Bulletin[]>;
+
+  /** Town notices (community board), pinned first then newest. Admin-authored. */
+  listCommunityNotices(): Promise<CommunityNotice[]>;
 
   /** Classes/workshops for one business, soonest first. Implementations return UPCOMING
    *  only — a past class is not a listing, and 4 of the 10 live rows are already past. */
