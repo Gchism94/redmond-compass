@@ -60,7 +60,7 @@ export function AccountScreen() {
               <p className="font-heading text-sm font-semibold text-foreground">{t("account.guest")}</p>
               <p className="text-xs text-muted-foreground">{t("account.guestMsg")}</p>
             </div>
-            <Button size="sm" variant="primary" onClick={() => s.openAuth("account")}>
+            <Button size="md" variant="primary" onClick={() => s.openAuth("account")}>
               {t("account.signIn")}
             </Button>
           </div>
@@ -265,7 +265,7 @@ function LocationControl() {
       <button
         type="button"
         onClick={() => s.setLocation(null)}
-        className="text-sm font-medium text-positive"
+        className="-my-3 inline-flex min-h-tap items-center text-sm font-medium text-positive"
       >
         {t("account.usingLocation")}
       </button>
@@ -287,7 +287,7 @@ function LocationControl() {
           { timeout: 8000 },
         );
       }}
-      className="text-sm font-medium text-positive"
+      className="-my-3 inline-flex min-h-tap items-center text-sm font-medium text-positive"
     >
       {busy ? t("account.locating") : t("account.useMine")}
     </button>

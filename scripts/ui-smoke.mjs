@@ -147,6 +147,32 @@ async function newPage(width, height) {
   taps = await tapOffenders();
   ok(taps.length === 0, label(`results: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
 
+  // ---- /account (added 2026-08-14) ----
+  // This route was NEVER visited by this suite, so a 57/57 pass said nothing about the
+  // Account screen. That blind spot is why an EN-only copy change shipped through a green
+  // run: the Spanish string for a removed feature ("tus intereses") survived a
+  // source-language grep AND the smoke suite, because neither looked here.
+  r = await visit("/account");
+  ok(/browsing as a guest/i.test(r.text), label("account renders for a guest (not a skeleton)"));
+  ok(/settings/i.test(r.text) && /location/i.test(r.text) && /language/i.test(r.text),
+     label("account: settings rows present"));
+  ok(/privacy & terms/i.test(r.text), label("account: privacy link present"));
+  ok(r.overflowX === 0, label(`account: no horizontal overflow (${r.overflowX})`));
+  taps = await tapOffenders();
+  ok(taps.length === 0, label(`account: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
+
+  // Two things must STAY GONE. Both were live settings that quietly promised behaviour the
+  // app does not have: interests were read by nothing, and the notification toggles had no
+  // delivery mechanism. Asserting their absence keeps a well-meaning re-add from silently
+  // restoring the promise.
+  const switches = await page.evaluate(
+    () => document.querySelectorAll('[role="switch"], input[type="checkbox"]').length,
+  );
+  ok(switches === 0, label(`account: no notification toggles — nothing delivers them yet (${switches})`));
+  ok(!/notification|bulletins from places|saved-event reminders/i.test(r.text),
+     label("account: no notification copy"));
+  ok(!/your interests|add interests/i.test(r.text), label("account: interests question stays removed"));
+
   r = await visit("/getting-settled");
   ok(r.title === "Getting Settled | Redmond Compass", label("guide title set"));
   // CONTENT, not just title: the prerendered <head> keeps the title correct even
@@ -163,6 +189,17 @@ async function newPage(width, height) {
   ok(r.lang === "es" && r.text.includes("Primeros pasos"), label("Spanish guide renders"));
   r = await visit(HOME);
   ok(/inicio/i.test(r.text) && /buscar/i.test(r.text), label("Spanish tab labels"));
+  // The ES half is the one that matters here: an English-only grep is structurally blind to
+  // a stale Spanish string, which is exactly how "tus intereses" survived item 3.
+  r = await visit("/account");
+  ok(/navegando como invitado/i.test(r.text), label("Spanish account renders"));
+  ok(/configuración/i.test(r.text) && /ubicación/i.test(r.text) && /idioma/i.test(r.text),
+     label("Spanish account: settings rows translated"));
+  ok(!/notificaciones|recordatorios de eventos|avisos de los lugares/i.test(r.text),
+     label("Spanish account: no notification copy"));
+  ok(!/tus intereses|agrega intereses/i.test(r.text),
+     label("Spanish account: no leftover interests copy"));
+  ok(r.overflowX === 0, label(`ES account: no horizontal overflow (${r.overflowX})`));
   await page.evaluate(() => localStorage.setItem("rc.lang", "en"));
 
   ok(errors.length === 0, label(`zero console errors (${errors.length ? errors.join(" | ").slice(0, 160) : "clean"})`));
