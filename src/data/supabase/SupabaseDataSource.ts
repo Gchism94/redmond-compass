@@ -8,6 +8,7 @@
 import type {
   Business,
   BusinessClass,
+  CommunityNotice,
   Bulletin,
   EventItem,
   NewsArticle,
@@ -40,7 +41,8 @@ import type {
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 import { getSupabaseClient } from "./client";
 import { rowToBusiness, rowToBulletin,
-  rowToBusinessClass, rowToEvent, rowToNews, rowToResource } from "./mappers";
+  rowToBusinessClass,
+  rowToCommunityNotice, rowToEvent, rowToNews, rowToResource } from "./mappers";
 
 function textMatch(b: Business, text: string): boolean {
   const hay = [b.name, b.description, b.category, ...(b.subcategories ?? []), ...b.amenityTags]
@@ -163,6 +165,23 @@ class SupabaseDataSource implements DataSource {
     const { data, error } = await qb;
     if (error) throw error;
     return (data ?? []).map(rowToBulletin);
+  }
+
+  async listCommunityNotices(): Promise<CommunityNotice[]> {
+    // Pinned first, then newest. Ordered in SQL so both data sources agree, and so the
+    // ordering is a data property rather than something a screen could quietly change.
+    //
+    // No staleness filter, deliberately. One row is not enough to invent a cutoff from and
+    // any cutoff would be wrong for the next notice — a road closure is stale in a week, a
+    // memorial never is. A visibly-dated notice lets the reader judge; a magic number in
+    // here would make that judgement for them, wrongly. The stale row is a content fix.
+    const { data, error } = await this.sb
+      .from("community_bulletins")
+      .select("*")
+      .order("pinned", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map(rowToCommunityNotice);
   }
 
   async listBusinessClasses(businessId: ID): Promise<BusinessClass[]> {

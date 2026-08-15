@@ -87,6 +87,27 @@ export interface Business {
  * `date` is a plain `date` column (no time zone) and `timeText` is free text — every row in
  * the live table has `timeText` null, so nothing here may depend on a time being present.
  */
+/**
+ * A town notice — the community board, NOT a business post. Deliberately a different word
+ * from `Bulletin`: that name is already taken on the Community screen by owner posts, and
+ * two different things called "bulletins" on one screen is how a reader learns to distrust
+ * both. Admin-authored only (`community_bulletins` has no write policy and no write grant
+ * for anon/authenticated — service_role writes it), and it carries no business FK, so it
+ * can never become a promoted post.
+ */
+export interface CommunityNotice {
+  id: ID;
+  title: string;
+  body: string;
+  imageUrl?: string;
+  supportLink?: string;
+  supportLabel?: string;
+  /** editorial pin — floats to the top of the notices list. Never a ranking signal. */
+  pinned: boolean;
+  category?: "loss" | "support" | "celebration" | "announcement" | "other";
+  createdAt: string;
+}
+
 export interface BusinessClass {
   id: ID;
   businessId: ID;

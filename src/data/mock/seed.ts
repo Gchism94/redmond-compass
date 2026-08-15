@@ -12,6 +12,7 @@ import type {
   Business,
   Bulletin,
   BusinessClass,
+  CommunityNotice,
   EventItem,
   Hours,
   NewsArticle,
@@ -202,6 +203,18 @@ const dayOffset = (n: number) => {
   d.setDate(d.getDate() + n);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
+
+export const communityNotices: CommunityNotice[] = [
+  // One PINNED and deliberately OLD, one recent and unpinned — the ordering contract needs
+  // both to be provable (pinned wins over newer), and the visible-date requirement needs
+  // something old enough that a date actually matters.
+  { id: "cn_pin", title: "Burn ban in effect across Deschutes County",
+    body: "Open burning is prohibited until further notice. Report concerns to non-emergency dispatch.",
+    pinned: true, category: "announcement", createdAt: "2026-07-03T05:41:30.455Z" },
+  { id: "cn_new", title: "Redmond Public Library reopens Saturday",
+    body: "The remodel is finished; regular hours resume this weekend.",
+    pinned: false, category: "announcement", createdAt: "2026-08-10T17:00:00.000Z" },
+];
 
 export const businessClasses: BusinessClass[] = [
   { id: "bc_past", businessId: "b_juniper", title: "Sourdough Basics", date: dayOffset(-14),

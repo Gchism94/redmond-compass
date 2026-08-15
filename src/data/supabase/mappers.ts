@@ -2,7 +2,7 @@
  * Row (snake_case Postgres) → domain (camelCase, src/lib/types.ts) mappers.
  * The only place column names appear, so the rest of the app is unchanged.
  */
-import type { Business, BusinessClass, Bulletin, EventItem, NewsArticle, Resource, Hours } from "@/lib/types";
+import type { Business, BusinessClass, CommunityNotice, Bulletin, EventItem, NewsArticle, Resource, Hours } from "@/lib/types";
 import { REDMOND_CENTER } from "@/lib/geo";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -76,6 +76,23 @@ export function rowToBulletin(r: Row): Bulletin {
     activeUntil: r.active_until ?? undefined,
     scheduledFor: r.scheduled_for ?? undefined,
     status: r.status,
+    createdAt: r.created_at,
+  };
+}
+
+export function rowToCommunityNotice(r: Row): CommunityNotice {
+  return {
+    id: r.id,
+    title: r.title,
+    body: r.body,
+    // imageUrl is mapped but NOT rendered — the one live row points at media.base44.com,
+    // which is expiring (guide images were self-hosted for exactly this reason) and
+    // check:base44 scans code, not data, so nothing would catch it going dark.
+    imageUrl: r.image_url ?? undefined,
+    supportLink: r.support_link ?? undefined,
+    supportLabel: r.support_label ?? undefined,
+    pinned: !!r.pinned,
+    category: r.category ?? undefined,
     createdAt: r.created_at,
   };
 }
