@@ -9,6 +9,7 @@
 import type {
   Business,
   Bulletin,
+  BusinessClass,
   EventItem,
   NewsArticle,
   Resource,
@@ -42,6 +43,7 @@ import {
   events as baseEvents,
   news,
   resources,
+  businessClasses,
 } from "./seed";
 
 const LATENCY_MS = 180;
@@ -243,6 +245,17 @@ export class MockDataSource implements DataSource {
     if (params.businessId) items = items.filter((b) => b.businessId === params.businessId);
     items = items.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
     if (params.limit != null) items = items.slice(0, params.limit);
+    return delay(items);
+  }
+
+  async listBusinessClasses(businessId: ID): Promise<BusinessClass[]> {
+    // Mirrors the Supabase implementation: upcoming only (calendar-day, so a class today
+    // still counts), soonest first.
+    const t = new Date();
+    const ymd = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+    const items = businessClasses
+      .filter((c) => c.businessId === businessId && c.date >= ymd)
+      .sort((a, b) => a.date.localeCompare(b.date));
     return delay(items);
   }
 

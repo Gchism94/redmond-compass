@@ -79,6 +79,29 @@ export interface Business {
   recommendCount?: number; // DEFERRED (fast-follow) — positive-only count; NOT a rating
 }
 
+/**
+ * A class/workshop a business runs. Read-only in the app today; owners already have write
+ * access at the database level (`business_classes` RLS gates insert/update/delete on
+ * `is_business_owner`), so an owner editor is additive whenever it is wanted.
+ *
+ * `date` is a plain `date` column (no time zone) and `timeText` is free text — every row in
+ * the live table has `timeText` null, so nothing here may depend on a time being present.
+ */
+export interface BusinessClass {
+  id: ID;
+  businessId: ID;
+  title: string;
+  /** YYYY-MM-DD — a calendar date, deliberately not a timestamp. */
+  date: string;
+  timeText?: string;
+  location?: string;
+  description?: string;
+  link?: string;
+  imageUrl?: string;
+  status: "open" | "sold_out" | "waitlist";
+  createdAt: string;
+}
+
 export interface Bulletin {
   id: ID;
   businessId: ID;

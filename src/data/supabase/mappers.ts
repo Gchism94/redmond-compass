@@ -2,7 +2,7 @@
  * Row (snake_case Postgres) → domain (camelCase, src/lib/types.ts) mappers.
  * The only place column names appear, so the rest of the app is unchanged.
  */
-import type { Business, Bulletin, EventItem, NewsArticle, Resource, Hours } from "@/lib/types";
+import type { Business, BusinessClass, Bulletin, EventItem, NewsArticle, Resource, Hours } from "@/lib/types";
 import { REDMOND_CENTER } from "@/lib/geo";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -75,6 +75,25 @@ export function rowToBulletin(r: Row): Bulletin {
     linkCta: r.link_cta ?? undefined,
     activeUntil: r.active_until ?? undefined,
     scheduledFor: r.scheduled_for ?? undefined,
+    status: r.status,
+    createdAt: r.created_at,
+  };
+}
+
+export function rowToBusinessClass(r: Row): BusinessClass {
+  return {
+    id: r.id,
+    businessId: r.business_id,
+    title: r.title,
+    date: r.date,
+    timeText: r.time_text ?? undefined,
+    location: r.location ?? undefined,
+    description: r.description ?? undefined,
+    link: r.link ?? undefined,
+    // imageUrl is mapped but NOT rendered: every live row hotlinks the studio's own Wix
+    // CDN, and the section reads fine without them. Kept on the type so an owner editor
+    // (or self-hosted images) can use it without a schema round-trip.
+    imageUrl: r.image_url ?? undefined,
     status: r.status,
     createdAt: r.created_at,
   };
