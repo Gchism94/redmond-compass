@@ -124,6 +124,58 @@ for (const t of ["businesses", "bulletins", "events", "news_articles", "resource
   ok(!!probe.error, "no boost/featured/rank/sponsored column on businesses (equal ranking)");
 }
 
+// 6b) COLUMN-level privacy: yard_sales.contact_email is never readable by the public.
+//
+// RLS gates ROWS, not COLUMNS. `yard_sales_read` limits anon to `status = 'approved'`, which
+// reads like protection — but the original table-wide `grant select` covered every column,
+// so `?select=contact_email` returned the submitter's email for any approved row. Confirmed
+// against the live table before the fix: 200, not 403. Empty only because the table had 0
+// rows; the leak armed itself on the first approval.
+//
+// This asserts the PRIVILEGE, not the UI. A screen that simply doesn't render the field is
+// not a control — the REST API hands out whatever the grant allows, and the browser is not
+// the only client.
+{
+  const { data: seeded } = await admin
+    .from("yard_sales")
+    .insert({
+      title: "rls-ys-probe", category: "yard-garage", start_date: "2026-08-22",
+      status: "approved", contact_email: "rls-probe-private@test.dev",
+    })
+    .select("id")
+    .single();
+
+  // Sanity: the row IS publicly visible (so a failure below means the COLUMN leaked, not
+  // that the row was hidden and the assertion passed for the wrong reason).
+  const visible = await anon.from("yard_sales").select("id,title,status").eq("id", seeded.id);
+  ok((visible.data?.length ?? 0) === 1,
+     `an approved yard sale is publicly visible (${visible.data?.length ?? 0}) — the row is not hiding the column`);
+
+  const direct = await anon.from("yard_sales").select("contact_email").eq("id", seeded.id);
+  ok(!!direct.error, `anon cannot select contact_email (${direct.error?.code ?? "NO ERROR — LEAKED"})`);
+  ok(!JSON.stringify(direct.data ?? []).includes("rls-probe-private"),
+     "the email never appears in an anon response body");
+
+  const mixed = await anon.from("yard_sales").select("id,title,contact_email").eq("id", seeded.id);
+  ok(!!mixed.error, "anon cannot smuggle it alongside allowed columns");
+
+  const star = await anon.from("yard_sales").select("*").eq("id", seeded.id);
+  ok(!!star.error, "select=* fails CLOSED rather than silently including it");
+
+  const allowed = await anon
+    .from("yard_sales")
+    .select("id,title,category,location,start_date,end_date,start_time,end_time,description,image_url,status,created_at")
+    .eq("id", seeded.id);
+  ok(!allowed.error && (allowed.data?.length ?? 0) === 1,
+     `the browsable columns still work (${allowed.error?.code ?? "ok"}) — this locked the column, not the feature`);
+
+  // An owner-authenticated user is still the public for this purpose.
+  const asUser = await a.client.from("yard_sales").select("contact_email").eq("id", seeded.id);
+  ok(!!asUser.error, "a signed-in resident cannot read it either — service_role only");
+
+  await admin.from("yard_sales").delete().eq("id", seeded.id);
+}
+
 // 7) PUBLISHED gating (Sheet-sync visibility): unpublished hidden from anon, owner still sees own
 {
   const { data: unpub } = await admin
