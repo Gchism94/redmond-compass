@@ -3,8 +3,9 @@
  *
  * Local-first by design: onboarding prefs (location, interests, notifications) and
  * recently-viewed work with NO account — stored in localStorage until/unless the user
- * signs in. Save / Follow / Save-event are the ONLY gated actions; tapping one as a
- * guest fires the just-in-time AuthSheet (login is never a browse gate).
+ * signs in. Save / Follow / Save-event are local-first TOO: a guest's tap writes straight
+ * to local state and is merged into their account on first sign-in. Only `recommend` (a
+ * server write keyed to a user id) and the owner/claim flows raise the JIT AuthSheet.
  *
  * Auth is delegated to the DataSource (the swap seam): Supabase does real passwordless
  * email-OTP sign-in (the session carries the Supabase JWT, so authed reads/writes use
@@ -92,7 +93,7 @@ interface SessionValue extends Profile {
   profileSyncFailed: boolean;
   retryProfileSync: () => void;
 
-  // gated actions (fire JIT auth when guest)
+  // personal collections — guest-local, merged on sign-in (no auth gate)
   isSaved: (id: string) => boolean;
   toggleSaveBusiness: (id: string) => void;
   isFollowing: (id: string) => boolean;
@@ -254,16 +255,33 @@ export function SessionProvider({ children }: { children: ReactNode }) {
    * profile back over the real server row; the server keeps it and re-merges on next
    * sign-in.
    */
-  const clearAccountScopedState = useCallback(() => {
+  /**
+   * `serverHasACopy` is passed IN rather than read from syncedRef, because one caller (the
+   * lost-session branch) resets syncedRef immediately before calling this — reading the ref
+   * here would have always seen `false` and silently stopped clearing anything on sign-out.
+   */
+  const clearAccountScopedState = useCallback((serverHasACopy: boolean) => {
+    // Now that saves are guest-local, "clear the account's lists" has a failure case it did
+    // not have when saving required sign-in. If the sign-in merge never succeeded
+    // (`getProfile()` threw — see profileSyncFailed), then NOTHING from the account was ever
+    // loaded into local state and nothing local was ever pushed up. The lists therefore hold
+    // only this device's own taps, stored nowhere else. Clearing them would be the one path
+    // in this flow that destroys data permanently.
+    //
+    // So: clear when we know the server has a copy; keep when we know it does not. Keeping
+    // is not a shared-device leak in that case for the same reason it is not a loss — an
+    // unsynced profile contains no one else's activity.
     syncedRef.current = false;
     lastUserIdRef.current = null;
     setProfileSyncFailed(false);
     setProfile((p) => ({
       ...p,
-      savedBusinessIds: [],
-      followedBusinessIds: [],
-      savedEventIds: [],
+      // ownerBusinessId always goes: it gates the owner dashboard, so leaving it set routes a
+      // signed-out user into screens whose every write fails. It is also never guest-created.
       ownerBusinessId: null,
+      ...(serverHasACopy
+        ? { savedBusinessIds: [], followedBusinessIds: [], savedEventIds: [] }
+        : null),
     }));
   }, []);
 
@@ -335,9 +353,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         // Guarded on having HAD a user, so a guest's local-first saves are never wiped on
         // a normal cold start (where apply(null) fires before the session restores).
         const hadUser = lastUserIdRef.current !== null;
+        const serverHasACopy = syncedRef.current; // capture BEFORE the reset below
         lastUserIdRef.current = null;
         syncedRef.current = false;
-        if (hadUser) clearAccountScopedState();
+        if (hadUser) clearAccountScopedState(serverHasACopy);
       }
     };
     // resolve the (lazily-loaded) source, then reflect its session
@@ -404,18 +423,30 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  /**
+   * Save / follow are GUEST-LOCAL — they write straight to local state, no sign-in.
+   *
+   * These three used to go through `requireAuth`, which opened the auth sheet and deferred
+   * the tap until the user signed in. That contradicted the rest of the app: onboarding
+   * collects a guest's interests and home location with no account at all (see
+   * `toggleInterest` below, which has never been gated), the landing page sells "optional
+   * accounts", and the privacy policy documents local-first guest prefs. So the app asked a
+   * first-time visitor what they liked, then demanded an account to bookmark a coffee shop.
+   *
+   * Nothing new is needed to make this safe: the profile is already persisted to
+   * localStorage for guests and authed users alike, and `mergeProfiles` already UNIONS
+   * local with server on sign-in — it was written for exactly this. A guest's saves are
+   * carried into their account rather than replacing it or being replaced by it.
+   *
+   * Still gated (correctly): `recommend` is a server write keyed to a user id, and
+   * claim/owner flows need an account by definition.
+   */
   const toggleSaveBusiness = useCallback(
-    (id: string) => requireAuth(() => toggleId("savedBusinessIds", id), "save", { type: "save", id }),
-    [requireAuth, toggleId],
+    (id: string) => toggleId("savedBusinessIds", id),
+    [toggleId],
   );
-  const toggleFollow = useCallback(
-    (id: string) => requireAuth(() => toggleId("followedBusinessIds", id), "follow", { type: "follow", id }),
-    [requireAuth, toggleId],
-  );
-  const toggleSaveEvent = useCallback(
-    (id: string) => requireAuth(() => toggleId("savedEventIds", id), "saveEvent", { type: "saveEvent", id }),
-    [requireAuth, toggleId],
-  );
+  const toggleFollow = useCallback((id: string) => toggleId("followedBusinessIds", id), [toggleId]);
+  const toggleSaveEvent = useCallback((id: string) => toggleId("savedEventIds", id), [toggleId]);
 
   const addRecentlyViewed = useCallback((id: string) => {
     setProfile((p) => {
@@ -473,15 +504,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // Same clearing as a lost session — see clearAccountScopedState. (a) a signed-out
     // ex-owner can't reach the owner dashboard, and (b) a shared device doesn't merge one
     // user's saves/follows into the NEXT account on sign-in.
-    clearAccountScopedState();
+    clearAccountScopedState(syncedRef.current);
     void getDS().then((ds) => ds.signOut());
   }, [getDS, clearAccountScopedState]);
 
   const deleteAccount = useCallback(async () => {
     const ds = await getDS();
     await ds.deleteAccount(); // server delete + signOut (Supabase); mock signs out
-    // account is gone — this device must not keep its saves/follows/interests.
-    clearAccountScopedState();
+    // account is gone — this device must not keep its saves/follows/interests. Unlike
+    // sign-out, this clears unconditionally: there is no server row left to recover from,
+    // but there is also no account left that these lists could belong to.
+    clearAccountScopedState(true);
     setProfile(DEFAULT_PROFILE);
     try {
       localStorage.removeItem(PROFILE_KEY);
