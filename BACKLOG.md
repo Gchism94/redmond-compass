@@ -1,0 +1,36 @@
+# Backlog — deferred cleanups and pending asks
+
+Small things that are **deliberately not done**, recorded so they stay decisions rather than
+drift. Anything here was looked at, judged not worth doing now, and given a reason. This is
+not a wish list — design-ahead features live in `DEV.md` → "Not built yet".
+
+---
+
+## Deferred code cleanups
+
+Each of these is safe to leave indefinitely. None is user-visible.
+
+| # | Item | Why deferred | When to revisit |
+|---|---|---|---|
+| 1 | **`AuthSheet` copy for `save` / `follow` / `saveEvent`** is unreachable (12 dict keys EN+ES, 3 `COPY` entries, 3 `AuthReason` members) | Save/follow/save-event became guest-local (2026-08-14), so those reasons can no longer be raised. The copy is invisible and promises nothing; removing it is pure housekeeping with zero user impact. Note `"save"` is still the default parameter of `requireAuth`, so removing that member needs a new default. | Next time `session.tsx` or `AuthSheet.tsx` is open for another reason |
+| 2 | **`PendingIntent` / `replayIntent` branches for `save` / `follow` / `saveEvent`** | Unreachable from the UI for the same reason. Kept deliberately: a user who was mid-OAuth-redirect when the guest-saves change deployed has one stashed in `localStorage`, and deleting the branch would drop that tap on the floor. | Once any in-flight intents have aged out — safe now, but low value |
+| 3 | **`profiles.interests` column** left in the database, inert | The app stopped reading and writing it when interests were removed. Dropping a column is a one-way door and the row count is unknowable from the client (RLS restricts `profiles` to `authenticated`). `rls-test` still uses it as a cross-user write probe. | When someone with service-role access can confirm what is in it |
+| 4 | **Yard sales** — table and RLS exist, no UI | 0 rows, no submit path, and no moderator. The concept passes a habitual-use test ("check Friday for the weekend"); it fails on fuel, not on idea. Any resident write path needs new RLS that pins `status = 'pending'` on insert and blocks status changes on update, or a submitter self-approves. | When there is real content **and** someone committed to approving it |
+| 5 | **`rls-test` is not in CI** | Needs a live database. Runs locally against `supabase start`; refuses to run against production by design. Supabase branch databases need a paid plan. | If branching is enabled, or a disposable CI database appears |
+| 6 | **`hours.ts` / month-boundary time logic is untested** | Last open item from the 2026-08-14 retrospective. Bit us indirectly: the guest-save test needed a pinned future event because the mock's July-2026 seeds silently emptied Home's events rail in August. | Next time open/closed status or `countBulletinsThisMonth` is touched |
+| 7 | **Three junk space-prefixed Supabase secrets** | Cosmetic; they shadow nothing. | Next dashboard visit |
+| 8 | **`smoke` has no `/manage` or owner-surface coverage** | `/account` was added 2026-08-15 after it turned out a 57/57 pass had never visited it — and that immediately exposed three shipping tap-target violations. The owner surfaces have the same blind spot today. | Before the next owner-dashboard change |
+
+---
+
+## Pending asks for the directory owner
+
+Content and console work that cannot be done from the repo.
+
+| # | Ask | Detail | Blocking |
+|---|---|---|---|
+| 1 | **Four Sheet `Category` cells** | Full list, with current and corrected values, in `supabase/functions/sync-sheet/SHEET-CORRECTIONS-2026-08-14.md`. Moves 4 businesses out of "Everything else" and onto real browse tiles. | Nothing — the app handles both states |
+| 2 | **Unpin or archive the stale community bulletin** | The only row in `community_bulletins` is *"EXTREME FIRE DANGER in Redmond This Fourth of July"* (2026-07-03) with `pinned = true`, so it sorts **first**. Six weeks stale and reads as current safety guidance. Also its image is on the expiring **base44 CDN** (`check:base44` scans code, not data, so nothing catches this). | **Yes — blocks showing community bulletins in the app.** Deliberately no staleness-threshold logic: one row is not enough to invent a cutoff from, and any cutoff is wrong for the next bulletin (a road closure goes stale in a week, a memorial never does). The source of truth gets corrected, not overridden — same principle as the category cells. |
+| 3 | **Release the sync cron hold** | Two steps in the SQL editor: `vault.create_secret` for both names, then the `cron.schedule` block. Sync is manual-only by deliberate choice after the first live run surfaced a real data bug. | Nothing — manual runs work |
+| 4 | **Verify `DEPLOY_HOOK_URL`** | Digest never confirmed. | Nothing |
+| 5 | **SMTP / DNS / Resend** | Handled separately with the domain owner — **not** to be touched from here. | — |

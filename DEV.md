@@ -57,6 +57,10 @@ Primary canvas ~360–390px. Open dev tools device mode (iPhone 12/13 ≈ 390px)
 
 ## Not built yet (seams left in place)
 
+> Small deferred cleanups and pending owner asks live in **`BACKLOG.md`** — decisions with
+> reasons, not a wish list. This section is for design-ahead features.
+
+
 The full MVP build sequence (§12 steps 1–9) is complete. Remaining are the intentionally-deferred, design-ahead features:
 - Membership/paywall (B6), Pro tools — Bookings/Inquiry/Loyalty (B7–B9), verified-customer recommendations (the ♥ Recommend action itself is now live; the *verified* badge on a recommendation is the remaining seam), Rewards wallet, map search. The data model keeps their fields and the entitlement helper has the Member/Pro matrix, so they switch on as config, not a rebuild.
 - Backend: implement `DataSource` for base44 or Supabase and set `VITE_DATA_SOURCE` (§2).
