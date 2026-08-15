@@ -367,7 +367,6 @@ export class MockDataSource implements DataSource {
       email: this.authUser.email,
       name: this.authUser.name,
       role: "resident",
-      interests: [],
       savedBusinessIds: [],
       followedBusinessIds: [],
       savedEventIds: [],

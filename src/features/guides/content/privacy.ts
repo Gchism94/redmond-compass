@@ -17,13 +17,13 @@ export const guide: Guide = {
     name: "Privacy & Terms",
     title: "Privacy & Terms",
     intro:
-      "Redmond Compass is a community hub, not a data business. This page explains in plain language what information the app touches, where it lives, and the ground rules for using the platform. Effective July 11, 2026.",
+      "Redmond Compass is a community hub, not a data business. This page explains in plain language what information the app touches, where it lives, and the ground rules for using the platform. Effective August 14, 2026.",
     sections: [
       {
         heading: "The short version",
         bullets: [
           "You can browse everything without an account, and we don't track you around the web.",
-          "Your saves, follows, and interests live on your device until you choose to sign in.",
+          "Your saves and follows live on your device until you choose to sign in — no account needed.",
           "If you create an account, we store your email, optional name, and your preferences — that's it.",
           "No ads, no selling or sharing your data for marketing, no analytics trackers, no star ratings, no paid placement.",
         ],
@@ -33,18 +33,17 @@ export const guide: Guide = {
         body: "Browsing is local-first. These live in your browser's storage on your device, not on our servers, until you sign in:",
         bullets: [
           "Places you save or follow, events you save, and recently viewed listings.",
-          "Your interests and notification preferences.",
           "Your language choice (English/Español).",
           "Your location, if you turn it on. It is used to sort results by distance and is never stored on our servers. It's optional, and you can turn it off any time in Account.",
         ],
       },
       {
         heading: "If you create an account",
-        body: "Accounts are optional — the app only asks when you do something that needs one, like saving a place. If you sign in, we store:",
+        body: "Accounts are optional. Saving and following work without one — the app only asks when something genuinely needs an account, like recommending a place or claiming your business. If you sign in, we store:",
         bullets: [
           "Your email address, and your name if you choose to give it.",
           "If you use \"Continue with Google\": your name and email from your Google account. We never see your Google password.",
-          "Your preferences (saves, follows, interests) — moved from your device to your profile so they follow you across devices. Nothing is lost and nothing else is copied.",
+          "Your preferences (saves, follows) — merged with whatever your profile already holds, so they follow you across devices. Nothing is lost from either side and nothing else is copied.",
         ],
       },
       {
@@ -107,7 +106,7 @@ export const guide: Guide = {
       },
     ],
     contactEmail: "Questions about privacy, or want your data deleted? Email us and a human will answer.",
-    reviewed: "Effective July 11, 2026",
+    reviewed: "Effective August 14, 2026",
     metaTitle: "Privacy & Terms | Redmond Compass",
     metaDescription:
       "How Redmond Compass handles your data: local-first browsing, optional accounts, no ads, no trackers, no data sales — and the ground rules for the platform.",
@@ -116,13 +115,13 @@ export const guide: Guide = {
     name: "Privacidad y términos",
     title: "Privacidad y términos",
     intro:
-      "Redmond Compass es un centro comunitario, no un negocio de datos. Esta página explica en lenguaje claro qué información toca la app, dónde vive y las reglas básicas para usar la plataforma. Vigente desde el 11 de julio de 2026.",
+      "Redmond Compass es un centro comunitario, no un negocio de datos. Esta página explica en lenguaje claro qué información toca la app, dónde vive y las reglas básicas para usar la plataforma. Vigente desde el 14 de agosto de 2026.",
     sections: [
       {
         heading: "La versión corta",
         bullets: [
           "Puedes explorar todo sin cuenta, y no te rastreamos por la web.",
-          "Tus guardados, seguidos e intereses viven en tu dispositivo hasta que decidas iniciar sesión.",
+          "Tus guardados y seguidos viven en tu dispositivo hasta que decidas iniciar sesión, sin necesidad de cuenta.",
           "Si creas una cuenta, guardamos tu correo, tu nombre (opcional) y tus preferencias. Nada más.",
           "Sin anuncios, sin venta ni intercambio de tus datos para marketing, sin rastreadores de analítica, sin estrellas y sin publicidad pagada en los resultados.",
         ],
@@ -132,18 +131,17 @@ export const guide: Guide = {
         body: "La app funciona primero en local. Esto vive en el almacenamiento de tu navegador, en tu dispositivo, no en nuestros servidores, hasta que inicies sesión:",
         bullets: [
           "Los lugares que guardas o sigues, los eventos que guardas y los listados vistos recientemente.",
-          "Tus intereses y preferencias de notificaciones.",
           "Tu idioma (English/Español).",
           "Tu ubicación, si la activas. Se usa para ordenar los resultados por distancia y nunca se guarda en nuestros servidores. Es opcional y puedes apagarla cuando quieras en Cuenta.",
         ],
       },
       {
         heading: "Si creas una cuenta",
-        body: "Las cuentas son opcionales: la app solo la pide cuando haces algo que la necesita, como guardar un lugar. Si inicias sesión, guardamos:",
+        body: "Las cuentas son opcionales. Guardar y seguir funcionan sin una: la app solo la pide cuando algo realmente la necesita, como recomendar un lugar o reclamar tu negocio. Si inicias sesión, guardamos:",
         bullets: [
           "Tu correo electrónico, y tu nombre si decides darlo.",
           "Si usas \"Continuar con Google\": tu nombre y correo de tu cuenta de Google. Nunca vemos tu contraseña de Google.",
-          "Tus preferencias (guardados, seguidos, intereses), que pasan de tu dispositivo a tu perfil para que te acompañen en todos tus dispositivos. No se pierde nada y no se copia nada más.",
+          "Tus preferencias (guardados, seguidos), que se combinan con lo que ya tenga tu perfil para que te acompañen en todos tus dispositivos. No se pierde nada de ninguno de los dos lados y no se copia nada más.",
         ],
       },
       {
@@ -206,7 +204,7 @@ export const guide: Guide = {
       },
     ],
     contactEmail: "¿Preguntas sobre privacidad, o quieres eliminar tus datos? Escríbenos y te responde una persona.",
-    reviewed: "Vigente desde el 11 de julio de 2026",
+    reviewed: "Vigente desde el 14 de agosto de 2026",
     metaTitle: "Privacidad y términos | Redmond Compass",
     metaDescription:
       "Cómo maneja tus datos Redmond Compass: navegación local primero, cuentas opcionales, sin anuncios, sin rastreadores, sin venta de datos, y las reglas de la plataforma.",

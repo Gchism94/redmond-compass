@@ -197,20 +197,6 @@ export const BUSINESS_CATEGORIES: string[] = [
   ...new Set(TOP_CATEGORIES.flatMap((c) => c.includes)),
 ].sort();
 
-/** Interest chips for onboarding (S1) + Account (S8). Shape the personalized feed. */
-export const INTERESTS: string[] = [
-  "Food & Drink",
-  "Coffee",
-  "Outdoors",
-  "Live music",
-  "Family",
-  "Shopping",
-  "Health & fitness",
-  "Home & garden",
-  "Arts & culture",
-  "Community events",
-];
-
 /** The amenity facets residents filter on (S4). Must match Business.amenityTags. */
 export const AMENITY_FACETS: string[] = [
   "Outdoor seating",

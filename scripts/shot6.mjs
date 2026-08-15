@@ -10,7 +10,6 @@ const SEED_PROFILE = {
   followedBusinessIds: ["b_basalt", "b_smithrock"],
   savedEventIds: ["e_2"],
   recentlyViewedIds: ["b_dailygrind", "b_cascade", "b_threesisters"],
-  interests: ["Food & Drink", "Outdoors", "Live music"],
   location: null,
   notificationPrefs: { followedBulletins: true, savedEvents: true, localNews: false },
   onboarded: true,

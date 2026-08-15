@@ -7,8 +7,7 @@ const BASE = "http://localhost:5173";
 
 const baseProfile = (over) => ({
   onboarded: true,
-  savedBusinessIds: [], followedBusinessIds: [], savedEventIds: [], recentlyViewedIds: [],
-  interests: [], location: null,
+  savedBusinessIds: [], followedBusinessIds: [], savedEventIds: [], recentlyViewedIds: [], location: null,
   notificationPrefs: { followedBulletins: true, savedEvents: true, localNews: false },
   ownerBusinessId: over,
 });
