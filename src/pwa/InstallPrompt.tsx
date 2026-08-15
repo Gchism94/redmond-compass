@@ -82,7 +82,7 @@ export function InstallRow() {
       <button
         type="button"
         onClick={promptInstall}
-        className="flex w-full items-center justify-between py-3 text-sm text-foreground"
+        className="flex min-h-tap w-full items-center justify-between py-3 text-sm text-foreground"
       >
         <span className="flex items-center gap-2">
           <Download size={15} className="text-positive" /> {t("pwa.installApp")}
