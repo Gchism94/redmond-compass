@@ -7,6 +7,7 @@
  */
 import type {
   Business,
+  BusinessClass,
   Bulletin,
   EventItem,
   NewsArticle,
@@ -38,7 +39,8 @@ import type {
 } from "../DataSource";
 import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 import { getSupabaseClient } from "./client";
-import { rowToBusiness, rowToBulletin, rowToEvent, rowToNews, rowToResource } from "./mappers";
+import { rowToBusiness, rowToBulletin,
+  rowToBusinessClass, rowToEvent, rowToNews, rowToResource } from "./mappers";
 
 function textMatch(b: Business, text: string): boolean {
   const hay = [b.name, b.description, b.category, ...(b.subcategories ?? []), ...b.amenityTags]
@@ -161,6 +163,22 @@ class SupabaseDataSource implements DataSource {
     const { data, error } = await qb;
     if (error) throw error;
     return (data ?? []).map(rowToBulletin);
+  }
+
+  async listBusinessClasses(businessId: ID): Promise<BusinessClass[]> {
+    // UPCOMING only, soonest first. `date` is a plain `date` column, so the comparison is a
+    // calendar-day one — a class happening TODAY is still upcoming, which `>= today` gets
+    // right and a timestamp comparison against `now()` would silently drop by mid-morning.
+    const today = new Date();
+    const ymd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const { data, error } = await this.sb
+      .from("business_classes")
+      .select("*")
+      .eq("business_id", businessId)
+      .gte("date", ymd)
+      .order("date", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(rowToBusinessClass);
   }
 
   async countBulletinsThisMonth(businessId: ID): Promise<number> {

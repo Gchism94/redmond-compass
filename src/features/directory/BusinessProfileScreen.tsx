@@ -1,19 +1,20 @@
 import { useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock, Heart, Check } from "lucide-react";
+import { ExternalLink, ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock, Heart, Check } from "lucide-react";
 import { ActionBar, Button, EventCard, FeedItem, StatusBadge, VerifiedBadge, OpenStatusLabel, Chip, Thumb, Skeleton, EmptyState, ErrorState } from "@/components";
 import { IconButton } from "@/components/ui/IconButton";
 import {
   useBusiness,
   useBulletins,
   useEvents,
+  useBusinessClasses,
   useRecommendations,
   useHasRecommended,
   useRecommend,
 } from "@/data/queries";
 import { WEEKDAY_ORDER, dayLabel, todayKey, formatClock } from "@/lib/hours";
 import { directionsHref } from "@/lib/links";
-import { relativeTime } from "@/lib/format";
+import { formatClassDate, relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
 import type { Business } from "@/lib/types";
 import { useI18n, tGlobal } from "@/i18n";
@@ -26,12 +27,13 @@ import { categoryLabelFor } from "@/lib/taxonomy";
  * and simply not rendered (no empty stubs, nothing visibly "locked").
  */
 export function BusinessProfileScreen() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { data: business, isLoading, isFetched, isError, refetch } = useBusiness(slug);
   const bulletins = useBulletins({ businessId: business?.id, limit: 5 });
   const events = useEvents({ businessId: business?.id });
+  const classes = useBusinessClasses(business?.id);
   const session = useSession();
 
   // Record recently-viewed (local, no auth) once the business resolves.
@@ -192,6 +194,57 @@ export function BusinessProfileScreen() {
               <EventCard key={e.id} event={e} />
             ))}
           </div>
+        </Section>
+      )}
+
+      {/* Classes & workshops — upcoming only.
+          Rendered only when there is something to show, like the two sections above: this
+          is a section 1 business in 133 currently has, and an empty "Classes" heading on
+          the other 132 would be noise. Deliberately NOT a town-wide browse surface — every
+          class in the table belongs to one business, so a cross-business rail would be a
+          feature slot for that business in an app whose ranking is equal for everyone.
+
+          Images are skipped: every live row hotlinks the studio's own Wix CDN. */}
+      {(classes.data?.length ?? 0) > 0 && (
+        <Section title={t("profile.classes")}>
+          <ul className="-my-1 divide-y divide-border">
+            {classes.data!.map((c) => (
+              <li key={c.id} className="py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-heading text-sm font-semibold leading-tight text-foreground">
+                      {c.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {/* timeText is null on every live row, so it is appended only when
+                          present rather than designed around. */}
+                      {formatClassDate(c.date, lang)}
+                      {c.timeText ? ` · ${c.timeText}` : ""}
+                      {c.location ? ` · ${c.location}` : ""}
+                    </p>
+                    {c.description && (
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{c.description}</p>
+                    )}
+                  </div>
+                  {c.status !== "open" && (
+                    <span className="shrink-0 rounded-pill border border-border bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                      {c.status === "sold_out" ? t("profile.classSoldOut") : t("profile.classWaitlist")}
+                    </span>
+                  )}
+                </div>
+                {c.link && (
+                  <a
+                    href={c.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-flex min-h-tap items-center text-sm font-semibold text-positive"
+                  >
+                    {t("profile.classDetails")} <ExternalLink size={13} className="ml-1" />
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
         </Section>
       )}
 

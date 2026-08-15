@@ -11,7 +11,7 @@
     "prerender": "node scripts/prerender.mjs",
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "npm run test:sync && npm run test:gcal && npm run test:categories && npm run test:scale && npm run test:errors && npm run test:delete-account && npm run test:edit-listing && npm run test:guest-save",
+    "test": "npm run test:sync && npm run test:gcal && npm run test:categories && npm run test:scale && npm run test:errors && npm run test:delete-account && npm run test:edit-listing && npm run test:guest-save && npm run test:classes",
     "test:sync": "node scripts/sync-sheet-test.mjs",
     "test:gcal": "node scripts/gcal-sync-test.mjs",
     "test:categories": "node scripts/category-vocab-test.mjs",
@@ -23,7 +23,8 @@
     "check:bundle": "node scripts/check-prod-bundle.mjs",
     "check:base44": "node scripts/check-no-base44.mjs",
     "smoke": "node scripts/ui-smoke.mjs",
-    "test:guest-save": "node scripts/guest-save-test.mjs"
+    "test:guest-save": "node scripts/guest-save-test.mjs",
+    "test:classes": "node scripts/business-classes-test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

@@ -16,6 +16,7 @@
  */
 import type {
   Business,
+  BusinessClass,
   Bulletin,
   EventItem,
   Hours,
@@ -184,6 +185,10 @@ export interface DataSource {
 
   // ---- Bulletins (business posts) ----
   listBulletins(params?: { businessId?: ID; limit?: number; status?: "live" | "all" }): Promise<Bulletin[]>;
+
+  /** Classes/workshops for one business, soonest first. Implementations return UPCOMING
+   *  only — a past class is not a listing, and 4 of the 10 live rows are already past. */
+  listBusinessClasses(businessId: ID): Promise<BusinessClass[]>;
   /** count toward the free monthly cap (all statuses, current month) */
   countBulletinsThisMonth(businessId: ID): Promise<number>;
 

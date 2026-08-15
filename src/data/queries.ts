@@ -24,6 +24,7 @@ export const qk = {
   categories: () => ["categories"] as const,
   bulletins: (p?: { businessId?: ID; limit?: number }) => ["bulletins", p ?? {}] as const,
   events: (q?: EventQuery) => ["events", q ?? {}] as const,
+  businessClasses: (id?: ID) => ["business-classes", id ?? ""] as const,
   event: (id: ID) => ["event", id] as const,
   news: (p?: { limit?: number }) => ["news", p ?? {}] as const,
   newsArticle: (slug: string) => ["news-article", slug] as const,
@@ -95,6 +96,15 @@ export function useCategories() {
 export function useBulletins(params?: { businessId?: ID; limit?: number }) {
   const getDS = useDataSource();
   return useQuery({ queryKey: qk.bulletins(params), queryFn: async () => (await getDS()).listBulletins(params) });
+}
+
+export function useBusinessClasses(businessId?: ID) {
+  const getDS = useDataSource();
+  return useQuery({
+    queryKey: qk.businessClasses(businessId),
+    enabled: !!businessId,
+    queryFn: async () => (await getDS()).listBusinessClasses(businessId!),
+  });
 }
 
 export function useEvents(query?: EventQuery) {

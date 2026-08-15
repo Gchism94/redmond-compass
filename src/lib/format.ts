@@ -63,3 +63,23 @@ export function eventGroup(iso: string, now: Date = new Date()): EventGroup {
 export function eventGroupLabel(g: EventGroup): string {
   return tGlobal(`group.${g}`);
 }
+
+/**
+ * Format a plain calendar date ("2026-08-17") for display.
+ *
+ * Parsed from its PARTS, never `new Date("2026-08-17")`. That form is specified to parse as
+ * UTC midnight, so in Redmond (UTC-7/-8) it renders as the PREVIOUS day — a class on the
+ * 17th would advertise itself as the 16th. `business_classes.date` is a Postgres `date`
+ * with no time zone, so there is no instant to convert; it is a day on a calendar and is
+ * treated as one.
+ */
+export function formatClassDate(ymd: string, lang: "en" | "es" = "en"): string {
+  const [y, m, d] = ymd.split("-").map(Number);
+  if (!y || !m || !d) return ymd; // unparseable — show the raw value rather than "Invalid Date"
+  const local = new Date(y, m - 1, d);
+  return local.toLocaleDateString(lang === "es" ? "es-US" : "en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}

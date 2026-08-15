@@ -11,6 +11,7 @@
 import type {
   Business,
   Bulletin,
+  BusinessClass,
   EventItem,
   Hours,
   NewsArticle,
@@ -187,6 +188,30 @@ export const bulletins: Bulletin[] = [
     status: "live", createdAt: "2026-06-22T12:00:00" },
   { id: "bl_5", businessId: "b_threesisters", body: "Local cherries just arrived — first of the season.",
     status: "live", createdAt: "2026-06-26T07:30:00" },
+];
+
+/**
+ * Mock classes. Dates are computed RELATIVE TO NOW rather than hard-coded, because the
+ * seeded events above are fixed July-2026 dates and silently emptied Home's events rail
+ * once that month passed — a mock that expires makes tests fail for reasons unrelated to
+ * the thing under test. One past row is deliberate: the profile section filters to
+ * upcoming, and a fixture with nothing to exclude cannot prove the filter works.
+ */
+const dayOffset = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+export const businessClasses: BusinessClass[] = [
+  { id: "bc_past", businessId: "b_juniper", title: "Sourdough Basics", date: dayOffset(-14),
+    location: "Juniper & Sage Cafe", status: "open", createdAt: "2026-01-01T00:00:00.000Z" },
+  { id: "bc_1", businessId: "b_juniper", title: "Latte Art Workshop", date: dayOffset(3),
+    timeText: "6:00–8:00 PM", location: "Juniper & Sage Cafe",
+    description: "Hands-on pouring practice; all skill levels.",
+    link: "https://example.com/latte-art", status: "open", createdAt: "2026-01-01T00:00:00.000Z" },
+  { id: "bc_2", businessId: "b_juniper", title: "Cold Brew 101", date: dayOffset(17),
+    location: "Juniper & Sage Cafe", status: "sold_out", createdAt: "2026-01-01T00:00:00.000Z" },
 ];
 
 export const events: EventItem[] = [

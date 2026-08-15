@@ -19,7 +19,7 @@ Each of these is safe to leave indefinitely. None is user-visible.
 | 5 | **`rls-test` is not in CI** | Needs a live database. Runs locally against `supabase start`; refuses to run against production by design. Supabase branch databases need a paid plan. | If branching is enabled, or a disposable CI database appears |
 | 6 | **`hours.ts` / month-boundary time logic is untested** | Last open item from the 2026-08-14 retrospective. Bit us indirectly: the guest-save test needed a pinned future event because the mock's July-2026 seeds silently emptied Home's events rail in August. | Next time open/closed status or `countBulletinsThisMonth` is touched |
 | 7 | **Three junk space-prefixed Supabase secrets** | Cosmetic; they shadow nothing. | Next dashboard visit |
-| 8 | **`smoke` has no `/manage` or owner-surface coverage** | `/account` was added 2026-08-15 after it turned out a 57/57 pass had never visited it — and that immediately exposed three shipping tap-target violations. The owner surfaces have the same blind spot today. | Before the next owner-dashboard change |
+| 8 | **`smoke` has no `/manage`, owner-surface, or business-profile coverage** | `/account` was added 2026-08-15 after it turned out a 57/57 pass had never visited it — and that immediately exposed three shipping tap-target violations. The owner surfaces have the same blind spot today. | Before the next owner-dashboard change. Known sub-44px controls on the business profile today: address, phone and website links (16px each), Recommend (40px) — found 2026-08-15 while verifying the classes section, which is itself compliant at 44px. |
 
 ---
 
