@@ -146,7 +146,14 @@ export function HomeScreen() {
               </div>
             ))
           : railItems.map((b) => (
-              <ResultCard key={b.id} business={b} variant="rail" origin={origin} />
+              <ResultCard
+                key={b.id}
+                business={b}
+                variant="rail"
+                origin={origin}
+                saved={session.isSaved(b.id)}
+                onSave={() => session.toggleSaveBusiness(b.id)}
+              />
             ))}
       </Rail>
 
@@ -191,7 +198,14 @@ export function HomeScreen() {
             <ErrorState compact title={t("error.loadEvents")} onRetry={() => events.refetch()} />
           ) : events.isLoading
             ? Array.from({ length: 3 }).map((_, i) => <FeedRowSkeleton key={i} />)
-            : events.data?.map((e) => <EventCard key={e.id} event={e} />)}
+            : events.data?.map((e) => (
+                <EventCard
+                  key={e.id}
+                  event={e}
+                  saved={session.isSavedEvent(e.id)}
+                  onSave={() => session.toggleSaveEvent(e.id)}
+                />
+              ))}
         </div>
       </section>
 
@@ -231,7 +245,14 @@ export function HomeScreen() {
       {recentlyViewed.length > 0 && (
         <Rail title={t("home.recentlyViewed")}>
           {recentlyViewed.map((b) => (
-            <ResultCard key={b.id} business={b} variant="rail" origin={origin} />
+            <ResultCard
+              key={b.id}
+              business={b}
+              variant="rail"
+              origin={origin}
+              saved={session.isSaved(b.id)}
+              onSave={() => session.toggleSaveBusiness(b.id)}
+            />
           ))}
         </Rail>
       )}

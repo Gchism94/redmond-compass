@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Phone, Navigation, Bookmark, Heart } from "lucide-react";
+import { Phone, Navigation, Bookmark, Heart, UserPlus } from "lucide-react";
 import type { Business } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { businessHref, directionsHref, telHref } from "@/lib/links";
@@ -18,9 +18,16 @@ export interface ResultCardProps {
   origin?: GeoPoint;
   /** show ♥ recommend count — DEFERRED (fast-follow). Off at MVP. */
   showRecommend?: boolean;
-  /** Save is auth-gated (JIT login, step 6); page supplies the handler */
+  /** Save — guest-local, no sign-in required; the page supplies the handler. */
   saved?: boolean;
   onSave?: (b: Business) => void;
+  /**
+   * Follow — also guest-local. Optional and OFF by default: follow only earns a slot where
+   * the surface is about businesses you might want updates from. Rendered in the `row`
+   * variant, next to Save.
+   */
+  following?: boolean;
+  onFollow?: (b: Business) => void;
   className?: string;
 }
 
@@ -35,6 +42,8 @@ export function ResultCard({
   showRecommend = false,
   saved = false,
   onSave,
+  following = false,
+  onFollow,
   className,
 }: ResultCardProps) {
   const { t } = useI18n();
@@ -51,13 +60,48 @@ export function ResultCard({
           className,
         )}
       >
-        <Thumb
-          src={business.photos[0]}
-          seed={business.name}
-          alt={business.name}
-          className="h-20 w-full"
-          rounded="rounded-lg"
-        />
+        <div className="relative">
+          <Thumb
+            src={business.photos[0]}
+            seed={business.name}
+            alt={business.name}
+            className="h-20 w-full"
+            rounded="rounded-lg"
+          />
+          {/* The rail card is one big <Link>, so Save has to sit ON the thumb and stop the
+              click from navigating — otherwise tapping Save opens the profile instead.
+              Note this variant ACCEPTED `saved`/`onSave` long before it rendered anything
+              for them, so Home passing the props was a silent no-op until now. */}
+          {onSave && (
+            <button
+              type="button"
+              aria-pressed={saved}
+              aria-label={saved ? t("common.saved") : t("common.save")}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onSave(business);
+              }}
+              /* 44px TAP TARGET, 28px visual. A rail thumb is only 80px tall and 144px
+                 wide, so a full-size 44px chip would swallow it — but shrinking the BUTTON
+                 breaks the ≥44px minimum the smoke suite enforces (it caught this at 32px).
+                 So the button carries the touch area transparently and the visible chip is
+                 an inner span. */
+              className="absolute right-0 top-0 inline-flex h-11 w-11 items-center justify-center"
+            >
+              <span
+                className={cn(
+                  "inline-flex h-7 w-7 items-center justify-center rounded-md border backdrop-blur transition",
+                  saved
+                    ? "border-positive bg-positive/90 text-primary-foreground"
+                    : "border-white/40 bg-background/80 text-foreground",
+                )}
+              >
+                <Bookmark size={14} className={saved ? "fill-current" : undefined} />
+              </span>
+            </button>
+          )}
+        </div>
         {/* Fixed name (2 lines) + single-line status so rail-card height is stable
             (skeleton ⇄ content swap doesn't shift the page — CLS). The distance suffix
             is dropped here so the full "Open · closes 7:00 PM" fits the narrow card. */}
@@ -113,7 +157,7 @@ export function ResultCard({
             aria-disabled={!tel}
             onClick={(e) => !tel && e.preventDefault()}
             className={cn(
-              "inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition hover:brightness-95",
+              "inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md bg-primary px-2 text-sm font-medium text-primary-foreground transition hover:brightness-95",
               !tel && "pointer-events-none opacity-40",
             )}
           >
@@ -123,7 +167,7 @@ export function ResultCard({
             href={directionsHref({ address: business.address, geo: business.geo })}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition hover:bg-muted"
+            className="inline-flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-2 text-sm font-medium text-foreground transition hover:bg-muted"
           >
             <Navigation size={15} /> {t("common.directions")}
           </a>
@@ -141,6 +185,27 @@ export function ResultCard({
           >
             <Bookmark size={16} className={saved ? "fill-current" : undefined} />
           </button>
+          {/* Follow — until now the ONLY way to follow anything was to open a full business
+              profile and find the button there. Follow is what makes Home's "From places you
+              follow" feed personalise, so its discoverability was the ceiling on that feed
+              ever having anything in it. Save and Follow read differently on purpose:
+              Save = "I'll come back to this", Follow = "tell me when they post". */}
+          {onFollow && (
+            <button
+              type="button"
+              aria-pressed={following}
+              aria-label={following ? t("common.following") : t("common.follow")}
+              onClick={() => onFollow(business)}
+              className={cn(
+                "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border transition",
+                following
+                  ? "border-positive bg-positive/10 text-positive"
+                  : "border-border bg-card text-foreground hover:bg-muted",
+              )}
+            >
+              <UserPlus size={16} />
+            </button>
+          )}
         </div>
       </div>
     </div>

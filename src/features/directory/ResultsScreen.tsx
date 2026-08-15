@@ -258,6 +258,8 @@ export function ResultsScreen() {
                       origin={session.location ?? undefined}
                       saved={session.isSaved(b.id)}
                       onSave={() => session.toggleSaveBusiness(b.id)}
+                      following={session.isFollowing(b.id)}
+                      onFollow={() => session.toggleFollow(b.id)}
                     />
                   </li>
                 ))}
