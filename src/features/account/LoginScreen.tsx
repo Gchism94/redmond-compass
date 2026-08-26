@@ -6,6 +6,7 @@ import { Button } from "@/components";
 import { useSession } from "./session";
 import { GoogleButton } from "./GoogleButton";
 import { useI18n } from "@/i18n";
+import { authErrorKey } from "@/lib/errors";
 
 const inputClass =
   "min-h-tap w-full rounded-lg border border-border bg-card px-3 text-base outline-none focus:border-positive focus:ring-2 focus:ring-positive/20";
@@ -41,7 +42,7 @@ export function LoginScreen() {
       if (needsOtp) setStep("code");
       else navigate("/account", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("auth.sendFailed"));
+      setError(t(authErrorKey(err, "auth.sendFailed")));
     } finally {
       setBusy(false);
     }
@@ -55,7 +56,7 @@ export function LoginScreen() {
       const { redirected } = await signInWithProvider("google");
       if (!redirected) navigate("/account", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("auth.googleFailed"));
+      setError(t(authErrorKey(err, "auth.googleFailed")));
       setBusy(false);
     }
   };
@@ -63,7 +64,7 @@ export function LoginScreen() {
   const submitCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
-    if (!code.trim()) {
+    if (!/^\d{6}$/.test(code.trim())) {
       setError(t("auth.enterCodeError"));
       return;
     }
@@ -136,7 +137,7 @@ export function LoginScreen() {
                 className={inputClass}
               />
             </label>
-            {error && <p className="text-sm text-danger">{error}</p>}
+            {error && <p role="alert" className="text-sm text-danger">{error}</p>}
             <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
               {busy ? t("auth.sending") : t("common.continue")}
             </Button>
@@ -158,7 +159,7 @@ export function LoginScreen() {
                 className={`${inputClass} text-center text-lg tracking-[0.4em]`}
               />
             </label>
-            {error && <p className="text-sm text-danger">{error}</p>}
+            {error && <p role="alert" className="text-sm text-danger">{error}</p>}
             <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
               {busy ? t("auth.verifying") : t("auth.verifyContinue")}
             </Button>

@@ -79,7 +79,11 @@ export function CommunityScreen() {
           Images and support links are not rendered in v1: the only live row's image is on
           the expiring base44 CDN, and a donation link is a trust surface that deserves its
           own design rather than arriving as a side effect. */}
-      {(notices.data?.length ?? 0) > 0 && (
+      {notices.isError ? (
+        <section className="px-4 pt-2">
+          <ErrorState compact title={t("error.loadNotices")} onRetry={() => notices.refetch()} />
+        </section>
+      ) : (notices.data?.length ?? 0) > 0 && (
         <section className="px-4 pt-2">
           <h2 className="font-heading text-sm font-semibold text-foreground">{t("community.notices")}</h2>
           <ul className="mt-2 space-y-2">

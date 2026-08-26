@@ -22,6 +22,7 @@ import type {
 } from "@/lib/types";
 import { REDMOND_CENTER, distanceMiles } from "@/lib/geo";
 import { getOpenStatus } from "@/lib/hours";
+import { redmondDateYmd } from "@/lib/format";
 import { topCategoryFor, tallyByTile } from "@/lib/taxonomy";
 import type {
   DataSource,
@@ -259,9 +260,9 @@ export class MockDataSource implements DataSource {
 
   async listBusinessClasses(businessId: ID): Promise<BusinessClass[]> {
     // Mirrors the Supabase implementation: upcoming only (calendar-day, so a class today
-    // still counts), soonest first.
-    const t = new Date();
-    const ymd = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+    // still counts), soonest first. "Today" is Redmond's day, not the viewer's: an
+    // out-of-state visitor must not lose tonight's class because midnight passed there.
+    const ymd = redmondDateYmd();
     const items = businessClasses
       .filter((c) => c.businessId === businessId && c.date >= ymd)
       .sort((a, b) => a.date.localeCompare(b.date));

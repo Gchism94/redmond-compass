@@ -31,6 +31,8 @@ export interface ClassifiedError {
   needsAuth: boolean;
 }
 
+export type AuthFallbackKey = "auth.sendFailed" | "auth.googleFailed";
+
 /** Best-effort field read off an unknown thrown value. */
 function field(err: unknown, name: string): string {
   if (err && typeof err === "object" && name in err) {
@@ -38,6 +40,41 @@ function field(err: unknown, name: string): string {
     if (typeof v === "string") return v;
   }
   return "";
+}
+
+/**
+ * Map Supabase/Auth provider failures to resident-safe, translated copy.
+ *
+ * Auth errors cross a trust boundary: SMTP responses can contain provider names, account
+ * configuration, request ids, or—in the Resend failure that prompted this audit—an empty
+ * JSON object. None of that helps someone sign in, and it must not be rendered verbatim.
+ * Keep only the two cases a resident can act on (connection and throttling); everything
+ * else uses the caller's generic email/Google fallback.
+ */
+export function authErrorKey(err: unknown, fallback: AuthFallbackKey): DictKey {
+  const message = err instanceof Error ? err.message : field(err, "message") || String(err ?? "");
+  const code = field(err, "code").toLowerCase();
+  const status = err && typeof err === "object" && "status" in err
+    ? Number((err as Record<string, unknown>).status)
+    : NaN;
+  const m = message.toLowerCase();
+
+  const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+  if (offline || m.includes("failed to fetch") || m.includes("networkerror") || m.includes("load failed")) {
+    return "auth.networkFailed";
+  }
+
+  if (
+    status === 429 ||
+    code.includes("rate_limit") ||
+    m.includes("rate limit") ||
+    m.includes("too many requests") ||
+    m.includes("security purposes")
+  ) {
+    return "auth.rateLimited";
+  }
+
+  return fallback;
 }
 
 export function classifyMutationError(err: unknown): ClassifiedError {

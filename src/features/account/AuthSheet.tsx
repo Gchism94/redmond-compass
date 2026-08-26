@@ -5,6 +5,7 @@ import { Button } from "@/components";
 import { useSession, type AuthReason } from "./session";
 import { GoogleButton } from "./GoogleButton";
 import { useI18n, type DictKey } from "@/i18n";
+import { authErrorKey } from "@/lib/errors";
 
 const COPY: Record<AuthReason, { icon: React.ReactNode; titleKey: DictKey; subKey: DictKey }> = {
   save: { icon: <Bookmark size={22} />, titleKey: "auth.saveTitle", subKey: "auth.saveSub" },
@@ -68,7 +69,7 @@ export function AuthSheet() {
       if (needsOtp) setStep("code");
       else finish(); // mock — signed in instantly
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("auth.sendFailed"));
+      setError(t(authErrorKey(err, "auth.sendFailed")));
     } finally {
       setBusy(false);
     }
@@ -87,7 +88,7 @@ export function AuthSheet() {
       }
       // redirected: the browser is navigating to Google; nothing more to do here
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("auth.googleFailed"));
+      setError(t(authErrorKey(err, "auth.googleFailed")));
       setBusy(false);
     }
   };
@@ -95,7 +96,7 @@ export function AuthSheet() {
   const submitCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
-    if (!code.trim()) {
+    if (!/^\d{6}$/.test(code.trim())) {
       setError(t("auth.enterCodeError"));
       return;
     }
@@ -166,7 +167,7 @@ export function AuthSheet() {
               className={inputClass}
             />
           </label>
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
           <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
             {busy ? t("auth.sending") : t("common.continue")}
           </Button>
@@ -188,7 +189,7 @@ export function AuthSheet() {
               className={`${inputClass} text-center text-lg tracking-[0.4em]`}
             />
           </label>
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
           <Button type="submit" variant="primary" size="lg" fullWidth disabled={busy}>
             {busy ? t("auth.verifying") : t("auth.verifyContinue")}
           </Button>

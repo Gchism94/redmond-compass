@@ -13,8 +13,8 @@ import { categoryLabelFor } from "@/lib/taxonomy";
 
 export interface ResultCardProps {
   business: Business;
-  /** row = S4 results / Saved; rail = Home horizontal rails */
-  variant?: "row" | "rail";
+  /** row = mobile/Saved list; rail = Home rail; card = desktop directory grid */
+  variant?: "row" | "rail" | "card";
   origin?: GeoPoint;
   /** show ♥ recommend count — DEFERRED (fast-follow). Off at MVP. */
   showRecommend?: boolean;
@@ -56,7 +56,7 @@ export function ResultCard({
       <Link
         to={businessHref(business)}
         className={cn(
-          "block w-36 shrink-0 focus-visible:outline-none",
+          "block w-36 shrink-0 focus-visible:outline-none lg:w-44",
           className,
         )}
       >
@@ -65,8 +65,9 @@ export function ResultCard({
             src={business.photos[0]}
             seed={business.name}
             alt={business.name}
-            className="h-20 w-full"
+            className="h-20 w-full lg:h-28"
             rounded="rounded-lg"
+            fit="contain"
           />
           {/* The rail card is one big <Link>, so Save has to sit ON the thumb and stop the
               click from navigating — otherwise tapping Save opens the profile instead.
@@ -115,6 +116,106 @@ export function ResultCard({
           />
         </div>
       </Link>
+    );
+  }
+
+  if (variant === "card") {
+    return (
+      <article
+        data-result-card="desktop"
+        className={cn(
+          "flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card",
+          className,
+        )}
+      >
+        <div className="relative">
+          <Link to={businessHref(business)} className="block focus-visible:outline-none">
+            <Thumb
+              src={business.photos[0]}
+              seed={business.name}
+              alt={business.name}
+              className="aspect-[16/9] w-full"
+              rounded="rounded-none"
+              fit="contain"
+            />
+          </Link>
+          <div className="absolute right-2 top-2 flex gap-1">
+            <button
+              type="button"
+              aria-pressed={saved}
+              aria-label={saved ? t("common.saved") : t("common.save")}
+              onClick={() => onSave?.(business)}
+              className={cn(
+                "inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-sm backdrop-blur transition",
+                saved
+                  ? "border-positive bg-positive/90 text-primary-foreground"
+                  : "border-white/50 bg-card/90 text-foreground hover:bg-card",
+              )}
+            >
+              <Bookmark size={17} className={saved ? "fill-current" : undefined} />
+            </button>
+            {onFollow && (
+              <button
+                type="button"
+                aria-pressed={following}
+                aria-label={following ? t("common.following") : t("common.follow")}
+                onClick={() => onFollow(business)}
+                className={cn(
+                  "inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-sm backdrop-blur transition",
+                  following
+                    ? "border-positive bg-positive/90 text-primary-foreground"
+                    : "border-white/50 bg-card/90 text-foreground hover:bg-card",
+                )}
+              >
+                <UserPlus size={17} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col p-4">
+          <Link to={businessHref(business)} className="block focus-visible:outline-none">
+            <div className="flex items-start gap-2">
+              <h3 className="line-clamp-2 min-h-[2.5em] font-heading text-md font-semibold leading-tight text-foreground">
+                {business.name}
+              </h3>
+              {business.verified && <VerifiedBadge className="mt-0.5 shrink-0" />}
+            </div>
+            <p className="mt-1 truncate text-xs text-muted-foreground">{catLine}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <OpenStatusLabel hours={business.hours} trailing={dist} className="text-sm" />
+              {showRecommend && business.recommendCount != null && (
+                <span className="inline-flex items-center gap-1 text-sm font-semibold text-positive">
+                  <Heart size={13} className="fill-current" />
+                  {business.recommendCount}
+                </span>
+              )}
+            </div>
+          </Link>
+
+          <div data-card-actions className="mt-auto grid grid-cols-2 gap-2 pt-4">
+            <a
+              href={tel}
+              aria-disabled={!tel}
+              onClick={(e) => !tel && e.preventDefault()}
+              className={cn(
+                "inline-flex h-11 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition hover:brightness-95",
+                !tel && "pointer-events-none opacity-40",
+              )}
+            >
+              <Phone size={15} /> {t("common.call")}
+            </a>
+            <a
+              href={directionsHref({ address: business.address, geo: business.geo })}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition hover:bg-muted"
+            >
+              <Navigation size={15} /> {t("common.directions")}
+            </a>
+          </div>
+        </div>
+      </article>
     );
   }
 

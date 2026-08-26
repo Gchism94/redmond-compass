@@ -23,6 +23,7 @@ import { REDMOND_CENTER, distanceMiles } from "@/lib/geo";
 import { getOpenStatus } from "@/lib/hours";
 import { topCategoryFor, categoryValuesFor, tallyByTile } from "@/lib/taxonomy";
 import { eventStartToUtc } from "@/lib/calendar";
+import { redmondDateYmd } from "@/lib/format";
 import type {
   DataSource,
   BusinessQuery,
@@ -188,8 +189,10 @@ class SupabaseDataSource implements DataSource {
     // UPCOMING only, soonest first. `date` is a plain `date` column, so the comparison is a
     // calendar-day one — a class happening TODAY is still upcoming, which `>= today` gets
     // right and a timestamp comparison against `now()` would silently drop by mid-morning.
-    const today = new Date();
-    const ymd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    // The app is hyperlocal even when the viewer is not. At 11:30 PM in Redmond it is
+    // already tomorrow on the East Coast; filtering by the viewer's day would drop a class
+    // that is still happening today in Redmond.
+    const ymd = redmondDateYmd();
     const { data, error } = await this.sb
       .from("business_classes")
       .select("*")

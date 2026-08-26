@@ -236,15 +236,43 @@ async function newPage(width, height) {
   ok((await page.$("nav a[href='/saved']")) === null, label("no bottom tab nav"));
   ok(r.overflowX === 0, label(`app home: no horizontal overflow (${r.overflowX})`));
   ok(!/featured/i.test(r.text), label("no Featured section (equal ranking)"));
+  const desktopHomeWidth = await page.$eval("main", (el) => Math.round(el.getBoundingClientRect().width));
+  ok(desktopHomeWidth >= 1000, label(`app home uses the wide desktop canvas (${desktopHomeWidth}px)`));
 
-  // directory grid: 3–4 columns
+  // Directory grid: image-led desktop cards, never mobile rows squeezed into tiles.
   r = await visit("/search/results");
   const cols = await page.evaluate(() => {
     const ul = [...document.querySelectorAll("ul")].find((u) => getComputedStyle(u).display === "grid");
     return ul ? getComputedStyle(ul).gridTemplateColumns.split(" ").length : 0;
   });
-  ok(cols >= 3 && cols <= 4, label(`results grid ${cols} columns`));
+  ok(cols >= 2 && cols <= 3, label(`results grid ${cols} readable columns`));
+  const cardVisual = await page.evaluate(() => {
+    const card = document.querySelector('[data-result-card="desktop"]');
+    const img = card?.querySelector("img");
+    const actions = [...(card?.querySelectorAll("[data-card-actions] a") ?? [])];
+    const rects = actions.map((el) => el.getBoundingClientRect());
+    return {
+      card: card ? Math.round(card.getBoundingClientRect().width) : 0,
+      imageWidth: img ? Math.round(img.getBoundingClientRect().width) : 0,
+      imageHeight: img ? Math.round(img.getBoundingClientRect().height) : 0,
+      imageFit: img ? getComputedStyle(img).objectFit : "",
+      actionsSeparate: rects.length >= 2 && rects[0].right <= rects[1].left,
+    };
+  });
+  ok(cardVisual.card >= 330, label(`directory card has usable width (${cardVisual.card}px)`));
+  ok(cardVisual.imageWidth >= 300 && cardVisual.imageHeight >= 150,
+     label(`directory image is visually useful (${cardVisual.imageWidth}×${cardVisual.imageHeight}px)`));
+  ok(cardVisual.imageFit === "contain", label("directory identity artwork is not cropped"));
+  ok(cardVisual.actionsSeparate, label("directory Call / Directions actions do not overlap"));
   ok(r.overflowX === 0, label(`results: no horizontal overflow (${r.overflowX})`));
+
+  // Long-form/list screens use a readable measure instead of the wide grid canvas.
+  r = await visit("/events");
+  const eventsWidth = await page.$eval("main", (el) => Math.round(el.getBoundingClientRect().width));
+  ok(eventsWidth <= 800, label(`events uses readable desktop measure (${eventsWidth}px)`));
+  r = await visit("/community");
+  const communityWidth = await page.$eval("main", (el) => Math.round(el.getBoundingClientRect().width));
+  ok(communityWidth <= 800, label(`community uses readable desktop measure (${communityWidth}px)`));
 
   // guides at readable max-width, with real content
   r = await visit("/getting-settled");

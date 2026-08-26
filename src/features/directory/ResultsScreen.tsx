@@ -9,6 +9,7 @@ import { AMENITY_FACETS, TOP_CATEGORIES } from "@/lib/taxonomy";
 import { relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
 import { useI18n, type DictKey } from "@/i18n";
+import { useIsDesktop } from "@/lib/useMediaQuery";
 
 type Tab = "all" | "businesses" | "events" | "community";
 const SORTS: { value: BusinessSort; labelKey: DictKey }[] = [
@@ -23,6 +24,7 @@ export function ResultsScreen() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const session = useSession();
+  const desktop = useIsDesktop();
   const [params, setParams] = useSearchParams();
   const [tab, setTab] = useState<Tab>("all");
   const [view, setView] = useState<"list" | "map">("list");
@@ -248,13 +250,15 @@ export function ResultsScreen() {
                 onClearFilters={() => patch({ openNow: null, maxmi: null, tags: null })}
               />
             ) : (
-              /* Mobile: divided list. Desktop site: 3–4 column card grid (per the
-                 original directory page) — same ResultCard, tile-framed by the li. */
-              <ul className="divide-y divide-border lg:grid lg:grid-cols-3 lg:gap-3 lg:divide-y-0 xl:grid-cols-4">
+              /* Mobile keeps the compact action row. Desktop gets an image-led card with
+                 enough width for names and actions; four columns made the mobile row
+                 overlap inside a ~270px tile. */
+              <ul className="divide-y divide-border lg:grid lg:grid-cols-2 lg:gap-5 lg:divide-y-0 xl:grid-cols-3">
                 {businesses.data?.items.map((b) => (
-                  <li key={b.id} className="lg:rounded-lg lg:border lg:border-border lg:bg-card lg:px-3">
+                  <li key={b.id} className="min-w-0">
                     <ResultCard
                       business={b}
+                      variant={desktop ? "card" : "row"}
                       origin={session.location ?? undefined}
                       saved={session.isSaved(b.id)}
                       onSave={() => session.toggleSaveBusiness(b.id)}

@@ -9,6 +9,8 @@ export interface ThumbProps {
   seed?: string;
   className?: string;
   rounded?: string;
+  /** auto chooses from aspect ratio; contain preserves identity artwork such as logos. */
+  fit?: "auto" | "cover" | "contain";
 }
 
 // ONE consistent on-brand placeholder everywhere: a warm tan (secondary) tinted square
@@ -44,15 +46,17 @@ const FIT_TOLERANCE = 1.4;
  *
  * The no-photo fallback below is deliberately untouched by any of this.
  */
-export function Thumb({ src, alt, seed, className, rounded = "rounded-md" }: ThumbProps) {
+export function Thumb({ src, alt, seed, className, rounded = "rounded-md", fit = "auto" }: ThumbProps) {
   const [failed, setFailed] = useState(false);
   const [contain, setContain] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const showImg = src && !failed;
+  const useContain = fit === "contain" || (fit === "auto" && contain);
 
   // Measured on load rather than assumed: the same Thumb renders at 144×80 in the rail,
   // 44×44 in a list row and full-bleed on a profile, so the right answer differs per slot.
   const chooseFit = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (fit !== "auto") return;
     const img = e.currentTarget;
     const el = wrapRef.current;
     if (!el?.clientWidth || !el.clientHeight || !img.naturalWidth || !img.naturalHeight) return;
@@ -69,7 +73,7 @@ export function Thumb({ src, alt, seed, className, rounded = "rounded-md" }: Thu
         "relative flex shrink-0 items-center justify-center overflow-hidden",
         rounded,
         // the tan fill backs BOTH the no-photo tile and a letterboxed logo
-        (!showImg || contain) && PLACEHOLDER,
+        (!showImg || useContain) && PLACEHOLDER,
         className,
       )}
     >
@@ -80,7 +84,7 @@ export function Thumb({ src, alt, seed, className, rounded = "rounded-md" }: Thu
           loading="lazy"
           onLoad={chooseFit}
           onError={() => setFailed(true)}
-          className={cn("h-full w-full", contain ? "object-contain p-1.5" : "object-cover")}
+          className={cn("h-full w-full", useContain ? "object-contain p-1.5" : "object-cover")}
         />
       ) : seed ? (
         <span aria-hidden className="font-heading text-lg font-semibold">

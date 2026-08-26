@@ -67,6 +67,7 @@ const RECENT = {
 };
 
 const EMPTY = q.get("empty") === "1";
+const FAIL = q.get("fail") === "1";
 
 function source() {
   const base = new MockDataSource();
@@ -75,7 +76,7 @@ function source() {
       if (prop === "listNews") return async () => [];
       if (prop === "listBulletins") return async () => [];
       if (prop === "listCommunityNotices") return async () =>
-        EMPTY ? [] : [STALE, RECENT];
+        FAIL ? Promise.reject(new TypeError("Failed to fetch")) : EMPTY ? [] : [STALE, RECENT];
       const v = Reflect.get(t, prop, r);
       return typeof v === "function" ? v.bind(t) : v;
     },
@@ -122,7 +123,7 @@ async function load(qs = {}) {
   const page = await browser.newPage();
   await page.setViewport({ width: 437, height: 1100, deviceScaleFactor: 2, isMobile: true });
   await page.goto(`${BASE}/?${new URLSearchParams(qs)}`, { waitUntil: "networkidle0" });
-  await new Promise((r) => setTimeout(r, 900));
+  await new Promise((r) => setTimeout(r, qs.fail ? 1800 : 900));
   return page;
 }
 const bodyText = (p) => p.evaluate(() => document.body.innerText);
@@ -224,10 +225,23 @@ const bodyText = (p) => p.evaluate(() => document.body.innerText);
   await page.close();
 }
 
+// ── 8. A failed notices query must not look like there are simply no town notices ───────
+{
+  const page = await load({ fail: "1" });
+  const out = await page.evaluate(() => ({
+    text: document.body.innerText,
+    alerts: document.querySelectorAll('[role="alert"]').length,
+    retries: [...document.querySelectorAll("button")].filter((b) => /try again/i.test(b.innerText)).length,
+  }));
+  ok(/Couldn't load town notices/i.test(out.text), "a notices fetch failure is named instead of silently hiding the section");
+  ok(out.alerts > 0 && out.retries > 0, `the notices failure is retryable and accessible (${out.alerts}/${out.retries})`);
+  await page.close();
+}
+
 await browser.close();
 server.kill();
 
-// ── 8. The SOURCE's own ordering ─────────────────────────────────────────────────────────
+// ── 9. The SOURCE's own ordering ─────────────────────────────────────────────────────────
 // The screen tests inject their own source, so they prove the screen renders what it is
 // handed — they cannot catch a regression in the ordering itself. (Learned on the classes
 // section, where deleting the real filter left every screen assertion green.)

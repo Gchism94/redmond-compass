@@ -104,6 +104,18 @@ export function formatClassDate(ymd: string, lang: "en" | "es" = "en"): string {
  */
 const REDMOND_TZ = "America/Los_Angeles";
 
+/** YYYY-MM-DD for the current calendar day in Redmond, independent of viewer time zone. */
+export function redmondDateYmd(now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: REDMOND_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
 export function formatNoticeDate(iso: string, lang: "en" | "es" = "en"): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";

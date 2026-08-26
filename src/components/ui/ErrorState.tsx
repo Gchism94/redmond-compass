@@ -53,7 +53,7 @@ export function ErrorState({ title, message, onRetry, compact, retryLabel, icon,
             <button
               type="button"
               onClick={onRetry}
-              className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-positive hover:underline"
+              className="mt-0.5 inline-flex min-h-tap items-center gap-1 text-xs font-semibold text-positive hover:underline"
             >
               <RotateCw size={12} aria-hidden /> {retryLabel ?? t("error.retry")}
             </button>

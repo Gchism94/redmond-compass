@@ -41,8 +41,10 @@ const PRIMARY_LINKS: { to: string; labelKey: DictKey }[] = [
   { to: "/resources", labelKey: "web.nav.resources" },
 ];
 
-// Screens designed as wide surfaces; everything else gets a readable column.
-const WIDE_ROUTES = new Set(["/", "/search", "/search/results", "/events", "/community"]);
+// Screens with true multi-column desktop layouts. Text/list surfaces (Events, Community,
+// profiles, guides) stay in the readable column instead of stretching a row across 1152px.
+// App-only mode serves the actual app home at /home, so BOTH home paths belong here.
+const WIDE_ROUTES = new Set(["/", "/home", "/search", "/search/results"]);
 
 export function WebShell() {
   const { pathname } = useLocation();

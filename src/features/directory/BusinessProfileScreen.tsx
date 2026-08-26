@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ExternalLink, ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock, Heart, Check } from "lucide-react";
 import { ActionBar, Button, EventCard, FeedItem, StatusBadge, VerifiedBadge, OpenStatusLabel, Chip, Thumb, Skeleton, EmptyState, ErrorState } from "@/components";
@@ -35,6 +35,7 @@ export function BusinessProfileScreen() {
   const events = useEvents({ businessId: business?.id });
   const classes = useBusinessClasses(business?.id);
   const session = useSession();
+  const [shareNotice, setShareNotice] = useState<"copied" | "failed" | null>(null);
 
   // Record recently-viewed (local, no auth) once the business resolves.
   const businessId = business?.id;
@@ -42,6 +43,12 @@ export function BusinessProfileScreen() {
   useEffect(() => {
     if (businessId) addRecentlyViewed(businessId);
   }, [businessId, addRecentlyViewed]);
+
+  useEffect(() => {
+    if (!shareNotice) return;
+    const timer = window.setTimeout(() => setShareNotice(null), 2500);
+    return () => window.clearTimeout(timer);
+  }, [shareNotice]);
 
   if (isLoading) return <ProfileSkeleton />;
   // isError BEFORE the not-found branch. React Query sets `isFetched` after a FAILED fetch
@@ -66,6 +73,24 @@ export function BusinessProfileScreen() {
     );
   if (!business) return null;
 
+  const shareBusiness = async () => {
+    setShareNotice(null);
+    const data = { title: business.name, text: business.description, url: window.location.href };
+    try {
+      if (navigator.share) {
+        await navigator.share(data);
+        return;
+      }
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(data.url);
+      setShareNotice("copied");
+    } catch (err) {
+      // Closing the native share sheet is a choice, not a product error.
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      setShareNotice("failed");
+    }
+  };
+
   return (
     <div className="pb-6">
       {/* Topbar over hero */}
@@ -73,17 +98,25 @@ export function BusinessProfileScreen() {
         <IconButton label={t("common.back")} variant="solid" onClick={() => navigate(-1)}>
           <ChevronLeft size={20} />
         </IconButton>
-        <IconButton label={t("common.share")} variant="solid" onClick={() => {}}>
+        <IconButton label={t("common.share")} variant="solid" onClick={shareBusiness}>
           <Share2 size={18} />
         </IconButton>
       </div>
+      {shareNotice && (
+        <p
+          role={shareNotice === "failed" ? "alert" : "status"}
+          className="fixed right-3 top-14 z-50 rounded-pill bg-foreground px-3 py-1.5 text-xs font-semibold text-background shadow-sticky"
+        >
+          {t(shareNotice === "copied" ? "common.linkCopied" : "common.shareFailed")}
+        </p>
+      )}
 
       {/* Hero (single photo at MVP; gallery is Member) */}
       <Thumb
         src={business.photos[0]}
         seed={business.name}
         alt={business.name}
-        className="h-44 w-full"
+        className="h-44 w-full lg:h-64"
         rounded="rounded-none"
       />
 
@@ -168,7 +201,11 @@ export function BusinessProfileScreen() {
       </Section>
 
       {/* What's new — bulletins */}
-      {(bulletins.data?.length ?? 0) > 0 && (
+      {bulletins.isError ? (
+        <Section title={t("profile.whatsNew")}>
+          <ErrorState compact title={t("error.loadNews")} onRetry={() => bulletins.refetch()} />
+        </Section>
+      ) : (bulletins.data?.length ?? 0) > 0 && (
         <Section title={t("profile.whatsNew")}>
           <div className="-my-1 divide-y divide-border">
             {bulletins.data!.map((bl) => (
@@ -187,7 +224,11 @@ export function BusinessProfileScreen() {
       )}
 
       {/* Upcoming — events */}
-      {(events.data?.length ?? 0) > 0 && (
+      {events.isError ? (
+        <Section title={t("profile.upcoming")}>
+          <ErrorState compact title={t("error.loadEvents")} onRetry={() => events.refetch()} />
+        </Section>
+      ) : (events.data?.length ?? 0) > 0 && (
         <Section title={t("profile.upcoming")}>
           <div className="-my-1 divide-y divide-border">
             {events.data!.map((e) => (
@@ -205,7 +246,11 @@ export function BusinessProfileScreen() {
           feature slot for that business in an app whose ranking is equal for everyone.
 
           Images are skipped: every live row hotlinks the studio's own Wix CDN. */}
-      {(classes.data?.length ?? 0) > 0 && (
+      {classes.isError ? (
+        <Section title={t("profile.classes")}>
+          <ErrorState compact title={t("error.loadClasses")} onRetry={() => classes.refetch()} />
+        </Section>
+      ) : (classes.data?.length ?? 0) > 0 && (
         <Section title={t("profile.classes")}>
           <ul className="-my-1 divide-y divide-border">
             {classes.data!.map((c) => (

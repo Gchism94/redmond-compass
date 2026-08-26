@@ -1,8 +1,27 @@
 # Backlog — deferred cleanups and pending asks
 
-Small things that are **deliberately not done**, recorded so they stay decisions rather than
-drift. Anything here was looked at, judged not worth doing now, and given a reason. This is
-not a wish list — design-ahead features live in `DEV.md` → "Not built yet".
+Work that is intentionally not in the current release, recorded so it stays a decision rather
+than becoming drift. Product work is separated from code cleanup and owner-operated tasks.
+
+---
+
+## Product features still to develop
+
+The MVP build sequence is complete. These are the remaining user-facing capabilities, not
+bugs in the current release.
+
+| Priority | Feature | What exists today | What remains |
+|---|---|---|---|
+| Fast-follow | **Map search** | A List/Map toggle and placeholder preserve the route and interaction seam. | Choose a map provider; implement pins, viewport-aware results, clustering, and list/map selection sync. |
+| Fast-follow | **Yard sales** | Database table and basic RLS exist; there are no live rows. | Resident submission, browse/detail UI, pending-by-default moderation rules, and an identified moderator. |
+| Fast-follow | **Verified-customer recommendations** | Positive-only Recommend is live and never changes ranking. | Define qualifying evidence and show the verified-customer distinction without creating a star-rating system. |
+| Next | **Classes & workshops management** | Upcoming classes render on business profiles and owner RLS permits writes. | Owner create/edit/cancel UI and validation; keep town-wide promotion out until there is representative inventory. |
+| Next | **Membership and business insights** | Tier fields and the Member/Pro entitlement matrix are modeled. | Billing/paywall, member analytics, and demand signals with clear privacy and value propositions. |
+| Next | **Live calendar subscriptions** | Per-event and bulk `.ics` export plus Google/Outlook links are live. | A stable `webcal` feed backed by a Supabase function, including update/cancellation behavior. |
+| Later | **Pro business tools** | Entitlement seams exist. | Bookings, inquiry inbox, loyalty tools, and follower announcements/perks. |
+| Later | **Notifications** | Preference fields and merge behavior remain in the profile model; controls are intentionally hidden. | Delivery infrastructure, permission UX, event/bulletin triggers, unsubscribe controls, and policy copy. |
+| Later | **Rewards wallet** | Design/data seams only. | Reward issuance, redemption, history, expiration, fraud controls, and owner administration. |
+| Later | **Richer discovery** | Search is conventional text/category filtering. | Storytelling profiles and voice/semantic search, after content quality and accessibility requirements are defined. |
 
 ---
 
@@ -15,12 +34,11 @@ Each of these is safe to leave indefinitely. None is user-visible.
 | 1 | **`AuthSheet` copy for `save` / `follow` / `saveEvent`** is unreachable (12 dict keys EN+ES, 3 `COPY` entries, 3 `AuthReason` members) | Save/follow/save-event became guest-local (2026-08-14), so those reasons can no longer be raised. The copy is invisible and promises nothing; removing it is pure housekeeping with zero user impact. Note `"save"` is still the default parameter of `requireAuth`, so removing that member needs a new default. | Next time `session.tsx` or `AuthSheet.tsx` is open for another reason |
 | 2 | **`PendingIntent` / `replayIntent` branches for `save` / `follow` / `saveEvent`** | Unreachable from the UI for the same reason. Kept deliberately: a user who was mid-OAuth-redirect when the guest-saves change deployed has one stashed in `localStorage`, and deleting the branch would drop that tap on the floor. | Once any in-flight intents have aged out — safe now, but low value |
 | 3 | **`profiles.interests` column** left in the database, inert | The app stopped reading and writing it when interests were removed. Dropping a column is a one-way door and the row count is unknowable from the client (RLS restricts `profiles` to `authenticated`). `rls-test` still uses it as a cross-user write probe. | When someone with service-role access can confirm what is in it |
-| 4 | **Yard sales** — table and RLS exist, no UI | 0 rows, no submit path, and no moderator. The concept passes a habitual-use test ("check Friday for the weekend"); it fails on fuel, not on idea. Any resident write path needs new RLS that pins `status = 'pending'` on insert and blocks status changes on update, or a submitter self-approves. | When there is real content **and** someone committed to approving it |
-| 5 | **`rls-test` is not in CI** | Needs a live database. Runs locally against `supabase start`; refuses to run against production by design. Supabase branch databases need a paid plan. | If branching is enabled, or a disposable CI database appears |
-| 6 | **`hours.ts` / month-boundary time logic is untested** | Last open item from the 2026-08-14 retrospective. Bit us indirectly: the guest-save test needed a pinned future event because the mock's July-2026 seeds silently emptied Home's events rail in August. | Next time open/closed status or `countBulletinsThisMonth` is touched |
-| 7 | **`new Date("YYYY-MM-DD")` parses as UTC — audit the remaining date-only surfaces** | Found once, in the classes section (2026-08-15). A date-only string is specified to parse as **UTC midnight**, so in Redmond (UTC-7/-8) it renders as the **previous day**. `business_classes.date` would have advertised every class one day early. Fixed there by parsing from parts (`formatClassDate` in `lib/format.ts`), with an assertion that catches a regression. **This is the dangerous kind of bug: confidently wrong output, no error, nothing on the page looks broken.** Remaining surfaces — (a) **`yard_sales.start_date` / `end_date`** are `date` columns with no UI yet, so whoever builds that surface hits this first; (b) **`EventQuery.from` / `to`** are documented as "ISO bounds" and fed straight to `new Date()` in both data sources — no caller passes them today, so a date-only value would silently shift the window by a day the moment one does; (c) **structured hours**, once the Sheet populates them — times rather than dates, but the same day-boundary class of error, and `hours.ts` is untested (see #6). Datetime strings without a `Z` (`events.start_at`) parse as LOCAL and are fine — the trap is specific to date-only. | When any of those three surfaces is built or touched |
-| 8 | **Three junk space-prefixed Supabase secrets** | Cosmetic; they shadow nothing. | Next dashboard visit |
-| 9 | **`smoke` has no `/manage`, owner-surface, or business-profile coverage** | `/account` was added 2026-08-15 after it turned out a 57/57 pass had never visited it — and that immediately exposed three shipping tap-target violations. The owner surfaces have the same blind spot today. | Before the next owner-dashboard change. Known sub-44px controls on the business profile today: address, phone and website links (16px each), Recommend (40px) — found 2026-08-15 while verifying the classes section, which is itself compliant at 44px. |
+| 4 | **`rls-test` is not in CI** | Needs a live database. Runs locally against `supabase start`; refuses to run against production by design. Supabase branch databases need a paid plan. | If branching is enabled, or a disposable CI database appears |
+| 5 | **`hours.ts` / month-boundary time logic is untested** | Last open item from the 2026-08-14 retrospective. Bit us indirectly: the guest-save test needed a pinned future event because the mock's July-2026 seeds silently emptied Home's events rail in August. | Next time open/closed status or `countBulletinsThisMonth` is touched |
+| 6 | **`new Date("YYYY-MM-DD")` parses as UTC — audit the remaining date-only surfaces** | Found once, in the classes section (2026-08-15). A date-only string is specified to parse as **UTC midnight**, so in Redmond (UTC-7/-8) it renders as the **previous day**. `business_classes.date` would have advertised every class one day early. Fixed there by parsing from parts (`formatClassDate` in `lib/format.ts`), with an assertion that catches a regression. **This is the dangerous kind of bug: confidently wrong output, no error, nothing on the page looks broken.** Remaining surfaces — (a) **`yard_sales.start_date` / `end_date`** are `date` columns with no UI yet, so whoever builds that surface hits this first; (b) **`EventQuery.from` / `to`** are documented as "ISO bounds" and fed straight to `new Date()` in both data sources — no caller passes them today, so a date-only value would silently shift the window by a day the moment one does; (c) **structured hours**, once the Sheet populates them — times rather than dates, but the same day-boundary class of error, and `hours.ts` is untested (see #5). Datetime strings without a `Z` (`events.start_at`) parse as LOCAL and are fine — the trap is specific to date-only. | When any of those three surfaces is built or touched |
+| 7 | **Three junk space-prefixed Supabase secrets** | Cosmetic; they shadow nothing. | Next dashboard visit |
+| 8 | **`smoke` has no `/manage`, owner-surface, or business-profile coverage** | `/account` was added 2026-08-15 after it turned out a 57/57 pass had never visited it — and that immediately exposed three shipping tap-target violations. The owner surfaces have the same blind spot today. | Before the next owner-dashboard change. Known sub-44px controls on the business profile today: address, phone and website links (16px each), Recommend (40px) — found 2026-08-15 while verifying the classes section, which is itself compliant at 44px. |
 
 ---
 

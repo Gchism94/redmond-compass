@@ -75,6 +75,7 @@ const ALL = [
 window.__EXPECT_SOON_DATE = ALL[2].date;
 
 const EMPTY = q.get("empty") === "1";
+const FAIL = q.get("fail") === "1";
 // "raw" serves the UNFILTERED list, to prove the screen is not doing its own filtering —
 // the contract is that the DataSource returns upcoming only.
 const RAW = q.get("raw") === "1";
@@ -87,6 +88,7 @@ function source() {
       if (prop === "listBulletins") return async () => [];
       if (prop === "listEvents") return async () => [];
       if (prop === "listBusinessClasses") return async () => {
+        if (FAIL) throw new TypeError("Failed to fetch");
         if (EMPTY) return [];
         if (RAW) return ALL;
         const today = new Date();
@@ -139,7 +141,7 @@ async function load(qs = {}) {
   const page = await browser.newPage();
   await page.setViewport({ width: 437, height: 1200, deviceScaleFactor: 2, isMobile: true });
   await page.goto(`${BASE}/?${new URLSearchParams(qs)}`, { waitUntil: "networkidle0" });
-  await new Promise((r) => setTimeout(r, 900));
+  await new Promise((r) => setTimeout(r, qs.fail ? 1800 : 900));
   return page;
 }
 const bodyText = (p) => p.evaluate(() => document.body.innerText);
@@ -223,10 +225,40 @@ const bodyText = (p) => p.evaluate(() => document.body.innerText);
   await page.close();
 }
 
+// ── 6. Secondary-query failures must not masquerade as "this business has no classes" ──
+{
+  const page = await load({ fail: "1" });
+  const out = await page.evaluate(() => ({
+    text: document.body.innerText,
+    alerts: document.querySelectorAll('[role="alert"]').length,
+    retries: [...document.querySelectorAll("button")].filter((b) => /try again/i.test(b.innerText)).length,
+  }));
+  ok(/Couldn't load classes and workshops/i.test(out.text), "a classes fetch failure is named instead of silently hiding the section");
+  ok(out.alerts > 0 && out.retries > 0, `the classes failure is retryable and accessible (${out.alerts}/${out.retries})`);
+  await page.close();
+}
+
+// ── 7. The visible Share control must actually invoke the platform share flow ──────────
+{
+  const page = await load({});
+  await page.evaluate(() => {
+    window.__sharePayload = null;
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async (payload) => { window.__sharePayload = payload; },
+    });
+  });
+  await page.click('button[aria-label="Share"]');
+  const payload = await page.evaluate(() => window.__sharePayload);
+  ok(payload?.title === "Imaginary Rebel Art Studio", `Share sends the business title (${payload?.title ?? "none"})`);
+  ok(typeof payload?.url === "string" && payload.url === await page.url(), "Share sends the current listing URL");
+  await page.close();
+}
+
 await browser.close();
 server.kill();
 
-// ── 7. The DataSource's OWN filter ───────────────────────────────────────────────────────
+// ── 8. The DataSource's OWN filter ───────────────────────────────────────────────────────
 // The screen tests above inject their own source, so they prove the SCREEN renders what it
 // is handed — they cannot catch a regression in the implementation that does the filtering.
 // (Verified: deleting the `date >= today` clause from MockDataSource leaves every assertion
@@ -255,6 +287,22 @@ server.kill();
   ok(rows.map((c) => c.date).join() === [...rows.map((c) => c.date)].sort().join(),
      "the source returns them soonest-first");
   ok((await ds.listBusinessClasses("b_nonexistent")).length === 0, "a business with no classes gets an empty list");
+}
+
+// ── 9. "Today" for the upcoming filter is Redmond's day, wherever the viewer is ─────────
+{
+  const dateOut = path.join(tmp, "format.mjs");
+  await build({
+    entryPoints: [path.join(ROOT, "src/lib/format.ts")],
+    bundle: true, format: "esm", platform: "node", outfile: dateOut, logLevel: "error",
+    absWorkingDir: ROOT, nodePaths: [path.join(ROOT, "node_modules")],
+    alias: { "@": path.join(ROOT, "src"), "@config": path.join(ROOT, "compass.config.ts") },
+    define: { "import.meta.env.DEV": "false", "import.meta.env.PROD": "true" },
+  });
+  const { redmondDateYmd } = await import(dateOut);
+  // 06:30Z is already Aug 29 in UTC/New York, but still 11:30 PM Aug 28 in Redmond.
+  ok(redmondDateYmd(new Date("2026-08-29T06:30:00.000Z")) === "2026-08-28",
+     "upcoming classes use Redmond's calendar day across the midnight boundary");
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

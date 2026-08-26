@@ -8,7 +8,7 @@ export interface ActionBarProps {
   business: Business;
   saved?: boolean;
   following?: boolean;
-  /** Save & Follow are auth-gated (JIT login — the only place we ask, step 6). */
+  /** Save & Follow are guest-local; supplied callbacks persist them through the session. */
   onSave?: (b: Business) => void;
   onFollow?: (b: Business) => void;
   className?: string;

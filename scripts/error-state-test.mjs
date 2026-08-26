@@ -39,7 +39,7 @@ const ok = (c, m) => { console.log(`${c ? "PASS" : "FAIL"}  ${m}`); c ? pass++ :
     bundle: true, format: "esm", platform: "node", outfile: path.join(t0, "errors.mjs"),
     logLevel: "error", absWorkingDir: ROOT, nodePaths: [path.join(ROOT, "node_modules")],
   });
-  const { classifyMutationError } = await import(path.join(t0, "errors.mjs"));
+  const { authErrorKey, classifyMutationError } = await import(path.join(t0, "errors.mjs"));
 
   const cases = [
     [new TypeError("Failed to fetch"), "network", false, "browser offline / request never landed"],
@@ -66,6 +66,16 @@ const ok = (c, m) => { console.log(`${c ? "PASS" : "FAIL"}  ${m}`); c ? pass++ :
        === undefined,
      "classify: raw Postgres driver text is NOT shown to the user");
   ok(classifyMutationError(null).kind === "unknown", "classify: null doesn't throw");
+
+  ok(authErrorKey(Object.assign(new Error("{}"), { status: 500, code: "unexpected_failure" }), "auth.sendFailed")
+       === "auth.sendFailed",
+     "auth classify: empty provider error uses safe email fallback");
+  ok(authErrorKey(new Error("gomail: SMTP password rejected"), "auth.sendFailed") === "auth.sendFailed",
+     "auth classify: SMTP internals are never exposed");
+  ok(authErrorKey(new TypeError("Failed to fetch"), "auth.googleFailed") === "auth.networkFailed",
+     "auth classify: network failures remain actionable");
+  ok(authErrorKey({ status: 429, message: "Too Many Requests" }, "auth.sendFailed") === "auth.rateLimited",
+     "auth classify: rate limits get specific guidance");
 }
 
 // A harness page that mounts the real app with an injected DataSource. `DataProvider`
