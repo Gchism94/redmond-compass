@@ -80,12 +80,12 @@ function WebHeader() {
   const session = useSession();
 
   return (
-    <header className="sticky top-0 z-20">
+    <header className="sticky top-0 z-20 shadow-sticky">
       {/* Row 1 — white bar: logo · primary links · Get the app / Sign in */}
-      <div className="border-b border-border bg-card">
+      <div className="border-b border-border bg-card/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6">
           <Link to={HOME_PATH} className="flex items-center gap-2.5 focus-visible:outline-none">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
               <Compass size={20} />
             </span>
             <span className="leading-none">
@@ -101,8 +101,10 @@ function WebHeader() {
                 to={l.to}
                 className={({ isActive }) =>
                   cn(
-                    "text-sm font-medium transition-colors hover:text-foreground",
-                    isActive ? "font-semibold text-foreground" : "text-muted-foreground",
+                    "relative inline-flex h-16 items-center text-sm font-medium transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:transition-transform",
+                    isActive
+                      ? "font-semibold text-foreground after:scale-x-100"
+                      : "text-muted-foreground after:scale-x-0 hover:text-foreground",
                   )
                 }
               >
@@ -133,7 +135,7 @@ function WebHeader() {
       </div>
 
       {/* Row 2 — cream guide links, exactly the original's eight */}
-      <div className="border-b border-border bg-secondary/70 backdrop-blur">
+      <div className="border-b border-border bg-background/95 backdrop-blur-md">
         <nav
           aria-label="Guides"
           className="mx-auto flex max-w-6xl items-center justify-center gap-6 overflow-x-auto px-6 py-2"
@@ -265,7 +267,7 @@ function WebFooter() {
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-12 md:grid-cols-4">
         <div>
           <button type="button" onClick={() => navigate(HOME_PATH)} className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
               <Compass size={20} />
             </span>
             <span className="text-left leading-none">

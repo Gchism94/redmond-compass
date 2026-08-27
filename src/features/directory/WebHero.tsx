@@ -40,7 +40,7 @@ export function WebHero() {
   return (
     <div className="pt-6">
       {/* Split hero — navy panel + mural, per the original site */}
-      <section className="grid overflow-hidden rounded-xl lg:grid-cols-2">
+      <section className="grid overflow-hidden rounded-xl ring-1 ring-foreground/5 shadow-lift lg:grid-cols-2">
         <div className="bg-foreground p-10 text-background">
           <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-background/70">
             <MapPin size={13} /> {t("web.hero.eyebrow")}
@@ -87,7 +87,7 @@ export function WebHero() {
           <Link
             key={tile.titleKey}
             to={tile.to}
-            className="group flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition hover:bg-muted"
+            className="group flex items-center gap-3 rounded-lg border border-border bg-card p-4 shadow-card transition-[transform,box-shadow,border-color,background-color] duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:bg-surface-raised hover:shadow-lift"
           >
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
               <tile.icon size={18} />

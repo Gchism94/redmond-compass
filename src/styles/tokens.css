@@ -74,8 +74,13 @@
   --rc-text-2xl: 30px;
   --rc-text-3xl: 40px;
 
-  --rc-shadow-card: 0 6px 16px -10px rgba(8, 41, 84, 0.22);
-  --rc-shadow-sticky: 0 4px 12px -8px rgba(8, 41, 84, 0.18);
+  /* Layered, low-contrast depth: still quiet enough for the editorial site, but
+     visible against cream on larger screens where the old single shadow vanished. */
+  --rc-shadow-card: 0 2px 8px -6px rgba(8, 41, 84, 0.22),
+    0 12px 28px -22px rgba(8, 41, 84, 0.38);
+  --rc-shadow-sticky: 0 8px 24px -18px rgba(8, 41, 84, 0.34);
+  --rc-shadow-lift: 0 6px 18px -12px rgba(8, 41, 84, 0.28),
+    0 22px 48px -30px rgba(8, 41, 84, 0.42);
   --rc-shadow-modal: 0 18px 44px -20px rgba(8, 41, 84, 0.4);
 
   --rc-tap-min: 44px;

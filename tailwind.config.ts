@@ -83,8 +83,9 @@ export default {
         pill: "999px",
       },
       boxShadow: {
-        card: "0 6px 16px -10px rgba(8,41,84,.22)",
-        sticky: "0 4px 12px -8px rgba(8,41,84,.18)",
+        card: "var(--rc-shadow-card)",
+        sticky: "var(--rc-shadow-sticky)",
+        lift: "var(--rc-shadow-lift)",
         modal: "0 18px 44px -20px rgba(8,41,84,.40)",
       },
       maxWidth: { content: "480px" }, // mobile content column cap

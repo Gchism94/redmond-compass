@@ -26,7 +26,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
         type="button"
         onClick={onActivate}
         className={cn(
-          "flex min-h-tap w-full items-center gap-2.5 rounded-lg border border-border bg-card px-3 text-left",
+          "flex min-h-tap w-full items-center gap-2.5 rounded-lg border border-border bg-card px-3 text-left shadow-card transition-[border-color,box-shadow,background-color] hover:border-border-strong hover:bg-surface-raised",
           className,
         )}
       >
@@ -39,7 +39,7 @@ export const SearchField = forwardRef<HTMLInputElement, SearchFieldProps>(functi
   return (
     <div
       className={cn(
-        "flex min-h-tap items-center gap-2.5 rounded-lg border border-border bg-card px-3 focus-within:border-positive focus-within:ring-2 focus-within:ring-positive/20",
+        "flex min-h-tap items-center gap-2.5 rounded-lg border border-border bg-card px-3 shadow-card transition-[border-color,box-shadow] focus-within:border-positive focus-within:shadow-lift focus-within:ring-2 focus-within:ring-positive/20",
         className,
       )}
     >

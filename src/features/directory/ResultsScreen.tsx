@@ -78,7 +78,7 @@ export function ResultsScreen() {
   return (
     <div className="pb-4">
       {/* Sticky results header */}
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 pt-3 pb-2.5 shadow-sticky backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 pt-3 pb-2.5 shadow-sticky backdrop-blur lg:static lg:mt-4 lg:rounded-xl lg:border lg:bg-card lg:p-4 lg:shadow-card">
         <div className="flex items-center gap-2">
           {/* Back to Search — no dead end (A) */}
           <IconButton label={t("results.backToSearch")} variant="solid" onClick={() => navigate("/search")}>
@@ -235,7 +235,7 @@ export function ResultsScreen() {
       {view === "map" ? (
         <MapPlaceholder onBack={() => setView("list")} />
       ) : (
-        <div className="px-4">
+        <div className="px-4 lg:pt-5">
           {tab === "all" || tab === "businesses" ? (
             businesses.isLoading ? (
               <ResultsSkeleton />
@@ -253,7 +253,7 @@ export function ResultsScreen() {
               /* Mobile keeps the compact action row. Desktop gets an image-led card with
                  enough width for names and actions; four columns made the mobile row
                  overlap inside a ~270px tile. */
-              <ul className="divide-y divide-border lg:grid lg:grid-cols-2 lg:gap-5 lg:divide-y-0 xl:grid-cols-3">
+              <ul className="divide-y divide-border lg:grid lg:grid-cols-2 lg:gap-6 lg:divide-y-0 xl:grid-cols-3">
                 {businesses.data?.items.map((b) => (
                   <li key={b.id} className="min-w-0">
                     <ResultCard

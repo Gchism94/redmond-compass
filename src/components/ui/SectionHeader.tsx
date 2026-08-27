@@ -21,13 +21,13 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   return (
-    <div className={cn("mb-3 flex items-baseline justify-between gap-3", className)}>
+    <div className={cn("mb-3 flex items-baseline justify-between gap-3 lg:mb-4", className)}>
       {variant === "eyebrow" ? (
         <h2 className="font-sans text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {title}
         </h2>
       ) : (
-        <h2 className="font-heading text-md font-semibold text-foreground">{title}</h2>
+        <h2 className="font-heading text-md font-semibold text-foreground lg:text-xl">{title}</h2>
       )}
       {seeAllHref && (
         <Link

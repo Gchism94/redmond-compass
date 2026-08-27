@@ -105,7 +105,7 @@ export function HomeScreen() {
             />
           </div>
 
-          <header className="bg-background px-4 pt-4 pb-2">
+          <header className="relative -mt-3 rounded-t-xl bg-background px-4 pt-5 pb-2 shadow-[0_-10px_24px_-22px_rgba(8,41,84,0.5)]">
             <div className="flex items-center justify-between gap-2">
               <p className="font-heading text-2xl font-bold text-foreground">Redmond Compass</p>
               <LangToggle />
@@ -158,9 +158,9 @@ export function HomeScreen() {
       </Rail>
 
       {/* Feed sections — single column on mobile; Popular · Events · News side by side on desktop */}
-      <div className="lg:grid lg:grid-cols-3 lg:gap-x-8">
+      <div className="lg:mt-3 lg:grid lg:grid-cols-3 lg:gap-5">
       {/* Follow feed → t("home.popular") cold-start fallback */}
-      <section className="px-4 py-2">
+      <section className="px-4 py-3 lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-5 lg:shadow-card">
         <SectionHeader title={feedTitle} seeAllHref="/community" />
         <div className="-my-1 divide-y divide-border">
           {bulletins.isError ? (
@@ -191,7 +191,7 @@ export function HomeScreen() {
       </section>
 
       {/* Upcoming events */}
-      <section className="px-4 py-2">
+      <section className="px-4 py-3 lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-5 lg:shadow-card">
         <SectionHeader title={t("home.upcomingEvents")} seeAllHref="/events" />
         <div className="-my-1 divide-y divide-border">
           {events.isError ? (
@@ -210,7 +210,7 @@ export function HomeScreen() {
       </section>
 
       {/* Local news */}
-      <section className="px-4 py-2">
+      <section className="px-4 py-3 lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-5 lg:shadow-card">
         <SectionHeader title={t("home.localNews")} seeAllHref="/community" />
         <div className="-my-1 divide-y divide-border">
           {news.isError ? (
@@ -236,7 +236,7 @@ export function HomeScreen() {
       </div>
 
       {/* Browse by category */}
-      <section className="px-4 py-3">
+      <section className="px-4 py-4 lg:mt-4 lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-6 lg:shadow-card">
         <SectionHeader title={t("search.browseByCategory")} />
         <CategoryGrid />
       </section>
@@ -261,13 +261,13 @@ export function HomeScreen() {
       <section className="grid grid-cols-2 gap-3 px-4 py-2">
         <Link
           to="/community"
-          className="flex min-h-tap items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground"
+          className="flex min-h-tap items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground shadow-card transition-[transform,box-shadow,border-color] hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lift"
         >
           {t("home.communityNews")}
         </Link>
         <Link
           to="/resources"
-          className="flex min-h-tap items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground"
+          className="flex min-h-tap items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground shadow-card transition-[transform,box-shadow,border-color] hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lift"
         >
           Local resources
         </Link>

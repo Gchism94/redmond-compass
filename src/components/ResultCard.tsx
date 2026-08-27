@@ -56,7 +56,7 @@ export function ResultCard({
       <Link
         to={businessHref(business)}
         className={cn(
-          "block w-36 shrink-0 focus-visible:outline-none lg:w-44",
+          "block w-36 shrink-0 focus-visible:outline-none lg:w-52 lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-2 lg:shadow-card lg:transition-[transform,box-shadow,border-color] lg:duration-200 lg:hover:-translate-y-0.5 lg:hover:border-border-strong lg:hover:shadow-lift",
           className,
         )}
       >
@@ -65,7 +65,8 @@ export function ResultCard({
             src={business.photos[0]}
             seed={business.name}
             alt={business.name}
-            className="h-20 w-full lg:h-28"
+            className="brand-image-frame h-20 w-full lg:h-28"
+            imageClassName="lg:p-3"
             rounded="rounded-lg"
             fit="contain"
           />
@@ -124,7 +125,7 @@ export function ResultCard({
       <article
         data-result-card="desktop"
         className={cn(
-          "flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card",
+          "flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card transition-[transform,box-shadow,border-color] duration-200 lg:hover:-translate-y-0.5 lg:hover:border-border-strong lg:hover:shadow-lift lg:focus-within:border-positive/40 lg:focus-within:shadow-lift",
           className,
         )}
       >
@@ -134,7 +135,8 @@ export function ResultCard({
               src={business.photos[0]}
               seed={business.name}
               alt={business.name}
-              className="aspect-[16/9] w-full"
+              className="brand-image-frame aspect-[16/9] w-full border-b border-border"
+              imageClassName="p-4"
               rounded="rounded-none"
               fit="contain"
             />
@@ -226,7 +228,7 @@ export function ResultCard({
           src={business.photos[0]}
           seed={business.name}
           alt={business.name}
-          className="h-[58px] w-[58px]"
+          className="brand-image-frame h-[58px] w-[58px] ring-1 ring-border/70"
           rounded="rounded-lg"
         />
       </Link>

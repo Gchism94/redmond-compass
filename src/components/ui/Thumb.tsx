@@ -8,6 +8,8 @@ export interface ThumbProps {
   /** seed text (e.g. business name) for a stable placeholder tint + initial */
   seed?: string;
   className?: string;
+  /** optional styling for the actual image (useful when a large logo needs breathing room) */
+  imageClassName?: string;
   rounded?: string;
   /** auto chooses from aspect ratio; contain preserves identity artwork such as logos. */
   fit?: "auto" | "cover" | "contain";
@@ -46,7 +48,15 @@ const FIT_TOLERANCE = 1.4;
  *
  * The no-photo fallback below is deliberately untouched by any of this.
  */
-export function Thumb({ src, alt, seed, className, rounded = "rounded-md", fit = "auto" }: ThumbProps) {
+export function Thumb({
+  src,
+  alt,
+  seed,
+  className,
+  imageClassName,
+  rounded = "rounded-md",
+  fit = "auto",
+}: ThumbProps) {
   const [failed, setFailed] = useState(false);
   const [contain, setContain] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -84,7 +94,11 @@ export function Thumb({ src, alt, seed, className, rounded = "rounded-md", fit =
           loading="lazy"
           onLoad={chooseFit}
           onError={() => setFailed(true)}
-          className={cn("h-full w-full", useContain ? "object-contain p-1.5" : "object-cover")}
+          className={cn(
+            "h-full w-full",
+            useContain ? "object-contain p-1.5" : "object-cover",
+            imageClassName,
+          )}
         />
       ) : seed ? (
         <span aria-hidden className="font-heading text-lg font-semibold">

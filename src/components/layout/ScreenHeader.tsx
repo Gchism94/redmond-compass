@@ -22,7 +22,7 @@ export function ScreenHeader({ title, back, action, sticky, className }: ScreenH
   return (
     <header
       className={cn(
-        "flex items-center gap-1 bg-background px-3 pt-3 pb-1",
+        "flex items-center gap-1 bg-background px-3 pt-3 pb-1 lg:px-4 lg:pt-8 lg:pb-3",
         sticky && "sticky top-0 z-10",
         className,
       )}
@@ -32,7 +32,7 @@ export function ScreenHeader({ title, back, action, sticky, className }: ScreenH
           <ChevronLeft size={22} />
         </IconButton>
       )}
-      <h1 className="flex-1 font-heading text-xl font-bold text-foreground">{title}</h1>
+      <h1 className="flex-1 font-heading text-xl font-bold text-foreground lg:text-2xl">{title}</h1>
       {action}
       {/* Persistent mobile-chrome language toggle (#5); desktop uses WebShell's own. */}
       <LangToggle className="lg:hidden" />

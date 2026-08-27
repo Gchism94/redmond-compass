@@ -21,7 +21,7 @@ export function BottomTabNav() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 pb-safe backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 pb-safe shadow-[0_-8px_24px_-20px_rgba(8,41,84,0.45)] backdrop-blur-md"
     >
       <ul className="app-frame grid grid-cols-5">
         {TABS.map(({ to, label, icon: Icon, end }) => (
@@ -31,13 +31,20 @@ export function BottomTabNav() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  "flex min-h-tap flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition",
+                  "relative flex min-h-tap flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium transition",
                   isActive ? "text-positive" : "text-muted-foreground hover:text-foreground",
                 )
               }
             >
               {({ isActive }) => (
                 <>
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute top-0 h-0.5 w-8 rounded-full bg-primary transition-transform",
+                      isActive ? "scale-x-100" : "scale-x-0",
+                    )}
+                  />
                   <Icon size={22} strokeWidth={isActive ? 2.4 : 2} aria-hidden />
                   <span>{t(label as never)}</span>
                 </>

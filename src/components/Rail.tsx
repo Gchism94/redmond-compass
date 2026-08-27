@@ -12,11 +12,11 @@ export function Rail({
   children: ReactNode;
 }) {
   return (
-    <section className="py-2">
+    <section className="py-3 lg:py-5">
       <div className="px-4">
         <SectionHeader title={title} seeAllHref={seeAllHref} />
       </div>
-      <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1">{children}</div>
+      <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1 lg:gap-4 lg:pb-2">{children}</div>
     </section>
   );
 }
