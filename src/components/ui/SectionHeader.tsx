@@ -33,7 +33,7 @@ export function SectionHeader({
         <Link
           to={seeAllHref}
           aria-label={`${seeAllLabel ?? tGlobal("common.seeAll")}: ${title}`}
-          className="shrink-0 text-sm font-semibold text-positive hover:underline"
+          className="inline-flex min-h-tap shrink-0 items-center px-1 text-sm font-semibold text-positive hover:underline"
         >
           {seeAllLabel ?? tGlobal("common.seeAll")}
         </Link>

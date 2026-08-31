@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import { ChevronRight, MapPin } from "lucide-react";
 import {
   SearchField,
   Rail,
@@ -34,20 +34,21 @@ export function HomeScreen() {
   const session = useSession();
   const desktop = useIsDesktop();
   const origin = session.location ?? undefined;
-  const openNow = useBusinesses({ openNow: true, sort: "distance", limit: 8, origin });
+  const locationSort = origin ? "distance" : "relevance";
+  const openNow = useBusinesses({ openNow: true, sort: locationSort, limit: 8, origin });
   const bulletins = useBulletins();
   const events = useEvents({ limit: 3, origin });
   const news = useNews({ limit: 2 });
   // The rail only ever shows 8 — ask for 8, not for a 50-row page we then slice. (The old
   // `limit: 50` query was doing double duty as the rail fallback AND as the lookup table for
   // recently-viewed + bulletin attribution, which is what capped those two at 50.)
-  const nearby = useBusinesses({ sort: "distance", limit: 8, origin });
+  const nearby = useBusinesses({ sort: locationSort, limit: 8, origin });
 
   // Never an empty module: if nothing's open right now (e.g. late night), the rail
   // degrades from "Open now" to "Nearby in Redmond" rather than going blank.
   const openItems = openNow.data?.items ?? [];
   const hasOpen = openItems.length > 0;
-  const railTitle = hasOpen ? t("home.openNow") : t("home.nearbyIn");
+  const railTitle = hasOpen ? t("home.openNow") : t(origin ? "home.nearbyIn" : "home.placesIn");
   const railItems = hasOpen ? openItems : (nearby.data?.items ?? []).slice(0, 8);
   const railLoading = openNow.isLoading || (!hasOpen && nearby.isLoading);
   // Home is a dashboard of independent sections: one failed query must degrade only its own
@@ -124,7 +125,7 @@ export function HomeScreen() {
               onClick={() => navigate("/account")}
               className="mt-2.5 inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-positive/25 bg-positive/10 px-3 py-1.5 text-xs font-semibold text-positive"
             >
-              <MapPin size={13} /> {t("home.nearYou")}
+              <MapPin size={13} /> {t(origin ? "home.nearYou" : "home.setLocation")}
             </button>
           </header>
 
@@ -133,7 +134,10 @@ export function HomeScreen() {
       )}
 
       {/* Open now near you — degrades to "Nearby" when nothing is open */}
-      <Rail title={railTitle} seeAllHref={hasOpen ? "/search/results?openNow=1" : "/search/results?sort=distance"}>
+      <Rail
+        title={railTitle}
+        seeAllHref={hasOpen ? "/search/results?openNow=1" : origin ? "/search/results?sort=distance" : "/search/results"}
+      >
         {railFailed ? (
           <ErrorState compact className="w-full" title={t("error.loadBusinesses")} onRetry={() => { openNow.refetch(); nearby.refetch(); }} />
         ) : railLoading
@@ -184,9 +188,15 @@ export function HomeScreen() {
               })}
         </div>
         {!usingFollowFeed && (
-          <div className="mt-2 rounded-lg border border-dashed border-positive/40 bg-positive/5 px-3 py-2.5 text-xs text-positive">
-            <b className="font-semibold">{t("home.followHintStrong")}</b> {t("home.followHintRest")}
-          </div>
+          <Link
+            to="/search"
+            className="mt-2 flex min-h-tap items-center justify-between gap-3 rounded-lg border border-dashed border-positive/40 bg-positive/5 px-3 py-2 text-xs text-positive transition-colors hover:border-positive/60 hover:bg-positive/10"
+          >
+            <span>
+              <b className="font-semibold">{t("home.followHintStrong")}</b> {t("home.followHintRest")}
+            </span>
+            <ChevronRight aria-hidden size={16} className="shrink-0" />
+          </Link>
         )}
       </section>
 
@@ -269,7 +279,7 @@ export function HomeScreen() {
           to="/resources"
           className="flex min-h-tap items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground shadow-card transition-[transform,box-shadow,border-color] hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lift"
         >
-          Local resources
+          {t("home.resources")}
         </Link>
       </section>
     </div>

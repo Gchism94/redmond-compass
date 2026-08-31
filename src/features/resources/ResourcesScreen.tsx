@@ -144,7 +144,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
       {tel ? (
         <a
           href={tel}
-          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+          className="inline-flex min-h-tap shrink-0 items-center gap-1 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
         >
           <Phone size={13} /> {t("common.call")}
         </a>
@@ -153,7 +153,7 @@ function ResourceRow({ resource }: { resource: Resource }) {
           href={resource.url}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-foreground"
+          className="inline-flex min-h-tap shrink-0 items-center gap-1 rounded-md border border-border bg-card px-3 py-2 text-xs font-medium text-foreground"
         >
           <ExternalLink size={13} /> {t("common.open")}
         </a>

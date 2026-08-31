@@ -46,7 +46,7 @@ export function OwnerDashboard() {
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground"
+          className="inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground"
         >
           <Repeat size={13} /> {t("owner.consumerView")}
         </button>
@@ -66,7 +66,7 @@ export function OwnerDashboard() {
               )}
               <StatusBadge tone="info">{t("owner.freeListing")}</StatusBadge>
             </div>
-            <Link to={`/b/${business.slug}`} className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-positive hover:underline">
+            <Link to={`/b/${business.slug}`} className="mt-1.5 inline-flex min-h-tap items-center gap-1 text-xs font-semibold text-positive hover:underline">
               {t("owner.viewPublicProfile")} <ArrowRight size={12} />
             </Link>
           </div>

@@ -130,10 +130,11 @@ async function newPage(width, height) {
   const tapOffenders = () =>
     page.evaluate(() => {
       const out = [];
-      for (const el of document.querySelectorAll('button, [role="button"], [role="tab"]')) {
+      for (const el of document.querySelectorAll('a[href], button, [role="button"], [role="tab"], input, select, summary')) {
         const rect = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
         if (rect.width === 0 || rect.height === 0 || cs.visibility === "hidden") continue; // hidden
+        if (cs.clip !== "auto" || cs.clipPath !== "none") continue; // visually-hidden skip links
         if (rect.height < 43.5)
           out.push(`${el.tagName.toLowerCase()} "${(el.textContent || "").trim().slice(0, 16)}" ${Math.round(rect.height)}px`);
       }
@@ -142,10 +143,54 @@ async function newPage(width, height) {
   let taps = await tapOffenders();
   ok(taps.length === 0, label(`home: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
 
-  r = await visit("/search/results");
+  r = await visit("/search");
+  ok((await page.$("[data-search-layout] h1")) !== null, label("search: visible page heading present"));
+  taps = await tapOffenders();
+  ok(taps.length === 0, label(`search: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
+
+  r = await visit("/search/results?q=Burger%20Wild");
   ok(r.overflowX === 0, label(`results: no horizontal overflow (${r.overflowX})`));
+  const mapControls = await page.evaluate(() =>
+    [...document.querySelectorAll("button")].filter((el) => /^map$|^mapa$/i.test((el.textContent || "").trim())).length,
+  );
+  ok(mapControls === 0 && !/map view is coming soon|el mapa llega pronto/i.test(r.text),
+     label("results: unfinished Map view is not advertised"));
+  const impreciseDistance = await page.evaluate(() => {
+    const card = [...document.querySelectorAll("[data-result-card], article")]
+      .find((el) => /Burger Wild - All American/i.test(el.textContent || ""));
+    return card ? /\bnearby\b/i.test(card.textContent || "") : null;
+  });
+  ok(impreciseDistance === false, label("results: synthetic center coordinate is not shown as a distance"));
   taps = await tapOffenders();
   ok(taps.length === 0, label(`results: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
+
+  r = await visit("/b/burger-wild-all-american");
+  ok(/11:00 AM - 10:00 PM/i.test(r.text) && !/hours not listed/i.test(r.text),
+     label("profile: source hours text replaces false missing-hours claim"));
+  const unavailableProfileActions = await page.evaluate(() => ({
+    call: document.querySelectorAll('a[href^="tel:"]').length,
+    blankAddress: /Address:\s*(?:About|$)/i.test(document.body.innerText),
+  }));
+  ok(unavailableProfileActions.call === 0 && !unavailableProfileActions.blankAddress,
+     label("profile: unavailable phone/address actions are omitted"));
+  taps = await tapOffenders();
+  ok(taps.length === 0, label(`profile: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
+
+  r = await visit("/events");
+  taps = await tapOffenders();
+  ok(taps.length === 0, label(`events: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
+
+  r = await visit("/resources");
+  taps = await tapOffenders();
+  ok(taps.length === 0, label(`resources: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
+
+  r = await visit("/community");
+  ok(/past notices|anuncios anteriores/i.test(r.text) && !/conditions are critically dry/i.test(r.text),
+     label("community: expired safety notice is collapsed into dated archive"));
+
+  r = await visit("/claim");
+  taps = await tapOffenders();
+  ok(taps.length === 0, label(`claim: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
 
   // ---- /account (added 2026-08-14) ----
   // This route was NEVER visited by this suite, so a 57/57 pass said nothing about the
@@ -217,6 +262,16 @@ async function newPage(width, height) {
     ok(!L.text.includes("Your Guide to Redmond Living"), label("site home NOT presented at /"));
     ok(!/featured/i.test(L.text), label("no Featured on landing (equal ranking)"));
     ok(L.overflowX === 0, label(`landing: no horizontal overflow (${L.overflowX})`));
+    const installCards = await page.$$eval("#install button[aria-expanded]", (buttons) =>
+      buttons.map((button) => ({
+        expanded: button.getAttribute("aria-expanded") === "true",
+        height: Math.round(button.parentElement?.getBoundingClientRect().height ?? 0),
+      })),
+    );
+    const expandedHeight = installCards.find((card) => card.expanded)?.height ?? 0;
+    const collapsedHeights = installCards.filter((card) => !card.expanded).map((card) => card.height);
+    ok(expandedHeight > 0 && collapsedHeights.length > 0 && collapsedHeights.every((height) => height < expandedHeight),
+       label("landing: collapsed install cards do not retain empty expanded height"));
   }
 
   let r = await visit(HOME);
@@ -239,32 +294,61 @@ async function newPage(width, height) {
   const desktopHomeWidth = await page.$eval("main", (el) => Math.round(el.getBoundingClientRect().width));
   ok(desktopHomeWidth >= 1000, label(`app home uses the wide desktop canvas (${desktopHomeWidth}px)`));
 
+  r = await visit("/search");
+  const searchLayout = await page.$eval("[data-search-layout]", (el) => ({
+    width: Math.round(el.getBoundingClientRect().width),
+    hasHeading: !!el.querySelector("h1"),
+  }));
+  ok(searchLayout.hasHeading && searchLayout.width <= 930,
+     label(`search has heading + deliberate desktop measure (${searchLayout.width}px)`));
+
   // Directory grid: image-led desktop cards, never mobile rows squeezed into tiles.
   r = await visit("/search/results");
+  ok(!/map view is coming soon/i.test(r.text), label("results does not advertise unfinished Map view"));
   const cols = await page.evaluate(() => {
     const ul = [...document.querySelectorAll("ul")].find((u) => getComputedStyle(u).display === "grid");
     return ul ? getComputedStyle(ul).gridTemplateColumns.split(" ").length : 0;
   });
   ok(cols >= 2 && cols <= 3, label(`results grid ${cols} readable columns`));
+  const initialCardCount = await page.$$eval('[data-result-card="desktop"]', (cards) => cards.length);
+  ok(initialCardCount > 0 && initialCardCount <= 30 && /show more places/i.test(r.text),
+     label(`results progressively reveal the full directory (${initialCardCount} cards initially)`));
   const cardVisual = await page.evaluate(() => {
     const card = document.querySelector('[data-result-card="desktop"]');
-    const img = card?.querySelector("img");
+    const frame = card?.querySelector(".brand-image-frame");
+    const img = frame?.querySelector("img");
+    const fallback = frame?.querySelector('[data-thumb-fallback="brand"]');
     const actions = [...(card?.querySelectorAll("[data-card-actions] a") ?? [])];
     const rects = actions.map((el) => el.getBoundingClientRect());
     return {
       card: card ? Math.round(card.getBoundingClientRect().width) : 0,
-      imageWidth: img ? Math.round(img.getBoundingClientRect().width) : 0,
-      imageHeight: img ? Math.round(img.getBoundingClientRect().height) : 0,
+      imageWidth: frame ? Math.round(frame.getBoundingClientRect().width) : 0,
+      imageHeight: frame ? Math.round(frame.getBoundingClientRect().height) : 0,
       imageFit: img ? getComputedStyle(img).objectFit : "",
+      brandedFallback: !!fallback,
       actionsSeparate: rects.length >= 2 && rects[0].right <= rects[1].left,
     };
   });
   ok(cardVisual.card >= 330, label(`directory card has usable width (${cardVisual.card}px)`));
   ok(cardVisual.imageWidth >= 300 && cardVisual.imageHeight >= 150,
      label(`directory image is visually useful (${cardVisual.imageWidth}×${cardVisual.imageHeight}px)`));
-  ok(cardVisual.imageFit === "contain", label("directory identity artwork is not cropped"));
+  ok(cardVisual.imageFit === "contain" || cardVisual.brandedFallback,
+     label("directory identity artwork is not cropped, with branded fallback when missing"));
   ok(cardVisual.actionsSeparate, label("directory Call / Directions actions do not overlap"));
+  const unearnedDistanceClaims = await page.$$eval('[data-result-card="desktop"]', (cards) =>
+    cards.filter((card) => /(?:\bnearby\b|\b\d+(?:\.\d+)? mi\b)/i.test(card.textContent || "")).length,
+  );
+  ok(unearnedDistanceClaims === 0,
+     label("directory shows no distance before the user shares a location"));
   ok(r.overflowX === 0, label(`results: no horizontal overflow (${r.overflowX})`));
+
+  r = await visit("/login");
+  const duplicateLoginLink = await page.$("header a[href='/login']");
+  ok(duplicateLoginLink === null, label("login: desktop header does not repeat the current Sign in action"));
+  const guideTapHeight = await page.$eval("header nav[aria-label='Guides'] a", (el) =>
+    Math.round(el.getBoundingClientRect().height),
+  );
+  ok(guideTapHeight >= 44, label(`desktop guide links have 44px targets (${guideTapHeight}px)`));
 
   // Long-form/list screens use a readable measure instead of the wide grid canvas.
   r = await visit("/events");

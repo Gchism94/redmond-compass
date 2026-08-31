@@ -184,7 +184,9 @@ export class MockDataSource implements DataSource {
     if (query.claimed != null) items = items.filter((b) => b.claimed === query.claimed);
     if (query.openNow) items = items.filter((b) => getOpenStatus(b.hours).open);
     if (query.maxDistanceMi != null) {
-      items = items.filter((b) => distanceMiles(origin, b.geo) <= query.maxDistanceMi!);
+      items = items.filter(
+        (b) => b.hasPreciseLocation !== false && distanceMiles(origin, b.geo) <= query.maxDistanceMi!,
+      );
     }
 
     items = this.sortBusinesses(items, query.sort ?? "relevance", origin);
@@ -197,9 +199,13 @@ export class MockDataSource implements DataSource {
 
   private sortBusinesses(items: Business[], sort: BusinessQuery["sort"], origin = REDMOND_CENTER) {
     const by = [...items];
+    const distance = (business: Business) =>
+      business.hasPreciseLocation === false ? Number.POSITIVE_INFINITY : distanceMiles(origin, business.geo);
+    const byDistanceThenName = (a: Business, b: Business) =>
+      distance(a) - distance(b) || a.name.localeCompare(b.name);
     switch (sort) {
       case "distance":
-        return by.sort((a, b) => distanceMiles(origin, a.geo) - distanceMiles(origin, b.geo));
+        return by.sort(byDistanceThenName);
       case "recommend":
         return by.sort((a, b) => (b.recommendCount ?? 0) - (a.recommendCount ?? 0));
       case "name":
@@ -212,7 +218,7 @@ export class MockDataSource implements DataSource {
         // "relevance": verified first, then nearer. Equal ranking otherwise — no paid boosts.
         return by.sort((a, b) => {
           if (a.verified !== b.verified) return Number(b.verified) - Number(a.verified);
-          return distanceMiles(origin, a.geo) - distanceMiles(origin, b.geo);
+          return byDistanceThenName(a, b);
         });
     }
   }
@@ -468,6 +474,7 @@ export class MockDataSource implements DataSource {
       description: input.description ?? "",
       address: input.address,
       geo: input.geo ?? REDMOND_CENTER,
+      hasPreciseLocation: !!input.geo,
       phone: input.phone,
       website: input.website,
       email: input.email,

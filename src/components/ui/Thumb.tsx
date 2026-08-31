@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ImageIcon } from "lucide-react";
+import { Compass, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export interface ThumbProps {
@@ -15,9 +15,9 @@ export interface ThumbProps {
   fit?: "auto" | "cover" | "contain";
 }
 
-// ONE consistent on-brand placeholder everywhere: a warm tan (secondary) tinted square
-// with a pine-green initial. Single tint + single initial color (not per-letter varying),
-// so every photo-less card reads identically across Home / Results / Saved / Search.
+// ONE consistent on-brand placeholder everywhere: a warm tan (secondary) frame
+// with the Compass mark. A generic brand mark is more deliberate than a giant initial,
+// while the adjacent accessible name still identifies the listing/article accurately.
 const PLACEHOLDER = "bg-secondary text-positive";
 
 /**
@@ -32,8 +32,23 @@ const PLACEHOLDER = "bg-secondary text-positive";
 const FIT_TOLERANCE = 1.4;
 
 /**
+ * Facebook CDN image URLs are short-lived, hotlink-protected assets. Loading them directly
+ * produces noisy 403s once their signed query expires, so render the intentional branded
+ * fallback immediately instead of briefly flashing a broken card.
+ */
+function isStableImageSource(src?: string): src is string {
+  if (!src) return false;
+  try {
+    const host = new URL(src, "https://app.redmondcompass.com").hostname.toLowerCase();
+    return host !== "fbcdn.net" && !host.endsWith(".fbcdn.net");
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Image with a branded placeholder fallback (used everywhere thumbnails appear).
- * When no src or on load error, shows the tinted tile with the seed's initial —
+ * When no src or on load error, shows a tinted tile with the Compass mark —
  * so a photo-less free listing still reads complete, never broken.
  *
  * FIT (2026-08-14): most `businesses.photos` entries are LOGOS hotlinked from the owner's
@@ -57,10 +72,10 @@ export function Thumb({
   rounded = "rounded-md",
   fit = "auto",
 }: ThumbProps) {
-  const [failed, setFailed] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string>();
   const [contain, setContain] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const showImg = src && !failed;
+  const showImg = isStableImageSource(src) && src !== failedSrc;
   const useContain = fit === "contain" || (fit === "auto" && contain);
 
   // Measured on load rather than assumed: the same Thumb renders at 144×80 in the rail,
@@ -93,7 +108,7 @@ export function Thumb({
           alt={alt}
           loading="lazy"
           onLoad={chooseFit}
-          onError={() => setFailed(true)}
+          onError={() => setFailedSrc(src)}
           className={cn(
             "h-full w-full",
             useContain ? "object-contain p-1.5" : "object-cover",
@@ -101,8 +116,12 @@ export function Thumb({
           )}
         />
       ) : seed ? (
-        <span aria-hidden className="font-heading text-lg font-semibold">
-          {seed.trim().charAt(0).toUpperCase()}
+        <span
+          aria-hidden
+          data-thumb-fallback="brand"
+          className="flex h-2/5 w-2/5 min-h-4 min-w-4 max-h-9 max-w-9 items-center justify-center rounded-full border border-positive/20 bg-background/65 text-positive/70 shadow-sm"
+        >
+          <Compass className="h-3/5 w-3/5" strokeWidth={1.8} />
         </span>
       ) : (
         <ImageIcon aria-hidden className="opacity-40" size={20} />

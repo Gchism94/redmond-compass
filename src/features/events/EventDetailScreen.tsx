@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { MapPin, Clock, Bookmark, Navigation } from "lucide-react";
+import { MapPin, Clock, Bookmark, Navigation, CalendarDays, ExternalLink } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Button, Thumb, StatusBadge, EmptyState, Skeleton, AddToCalendar, ErrorState } from "@/components";
 import { useEvent, useBusinessById } from "@/data/queries";
@@ -52,11 +52,33 @@ export function EventDetailScreen() {
   if (!event) return null;
 
   const badge = eventDateBadge(event.startAt);
+  const address = event.address?.trim();
+  const venueName = event.venueName?.trim();
+  const description = event.description?.trim();
+  const eventLink = safeEventLink(event.linkCta);
+  const directions = event.geo || address
+    ? directionsHref({ address, geo: event.geo })
+    : undefined;
 
   return (
     <div className="pb-6">
       <ScreenHeader title={t("events.event")} back />
-      <Thumb src={event.image} seed={event.title} alt={event.title} className="h-44 w-full" rounded="rounded-none" />
+      {event.image ? (
+        <Thumb
+          src={event.image}
+          seed={event.title}
+          alt={event.title}
+          className="h-44 w-full"
+          rounded="rounded-none"
+        />
+      ) : (
+        <div className="flex h-36 w-full items-center justify-center bg-secondary text-positive" aria-hidden>
+          <div className="flex items-center gap-2 rounded-xl border border-positive/15 bg-background/35 px-5 py-3">
+            <CalendarDays size={28} strokeWidth={1.6} aria-hidden />
+            <span className="font-heading text-sm font-semibold">{t("events.event")}</span>
+          </div>
+        </div>
+      )}
 
       <div className="px-4 pt-4">
         <div className="flex items-start gap-3">
@@ -84,23 +106,33 @@ export function EventDetailScreen() {
             <Clock size={15} className="mt-0.5 shrink-0 text-muted-foreground" />
             <span className="text-foreground">{eventTimeShort(event.startAt)}</span>
           </div>
-          {event.venueName && (
+          {(venueName || address) && (
             <div className="flex gap-2.5">
               <MapPin size={15} className="mt-0.5 shrink-0 text-muted-foreground" />
               <span className="text-foreground">
-                {event.venueName}
-                {event.address ? <span className="text-muted-foreground"> · {event.address}</span> : null}
+                {venueName}
+                {venueName && address ? <span className="text-muted-foreground"> · {address}</span> : address}
               </span>
             </div>
           )}
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <AddToCalendar event={event} align="left" />
+          {eventLink && (
+            <a
+              href={eventLink.href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-tap items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-4 text-sm font-semibold text-positive transition hover:bg-muted"
+            >
+              {eventLink.label} <ExternalLink size={14} aria-hidden />
+            </a>
+          )}
         </div>
 
-        {event.description && (
-          <p className="mt-4 text-sm leading-relaxed text-foreground">{event.description}</p>
+        {description && (
+          <p className="mt-4 text-sm leading-relaxed text-foreground">{description}</p>
         )}
 
         {host.data && (
@@ -113,14 +145,16 @@ export function EventDetailScreen() {
         )}
 
         <div className="mt-5 flex gap-2">
-          <a
-            href={directionsHref({ address: event.address, geo: event.geo })}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex min-h-tap h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground"
-          >
-            <Navigation size={16} /> {t("common.directions")}
-          </a>
+          {directions && (
+            <a
+              href={directions}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-tap h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground"
+            >
+              <Navigation size={16} /> {t("common.directions")}
+            </a>
+          )}
           <Button
             variant={session.isSavedEvent(event.id) ? "positive" : "ghost"}
             onClick={() => session.toggleSaveEvent(event.id)}
@@ -136,4 +170,16 @@ export function EventDetailScreen() {
       </div>
     </div>
   );
+}
+
+function safeEventLink(link?: { label: string; url: string }): { label: string; href: string } | undefined {
+  const rawUrl = link?.url.trim();
+  if (!rawUrl) return undefined;
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return undefined;
+    return { href: url.href, label: link?.label.trim() || url.hostname.replace(/^www\./, "") };
+  } catch {
+    return undefined;
+  }
 }

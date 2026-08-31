@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowUpDown, SlidersHorizontal, Map as MapIcon, MapPin, ChevronLeft, Search, X } from "lucide-react";
-import {   Chip, Toggle, ResultCard, EventCard, FeedItem, EmptyState, Skeleton, ErrorState } from "@/components";
+import { ArrowUpDown, SlidersHorizontal, MapPin, ChevronLeft, Search, X } from "lucide-react";
+import { Chip, ResultCard, EventCard, FeedItem, EmptyState, Skeleton, ErrorState } from "@/components";
 import { IconButton } from "@/components/ui/IconButton";
 import { useBusinesses, useEvents, useSearch } from "@/data/queries";
 import type { BusinessSort } from "@/data/DataSource";
@@ -12,6 +12,7 @@ import { useI18n, type DictKey } from "@/i18n";
 import { useIsDesktop } from "@/lib/useMediaQuery";
 
 type Tab = "all" | "businesses" | "events" | "community";
+const RESULT_BATCH_SIZE = 30;
 const SORTS: { value: BusinessSort; labelKey: DictKey }[] = [
   { value: "relevance", labelKey: "results.sort.relevance" },
   { value: "distance", labelKey: "results.sort.distance" },
@@ -19,7 +20,7 @@ const SORTS: { value: BusinessSort; labelKey: DictKey }[] = [
   { value: "name", labelKey: "results.sort.name" },
 ];
 
-/** Results & filters (S4). List view + filters; map is deferred (seam present). */
+/** Results & filters (S4). */
 export function ResultsScreen() {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -27,15 +28,17 @@ export function ResultsScreen() {
   const desktop = useIsDesktop();
   const [params, setParams] = useSearchParams();
   const [tab, setTab] = useState<Tab>("all");
-  const [view, setView] = useState<"list" | "map">("list");
   const [panel, setPanel] = useState<"none" | "sort" | "filters">("none");
+  const [visibleCount, setVisibleCount] = useState(RESULT_BATCH_SIZE);
 
   const q = params.get("q") ?? "";
   const cat = params.get("cat") ?? undefined;
   const openNow = params.get("openNow") === "1";
-  const sort = (params.get("sort") as BusinessSort) ?? "relevance";
+  const canUseDistance = !!session.location;
+  const requestedSort = (params.get("sort") as BusinessSort) ?? "relevance";
+  const sort = requestedSort === "distance" && !canUseDistance ? "relevance" : requestedSort;
   const tags = useMemo(() => (params.get("tags") ? params.get("tags")!.split(",") : []), [params]);
-  const maxmi = params.get("maxmi") ? Number(params.get("maxmi")) : undefined;
+  const maxmi = canUseDistance && params.get("maxmi") ? Number(params.get("maxmi")) : undefined;
 
   const businesses = useBusinesses({
     text: q || undefined,
@@ -60,6 +63,7 @@ export function ResultsScreen() {
       if (v == null || v === "") p.delete(k);
       else p.set(k, v);
     }
+    setVisibleCount(RESULT_BATCH_SIZE);
     setParams(p, { replace: true });
   };
 
@@ -105,85 +109,72 @@ export function ResultsScreen() {
                   type="button"
                   aria-label={t("results.clearSearch")}
                   onClick={() => navigate("/search")}
-                  className="shrink-0 rounded-full p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-positive/40"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-positive/40"
                 >
                   <X size={16} />
                 </button>
               )}
             </div>
           </div>
-          <Toggle
-            ariaLabel={t("results.list")}
-            value={view}
-            onChange={setView}
-            options={[
-              { value: "list", label: t("results.list") },
-              { value: "map", label: t("results.map") },
-            ]}
-          />
         </div>
 
-        {view === "list" && (
-          <>
-            <div className="mt-2 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                {count === 1 ? t("results.place") : t("results.places", { n: count })}
-                {openNow ? t("results.openNowSuffix") : ""}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPanel((p) => (p === "sort" ? "none" : "sort"))}
-                  className="inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
-                >
-                  <ArrowUpDown size={13} /> {t("results.sort")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPanel((p) => (p === "filters" ? "none" : "filters"))}
-                  className="inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
-                >
-                  <SlidersHorizontal size={13} /> {t("results.filters")}
-                </button>
-              </div>
-            </div>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {count === 1 ? t("results.place") : t("results.places", { n: count })}
+            {openNow ? t("results.openNowSuffix") : ""}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPanel((p) => (p === "sort" ? "none" : "sort"))}
+              className="inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
+            >
+              <ArrowUpDown size={13} /> {t("results.sort")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPanel((p) => (p === "filters" ? "none" : "filters"))}
+              className="inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium"
+            >
+              <SlidersHorizontal size={13} /> {t("results.filters")}
+            </button>
+          </div>
+        </div>
 
-            {activeFilters.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {activeFilters.map((f) => (
-                  <Chip key={f.label} active onRemove={f.clear}>
-                    {f.label}
-                  </Chip>
-                ))}
-              </div>
-            )}
-
-            {/* Result tabs */}
-            <div className="mt-2.5 flex gap-1.5 overflow-x-auto">
-              {(["all", "businesses", "events", "community"] as Tab[]).map((tb) => (
-                <button
-                  key={tb}
-                  type="button"
-                  onClick={() => setTab(tb)}
-                  className={
-                    "inline-flex min-h-tap shrink-0 items-center rounded-pill px-3 py-1.5 text-xs font-medium transition " +
-                    (tab === tb ? "bg-foreground text-background" : "bg-muted text-muted-foreground")
-                  }
-                >
-                  {t(`results.tab.${tb}` as DictKey)}
-                </button>
-              ))}
-            </div>
-          </>
+        {activeFilters.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {activeFilters.map((f) => (
+              <Chip key={f.label} active onRemove={f.clear}>
+                {f.label}
+              </Chip>
+            ))}
+          </div>
         )}
+
+        {/* Result tabs */}
+        <div className="mt-2.5 flex gap-1.5 overflow-x-auto">
+          {(["all", "businesses", "events", "community"] as Tab[]).map((tb) => (
+            <button
+              key={tb}
+              type="button"
+              onClick={() => setTab(tb)}
+              className={
+                "inline-flex min-h-tap shrink-0 items-center rounded-pill px-3 py-1.5 text-xs font-medium transition " +
+                (tab === tb ? "bg-foreground text-background" : "bg-muted text-muted-foreground")
+              }
+            >
+              {t(`results.tab.${tb}` as DictKey)}
+            </button>
+          ))}
+        </div>
       </header>
 
       {/* Sort panel */}
-      {view === "list" && panel === "sort" && (
+      {panel === "sort" && (
         <div className="border-b border-border bg-card px-4 py-3">
           <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.sortBy")}</p>
           <div className="flex flex-wrap gap-2">
-            {SORTS.map((s) => (
+            {SORTS.filter((s) => s.value !== "distance" || canUseDistance).map((s) => (
               <Chip
                 key={s.value}
                 active={sort === s.value}
@@ -200,7 +191,7 @@ export function ResultsScreen() {
       )}
 
       {/* Filters panel */}
-      {view === "list" && panel === "filters" && (
+      {panel === "filters" && (
         <div className="space-y-3 border-b border-border bg-card px-4 py-3">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.availability")}</p>
@@ -208,16 +199,18 @@ export function ResultsScreen() {
               {t("search.openNow")}
             </Chip>
           </div>
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.distance")}</p>
-            <div className="flex flex-wrap gap-2">
-              {[2, 5, 10].map((mi) => (
-                <Chip key={mi} active={maxmi === mi} onClick={() => patch({ maxmi: maxmi === mi ? null : String(mi) })}>
-                  {t("results.withinMi", { n: mi })}
-                </Chip>
-              ))}
+          {canUseDistance && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.distance")}</p>
+              <div className="flex flex-wrap gap-2">
+                {[2, 5, 10].map((mi) => (
+                  <Chip key={mi} active={maxmi === mi} onClick={() => patch({ maxmi: maxmi === mi ? null : String(mi) })}>
+                    {t("results.withinMi", { n: mi })}
+                  </Chip>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.amenities")}</p>
             <div className="flex flex-wrap gap-2">
@@ -232,10 +225,7 @@ export function ResultsScreen() {
       )}
 
       {/* Body */}
-      {view === "map" ? (
-        <MapPlaceholder onBack={() => setView("list")} />
-      ) : (
-        <div className="px-4 lg:pt-5">
+      <div className="px-4 lg:pt-5">
           {tab === "all" || tab === "businesses" ? (
             businesses.isLoading ? (
               <ResultsSkeleton />
@@ -253,21 +243,34 @@ export function ResultsScreen() {
               /* Mobile keeps the compact action row. Desktop gets an image-led card with
                  enough width for names and actions; four columns made the mobile row
                  overlap inside a ~270px tile. */
-              <ul className="divide-y divide-border lg:grid lg:grid-cols-2 lg:gap-6 lg:divide-y-0 xl:grid-cols-3">
-                {businesses.data?.items.map((b) => (
-                  <li key={b.id} className="min-w-0">
-                    <ResultCard
-                      business={b}
-                      variant={desktop ? "card" : "row"}
-                      origin={session.location ?? undefined}
-                      saved={session.isSaved(b.id)}
-                      onSave={() => session.toggleSaveBusiness(b.id)}
-                      following={session.isFollowing(b.id)}
-                      onFollow={() => session.toggleFollow(b.id)}
-                    />
-                  </li>
-                ))}
-              </ul>
+              <>
+                <ul className="divide-y divide-border lg:grid lg:grid-cols-2 lg:gap-6 lg:divide-y-0 xl:grid-cols-3">
+                  {businesses.data?.items.slice(0, visibleCount).map((b) => (
+                    <li key={b.id} className="min-w-0">
+                      <ResultCard
+                        business={b}
+                        variant={desktop ? "card" : "row"}
+                        origin={session.location ?? undefined}
+                        saved={session.isSaved(b.id)}
+                        onSave={() => session.toggleSaveBusiness(b.id)}
+                        following={session.isFollowing(b.id)}
+                        onFollow={() => session.toggleFollow(b.id)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+                {(businesses.data?.items.length ?? 0) > visibleCount && (
+                  <div className="flex justify-center py-6">
+                    <button
+                      type="button"
+                      onClick={() => setVisibleCount((count) => count + RESULT_BATCH_SIZE)}
+                      className="inline-flex min-h-tap items-center justify-center rounded-pill border border-border bg-card px-5 text-sm font-semibold text-foreground shadow-card transition hover:border-border-strong hover:bg-muted"
+                    >
+                      {t("results.showMore")}
+                    </button>
+                  </div>
+                )}
+              </>
             )
           ) : tab === "events" ? (
             <div className="divide-y divide-border">
@@ -332,8 +335,7 @@ export function ResultsScreen() {
               )}
             </div>
           )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -401,18 +403,5 @@ function NoResults({
           ))}
       </div>
     </div>
-  );
-}
-
-/** Map view is deferred (BUILD-BRIEF §3) — this seam keeps the toggle honest. */
-function MapPlaceholder({ onBack }: { onBack: () => void }) {
-  const { t } = useI18n();
-  return (
-    <EmptyState
-      icon={<MapIcon size={22} />}
-      title={t("results.mapSoon")}
-      message={t("results.mapSoonMsg")}
-      action={{ label: t("results.backToList"), onClick: onBack }}
-    />
   );
 }

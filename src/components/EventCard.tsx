@@ -3,7 +3,7 @@ import { Bookmark, MapPin } from "lucide-react";
 import type { EventItem } from "@/lib/types";
 import { cn } from "@/lib/cn";
 import { eventDateBadge, eventTimeShort } from "@/lib/format";
-import { formatDistance, distanceMiles, REDMOND_CENTER } from "@/lib/geo";
+import { formatDistance, distanceMiles } from "@/lib/geo";
 import type { GeoPoint } from "@/lib/types";
 import { AddToCalendar } from "./AddToCalendar";
 import { useI18n } from "@/i18n";
@@ -27,7 +27,7 @@ export interface EventCardProps {
  */
 export function EventCard({
   event,
-  origin = REDMOND_CENTER,
+  origin,
   saved,
   onSave,
   addToCalendar,
@@ -37,21 +37,19 @@ export function EventCard({
   const { t } = useI18n();
   const badge = eventDateBadge(event.startAt);
   const dist =
-    event.geo != null ? ` · ${formatDistance(distanceMiles(origin, event.geo))}` : "";
+    origin && event.geo != null ? ` · ${formatDistance(distanceMiles(origin, event.geo))}` : "";
   const meta = `${eventTimeShort(event.startAt)}${event.venueName ? ` · ${event.venueName}` : ""}${dist}`;
 
   return (
     <div className={cn("flex items-center gap-3 py-2.5", className)}>
-      <Link
-        to={`/events/${event.id}`}
-        className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-secondary px-2.5 py-1.5 leading-none text-secondary-foreground focus-visible:outline-none"
-        tabIndex={-1}
+      <div
+        className="flex min-h-tap shrink-0 flex-col items-center justify-center rounded-lg bg-secondary px-2.5 py-1.5 leading-none text-secondary-foreground"
         aria-hidden
       >
         <span className="font-heading text-md font-bold">{badge.day}</span>
         <span className="text-[10px] font-medium uppercase text-muted-foreground">{badge.mo}</span>
-      </Link>
-      <Link to={`/events/${event.id}`} className="min-w-0 flex-1 focus-visible:outline-none">
+      </div>
+      <Link to={`/events/${event.id}`} className="flex min-h-tap min-w-0 flex-1 flex-col justify-center focus-visible:outline-none">
         <div className="font-heading text-sm font-semibold leading-tight text-foreground">
           {event.title}
         </div>

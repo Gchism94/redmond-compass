@@ -87,7 +87,9 @@ class SupabaseDataSource implements DataSource {
     if (query.text) items = items.filter((b) => textMatch(b, query.text!));
     if (query.openNow) items = items.filter((b) => getOpenStatus(b.hours).open);
     if (query.maxDistanceMi != null)
-      items = items.filter((b) => distanceMiles(origin, b.geo) <= query.maxDistanceMi!);
+      items = items.filter(
+        (b) => b.hasPreciseLocation !== false && distanceMiles(origin, b.geo) <= query.maxDistanceMi!,
+      );
 
     items = this.sortBusinesses(items, query.sort ?? "relevance", origin);
 
@@ -99,9 +101,13 @@ class SupabaseDataSource implements DataSource {
 
   private sortBusinesses(items: Business[], sort: BusinessQuery["sort"], origin = REDMOND_CENTER) {
     const by = [...items];
+    const distance = (business: Business) =>
+      business.hasPreciseLocation === false ? Number.POSITIVE_INFINITY : distanceMiles(origin, business.geo);
+    const byDistanceThenName = (a: Business, b: Business) =>
+      distance(a) - distance(b) || a.name.localeCompare(b.name);
     switch (sort) {
       case "distance":
-        return by.sort((a, b) => distanceMiles(origin, a.geo) - distanceMiles(origin, b.geo));
+        return by.sort(byDistanceThenName);
       case "recommend":
         return by.sort((a, b) => (b.recommendCount ?? 0) - (a.recommendCount ?? 0));
       case "name":
@@ -114,7 +120,7 @@ class SupabaseDataSource implements DataSource {
         // relevance: verified first, then nearer. NO paid boost (no such column exists).
         return by.sort((a, b) => {
           if (a.verified !== b.verified) return Number(b.verified) - Number(a.verified);
-          return distanceMiles(origin, a.geo) - distanceMiles(origin, b.geo);
+          return byDistanceThenName(a, b);
         });
     }
   }
@@ -513,8 +519,10 @@ class SupabaseDataSource implements DataSource {
         subcategories: input.subcategories ?? [],
         description: input.description ?? "",
         address: input.address,
-        lat: input.geo?.lat ?? REDMOND_CENTER.lat,
-        lng: input.geo?.lng ?? REDMOND_CENTER.lng,
+        // No geocoder runs in this form. NULL is more accurate than silently pinning a new
+        // business to Redmond's center and then presenting that synthetic point as nearby.
+        lat: input.geo?.lat ?? null,
+        lng: input.geo?.lng ?? null,
         phone: input.phone,
         website: input.website,
         email: input.email,

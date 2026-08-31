@@ -58,8 +58,11 @@ export function SearchScreen() {
   const acMeta = useMemo(() => buildAutocomplete, []);
 
   return (
-    <div className="pb-4">
-      <header className="sticky top-0 z-10 bg-background px-4 pt-4 pb-2">
+    <div data-search-layout className="mx-auto w-full max-w-4xl pb-4 lg:pt-6">
+      <header className="sticky top-0 z-10 bg-background px-4 pb-3 pt-5 lg:static lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-6 lg:shadow-card">
+        <div className="mb-3">
+          <h1 className="font-heading text-2xl font-bold text-foreground lg:text-3xl">{t("search.title")}</h1>
+        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -71,7 +74,7 @@ export function SearchScreen() {
             value={query}
             onChange={setQuery}
             placeholder={t("home.searchPlaceholder")}
-            autoFocus
+            className="focus-within:shadow-card focus-within:ring-1"
             enterKeyHint="search"
           />
         </form>
@@ -90,7 +93,7 @@ export function SearchScreen() {
 
       {typing ? (
         /* ---- Unified autocomplete ---- */
-        <div className="px-4">
+        <div className="px-4 lg:px-6">
           <button
             type="button"
             onClick={() => submit(query)}
@@ -145,13 +148,13 @@ export function SearchScreen() {
       ) : (
         /* ---- Idle browse ---- */
         <>
-          <section className="px-4 py-3">
+          <section className="px-4 py-4 lg:px-6 lg:py-6">
             <SectionHeader title={t("search.browseByCategory")} variant="eyebrow" />
             <CategoryGrid />
           </section>
 
           {recents.length > 0 && (
-            <section className="px-4 py-3">
+            <section className="px-4 py-3 lg:px-6 lg:py-4">
               <SectionHeader title={t("search.recent")} variant="eyebrow" />
               <ul className="-my-1 divide-y divide-border">
                 {recents.map((r) => (
@@ -170,7 +173,7 @@ export function SearchScreen() {
             </section>
           )}
 
-          <section className="px-4 py-3">
+          <section className="px-4 py-3 lg:px-6 lg:py-4">
             <SectionHeader title={t("search.trending")} variant="eyebrow" />
             <div className="flex flex-wrap gap-2">
               {TRENDING.map((t) => (
@@ -181,7 +184,7 @@ export function SearchScreen() {
             </div>
           </section>
 
-          <section className="px-4 py-3">
+          <section className="px-4 py-3 lg:px-6 lg:py-4">
             <SectionHeader title={t("search.collections")} variant="eyebrow" />
             <div className="flex flex-col gap-2.5">
               {COLLECTIONS.map((c) => {

@@ -47,23 +47,36 @@ export function NewsArticleScreen() {
     );
   if (!article) return null;
 
+  const source = article.source.trim();
+  const author = article.author?.trim();
+
   return (
     <article className="pb-8">
       <ScreenHeader title={t("news.title")} back />
       <div className="px-4">
         <h1 className="font-heading text-2xl font-bold leading-tight text-foreground">{article.title}</h1>
         <p className="mt-2 text-xs text-muted-foreground">
-          {article.source}
-          {article.author ? ` · ${article.author}` : ""} · {relativeTime(article.publishedAt)}
+          {source ? `${source} · ` : ""}
+          {author ? `${author} · ` : ""}
+          {relativeTime(article.publishedAt)}
         </p>
       </div>
-      <Thumb
-        src={article.image}
-        seed={article.source}
-        alt={article.title}
-        className="mt-3 h-48 w-full"
-        rounded="rounded-none"
-      />
+      {article.image ? (
+        <Thumb
+          src={article.image}
+          seed={source}
+          alt={article.title}
+          className="mt-3 h-48 w-full"
+          rounded="rounded-none"
+        />
+      ) : (
+        <div className="mt-3 flex h-36 w-full items-center justify-center bg-secondary text-positive" aria-hidden>
+          <div className="flex items-center gap-2 rounded-xl border border-positive/15 bg-background/35 px-5 py-3">
+            <Newspaper size={28} strokeWidth={1.6} aria-hidden />
+            <span className="font-heading text-sm font-semibold">{t("news.title")}</span>
+          </div>
+        </div>
+      )}
       <div className="px-4 pt-4">
         <p className="text-base leading-relaxed text-foreground">{article.body}</p>
         <p className="mt-6 text-xs text-muted-foreground">

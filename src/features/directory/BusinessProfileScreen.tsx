@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ExternalLink, ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock, Heart, Check } from "lucide-react";
+import { ExternalLink, ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock, Heart, Check, Compass } from "lucide-react";
 import { ActionBar, Button, EventCard, FeedItem, StatusBadge, VerifiedBadge, OpenStatusLabel, Chip, Thumb, Skeleton, EmptyState, ErrorState } from "@/components";
 import { IconButton } from "@/components/ui/IconButton";
 import {
@@ -12,8 +12,8 @@ import {
   useHasRecommended,
   useRecommend,
 } from "@/data/queries";
-import { WEEKDAY_ORDER, dayLabel, todayKey, formatClock } from "@/lib/hours";
-import { directionsHref } from "@/lib/links";
+import { WEEKDAY_ORDER, dayLabel, todayKey, formatClock, hasValidWeeklyHours, hoursTextFallback } from "@/lib/hours";
+import { directionsHref, telHref } from "@/lib/links";
 import { formatClassDate, relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
 import type { Business } from "@/lib/types";
@@ -73,9 +73,20 @@ export function BusinessProfileScreen() {
     );
   if (!business) return null;
 
+  const hasStructuredHours = hasValidWeeklyHours(business.hours);
+  const fallbackHours = hoursTextFallback(business.hours, business.hoursText);
+  const address = business.address.trim();
+  const phone = business.phone?.trim();
+  const phoneHref = telHref(phone);
+  const website = safeWebsite(business.website);
+  const amenityTags = business.amenityTags.map((tag) => tag.trim()).filter(Boolean);
+  const description = (business.longDescription || business.description).trim();
+  const hasAtAGlance =
+    hasStructuredHours || !!fallbackHours || !!address || !!phoneHref || !!website || amenityTags.length > 0;
+
   const shareBusiness = async () => {
     setShareNotice(null);
-    const data = { title: business.name, text: business.description, url: window.location.href };
+    const data = { title: business.name, text: description, url: window.location.href };
     try {
       if (navigator.share) {
         await navigator.share(data);
@@ -112,13 +123,17 @@ export function BusinessProfileScreen() {
       )}
 
       {/* Hero (single photo at MVP; gallery is Member) */}
-      <Thumb
-        src={business.photos[0]}
-        seed={business.name}
-        alt={business.name}
-        className="h-44 w-full lg:h-64"
-        rounded="rounded-none"
-      />
+      {business.photos[0] ? (
+        <Thumb
+          src={business.photos[0]}
+          seed={business.name}
+          alt={business.name}
+          className="brand-image-frame h-44 w-full lg:h-64"
+          rounded="rounded-none"
+        />
+      ) : (
+        <BrandedHero />
+      )}
 
       {/* Header */}
       <div className="px-4 pt-3">
@@ -129,7 +144,13 @@ export function BusinessProfileScreen() {
           {[categoryLabelFor(business.category), ...(business.subcategories ?? [])].join(" · ")}
         </p>
         <div className="mt-2">
-          <OpenStatusLabel hours={business.hours} />
+          {hasStructuredHours ? (
+            <OpenStatusLabel hours={business.hours} />
+          ) : fallbackHours ? (
+            <p className="text-sm text-muted-foreground">{fallbackHours}</p>
+          ) : (
+            <OpenStatusLabel />
+          )}
         </div>
       </div>
 
@@ -158,47 +179,59 @@ export function BusinessProfileScreen() {
       <RecommendRow businessId={business.id} />
 
       {/* At a glance */}
-      <Section title={t("profile.atAGlance")}>
-        {business.hours && <HoursBlock business={business} />}
-        {!business.hours && business.hoursText && (
-          <Fact icon={<Clock size={15} />} label={t("profile.hours")}>
-            {business.hoursText}
-          </Fact>
-        )}
-        <Fact icon={<MapPin size={15} />} label={t("profile.address")}>
-          <a
-            href={directionsHref({ address: business.address, geo: business.geo })}
-            target="_blank"
-            rel="noreferrer"
-            className="text-positive hover:underline"
-          >
-            {business.address}
-          </a>
-        </Fact>
-        {business.phone && (
-          <Fact icon={<PhoneIcon size={15} />} label={t("profile.phone")}>
-            <a href={`tel:${business.phone.replace(/[^\d+]/g, "")}`} className="text-positive hover:underline">
-              {business.phone}
-            </a>
-          </Fact>
-        )}
-        {business.website && (
-          <Fact icon={<Globe size={15} />} label={t("profile.website")}>
-            <a href={business.website} target="_blank" rel="noreferrer" className="text-positive hover:underline">
-              {business.website.replace(/^https?:\/\//, "")}
-            </a>
-          </Fact>
-        )}
-        {business.amenityTags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {business.amenityTags.map((t) => (
-              <Chip key={t} as="span">
-                {t}
-              </Chip>
-            ))}
-          </div>
-        )}
-      </Section>
+      {hasAtAGlance && (
+        <Section title={t("profile.atAGlance")}>
+          {hasStructuredHours && <HoursBlock business={business} />}
+          {!hasStructuredHours && fallbackHours && (
+            <Fact icon={<Clock size={15} />} label={t("profile.hours")}>
+              {fallbackHours}
+            </Fact>
+          )}
+          {address && (
+            <Fact icon={<MapPin size={15} />} label={t("profile.address")}>
+              <a
+                href={directionsHref({ address })}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-tap items-center text-positive hover:underline"
+              >
+                {address}
+              </a>
+            </Fact>
+          )}
+          {phoneHref && phone && (
+            <Fact icon={<PhoneIcon size={15} />} label={t("profile.phone")}>
+              <a
+                href={phoneHref}
+                className="inline-flex min-h-tap items-center text-positive hover:underline"
+              >
+                {phone}
+              </a>
+            </Fact>
+          )}
+          {website && (
+            <Fact icon={<Globe size={15} />} label={t("profile.website")}>
+              <a
+                href={website.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-tap items-center text-positive hover:underline"
+              >
+                {website.label}
+              </a>
+            </Fact>
+          )}
+          {amenityTags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {amenityTags.map((tag) => (
+                <Chip key={tag} as="span">
+                  {tag}
+                </Chip>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
 
       {/* What's new — bulletins */}
       {bulletins.isError ? (
@@ -294,13 +327,15 @@ export function BusinessProfileScreen() {
       )}
 
       {/* About */}
-      <Section title={t("profile.about")}>
-        <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{business.longDescription || business.description}</p>
-      </Section>
+      {description && (
+        <Section title={t("profile.about")}>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{description}</p>
+        </Section>
+      )}
 
       <p className="px-4 pt-2 text-center text-xs text-muted-foreground">
         {t("profile.providedBy")} ·{" "}
-        <Link to="/resources" className="font-semibold text-positive hover:underline">
+        <Link to="/resources" className="inline-flex min-h-tap items-center font-semibold text-positive hover:underline">
           {t("profile.seeResources")}
         </Link>
       </p>
@@ -343,6 +378,7 @@ function RecommendRow({ businessId }: { businessId: string }) {
       <Button
         size="sm"
         variant={recommended ? "positive" : "ghost"}
+        className="min-h-tap"
         onClick={onRecommend}
         disabled={recommended || recommend.isPending}
       >
@@ -412,7 +448,7 @@ function HoursBlock({ business }: { business: Business }) {
                 {isToday ? ` · ${tGlobal("day.today")}` : ""}
               </span>
               <span className="tabular-nums">
-                {dh.closed || !dh.open ? "Closed" : `${formatClock(dh.open)} – ${formatClock(dh.close)}`}
+                {dh.closed || !dh.open ? tGlobal("status.closed") : `${formatClock(dh.open)} – ${formatClock(dh.close)}`}
               </span>
             </div>
           );
@@ -420,6 +456,36 @@ function HoursBlock({ business }: { business: Business }) {
       </div>
     </div>
   );
+}
+
+function BrandedHero() {
+  return (
+    <div
+      className="flex h-44 w-full items-center justify-center bg-secondary text-positive lg:h-64"
+      aria-hidden
+    >
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-positive/15 bg-background/35 px-6 py-4">
+        <Compass size={34} strokeWidth={1.6} aria-hidden />
+        <span className="font-heading text-sm font-semibold tracking-wide">Redmond Compass</span>
+      </div>
+    </div>
+  );
+}
+
+function safeWebsite(value?: string): { href: string; label: string } | undefined {
+  const raw = value?.trim();
+  if (!raw) return undefined;
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return undefined;
+    if (!url.hostname.includes(".")) return undefined;
+    return {
+      href: url.href,
+      label: `${url.hostname.replace(/^www\./, "")}${url.pathname === "/" ? "" : url.pathname.replace(/\/$/, "")}`,
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 function ProfileSkeleton() {

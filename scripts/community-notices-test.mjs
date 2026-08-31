@@ -1,15 +1,10 @@
 // Town notices on Community (item 6, 2026-08-15).
 //
 // WHY THIS SCREEN IS DELICATE. The only row in `community_bulletins` today is a Fourth of
-// July fire-danger warning with `pinned = true`, six weeks old. Pinned means it sorts
-// FIRST. Rendered without a date it reads as current safety guidance — the failure mode is
-// not a broken page, it is a page that confidently tells someone the wrong thing about a
-// fire risk. So the date is not decoration here and is asserted as a hard requirement.
-//
-// There is deliberately NO staleness-threshold logic to test, and that absence is itself
-// asserted: an old notice must still RENDER (the reader decides), it must simply say when
-// it is from. One row is not enough to invent a cutoff from, and any cutoff would be wrong
-// for the next notice — a road closure is stale in a week, a memorial never is.
+// July fire-danger warning with `pinned = true`, long past its useful prominence window.
+// Pinned data alone must not keep it at the top forever. Old notices remain readable and
+// absolutely dated, but start inside a collapsed Past notices disclosure. When a source
+// supplies an explicit active-until date, that editorial signal takes precedence.
 //
 //   node scripts/community-notices-test.mjs
 import { build } from "esbuild";
@@ -55,7 +50,16 @@ const STALE = {
   supportLabel: "Donate",
   pinned: true,
   category: "announcement",
-  createdAt: "2026-07-03T05:41:30.455Z",
+  createdAt: "2000-07-03T05:41:30.455Z",
+};
+const EXPLICIT_ACTIVE = {
+  id: "cn_explicit",
+  title: "Long-running water conservation notice",
+  body: "This notice has an explicit active-until date.",
+  pinned: true,
+  category: "announcement",
+  createdAt: "2001-06-01T17:00:00.000Z",
+  activeUntil: "2099-12-31T23:59:59.000Z",
 };
 const RECENT = {
   id: "cn_recent",
@@ -63,8 +67,9 @@ const RECENT = {
   body: "The remodel is finished.",
   pinned: false,
   category: "announcement",
-  createdAt: "2026-08-10T17:00:00.000Z",
+  createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
 };
+const STALE_NEWS = q.get("staleNews") === "1";
 
 const EMPTY = q.get("empty") === "1";
 const FAIL = q.get("fail") === "1";
@@ -73,10 +78,14 @@ function source() {
   const base = new MockDataSource();
   return new Proxy(base, {
     get(t, prop, r) {
-      if (prop === "listNews") return async () => [];
+      if (prop === "listNews") return async () => STALE_NEWS ? [{
+        id: "news_old", slug: "older-story", title: "An older local story", excerpt: "",
+        body: "Archived reporting remains available.", source: "Test source",
+        publishedAt: "2000-01-02T17:00:00.000Z",
+      }] : [];
       if (prop === "listBulletins") return async () => [];
       if (prop === "listCommunityNotices") return async () =>
-        FAIL ? Promise.reject(new TypeError("Failed to fetch")) : EMPTY ? [] : [STALE, RECENT];
+        FAIL ? Promise.reject(new TypeError("Failed to fetch")) : EMPTY ? [] : [STALE, EXPLICIT_ACTIVE, RECENT];
       const v = Reflect.get(t, prop, r);
       return typeof v === "function" ? v.bind(t) : v;
     },
@@ -133,21 +142,27 @@ const bodyText = (p) => p.evaluate(() => document.body.innerText);
   const page = await load();
   const txt = await bodyText(page);
   ok(/Notices/.test(txt), "the Notices section renders");
-  ok(/EXTREME FIRE DANGER/.test(txt), "the stale notice still renders — the reader decides, not a threshold");
-  // Jul 2, not Jul 3: 2026-07-03T05:41:30Z is 10:41 PM Pacific on July 2, and this renders
+  ok(/Long-running water conservation/.test(txt), "an explicitly active notice remains prominent regardless of age");
+  ok(/Library reopens/.test(txt), "a recent notice remains prominent");
+  ok(!/EXTREME FIRE DANGER/.test(txt), "an old notice does not dominate the initial view");
+  ok(/Past notices \(1\)/.test(txt), "the old notice remains available in a clearly labelled archive");
+  await page.click("details summary");
+  const expanded = await bodyText(page);
+  ok(/EXTREME FIRE DANGER/.test(expanded), "expanding Past notices preserves the authored notice");
+  // Jul 2, not Jul 3: 2000-07-03T05:41:30Z is 10:41 PM Pacific on July 2, and this renders
   // in REDMOND's zone because that is the day the town was told. My first expectation here
   // was Jul 3 — reading the UTC string rather than the local day — which is the same
   // confusion the classes date bug came from, pointing the other way.
-  ok(/Jul 2, 2026/.test(txt),
-     `the notice carries an ABSOLUTE Redmond-local date with the year (${(txt.match(/\w{3} \d{1,2}, \d{4}/g) ?? []).join(" · ") || "NO DATE FOUND"})`);
-  ok(/Aug 10, 2026/.test(txt), "every notice is dated, not just the pinned one");
+  ok(/Jul 2, 2000/.test(expanded),
+     `the notice carries an ABSOLUTE Redmond-local date with the year (${(expanded.match(/\w{3} \d{1,2}, \d{4}/g) ?? []).join(" · ") || "NO DATE FOUND"})`);
+  ok(/Past notice/.test(expanded), "an archived item is labelled as a past notice, not still pinned");
   // A relative time ("6 weeks ago") is NOT sufficient: it makes the reader do arithmetic
   // against a year they have to assume, on content where the year is the whole point.
-  ok(!/weeks? ago|months? ago/i.test(txt.split("Notices")[1] ?? ""),
+  ok(!/weeks? ago|months? ago/i.test(expanded.split("Notices")[1] ?? ""),
      "the notice date is absolute, not a relative age");
 
   // ── 2. Pinned sorts FIRST, even though it is older ─────────────────────────────────────
-  const iPinned = txt.indexOf("EXTREME FIRE DANGER");
+  const iPinned = txt.indexOf("Long-running water conservation");
   const iRecent = txt.indexOf("Library reopens");
   ok(iPinned > -1 && iRecent > iPinned,
      "pinned sorts above a NEWER unpinned notice (editorial pin, not recency)");
@@ -161,9 +176,8 @@ const bodyText = (p) => p.evaluate(() => document.body.innerText);
     [...document.querySelectorAll("a")].filter((a) => /gofundme/i.test(a.href)).length);
   ok(gofundme === 0, `the support/donation link is not rendered in v1 (${gofundme})`);
 
-  // ── 4. No staleness logic — the old notice is not hidden, greyed out, or badged ────────
-  ok(!/expired|out of date|no longer|stale/i.test(txt),
-     "no staleness verdict is rendered — there is no threshold in code to render one");
+  // ── 4. The archive is collapsed by default, preventing old pinned content dominance ──
+  ok((await page.$eval("details", (d) => d.open)) === true, "the Past notices disclosure can be opened");
   await page.close();
 }
 
@@ -179,11 +193,22 @@ const bodyText = (p) => p.evaluate(() => document.body.innerText);
     await page.emulateTimezone(tz);
     await page.goto(BASE, { waitUntil: "networkidle0" });
     await new Promise((r) => setTimeout(r, 800));
+    await page.click("details summary");
     const txt = await bodyText(page);
-    ok(/Jul 2, 2026/.test(txt),
+    ok(/Jul 2, 2000/.test(txt),
        `the Redmond date holds when viewed from ${label} (${(txt.match(/\w{3} \d{1,2}, \d{4}/g) ?? []).join(" · ") || "NONE"})`);
     await page.close();
   }
+}
+
+// ── 4c. OLD NEWS STAYS AVAILABLE, WITH A FACTUAL LAST-UPDATED DISCLOSURE ────────────────
+{
+  const page = await load({ staleNews: "1" });
+  const txt = await bodyText(page);
+  ok(/An older local story/.test(txt), "older news remains in the feed");
+  ok(/News feed last updated Jan 2, 2000/i.test(txt), "an old news feed names its actual last update date");
+  ok(/Check the original source/i.test(txt), "the age notice directs readers to the source without inventing an update");
+  await page.close();
 }
 
 // ── 5. The existing feed still works (this section sits ABOVE it, not inside it) ─────────
@@ -214,10 +239,12 @@ const bodyText = (p) => p.evaluate(() => document.body.innerText);
 // recreate in Spanish exactly the one-word-two-meanings problem avoided in English.
 {
   const page = await load({ lang: "es" });
+  await page.click("details summary");
   const txt = await bodyText(page);
   ok(/Anuncios/.test(txt), "the Spanish notices heading renders");
   ok(/Fijado/.test(txt), "the Spanish pinned badge renders");
-  ok(/2 jul 2026|2 de jul|jul 2, 2026/i.test(txt),
+  ok(/Anuncios anteriores \(1\)/.test(txt), "the Spanish Past notices disclosure renders");
+  ok(/2 jul 2000|2 de jul|jul 2, 2000/i.test(txt),
      `the Spanish date renders with a year (${(txt.match(/\d{1,2} \w{3,} \d{4}|\w{3} \d{1,2}, \d{4}/g) ?? []).join(" · ") || "NONE"})`);
   ok(!/Notices|Pinned/.test(txt), "no English leaks into the Spanish render");
   const iA = txt.indexOf("Anuncios"), iAv = txt.indexOf("Avisos");

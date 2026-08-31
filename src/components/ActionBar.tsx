@@ -28,27 +28,38 @@ export function ActionBar({
 }: ActionBarProps) {
   const { t } = useI18n();
   const tel = telHref(business.phone);
+  const address = business.address.trim();
+  const directions = address
+    ? directionsHref({ address })
+    : business.hasPreciseLocation !== false
+      ? directionsHref({ geo: business.geo })
+      : undefined;
+  const actionColumns = 2 + Number(!!tel) + Number(!!directions);
   return (
     <div
       className={cn(
-        "sticky top-0 z-20 grid grid-cols-4 gap-2 border-b border-border bg-background/95 px-3 py-2.5 shadow-sticky backdrop-blur",
+        "sticky top-0 z-20 grid gap-2 border-b border-border bg-background/95 px-3 py-2.5 shadow-sticky backdrop-blur",
+        actionColumns === 4 ? "grid-cols-4" : actionColumns === 3 ? "grid-cols-3" : "grid-cols-2",
         className,
       )}
     >
-      <ActionLink
-        href={tel}
-        disabled={!tel}
-        icon={<Phone size={18} />}
-        label={t("common.call")}
-        tone="primary"
-      />
-      <ActionLink
-        href={directionsHref({ address: business.address, geo: business.geo })}
-        external
-        icon={<Navigation size={18} />}
-        label={t("common.directions")}
-        tone="secondary"
-      />
+      {tel && (
+        <ActionLink
+          href={tel}
+          icon={<Phone size={18} />}
+          label={t("common.call")}
+          tone="primary"
+        />
+      )}
+      {directions && (
+        <ActionLink
+          href={directions}
+          external
+          icon={<Navigation size={18} />}
+          label={t("common.directions")}
+          tone="secondary"
+        />
+      )}
       <ActionButton
         active={saved}
         onClick={() => onSave?.(business)}
@@ -68,14 +79,12 @@ export function ActionBar({
 function ActionLink({
   href,
   external,
-  disabled,
   icon,
   label,
   tone,
 }: {
-  href?: string;
+  href: string;
   external?: boolean;
-  disabled?: boolean;
   icon: React.ReactNode;
   label: string;
   tone: "primary" | "secondary";
@@ -84,13 +93,10 @@ function ActionLink({
     <a
       href={href}
       {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
-      aria-disabled={disabled}
-      onClick={(e) => disabled && e.preventDefault()}
       className={cn(
         "flex min-h-tap flex-col items-center justify-center gap-1 rounded-lg py-1.5 text-xs font-medium transition",
         tone === "primary" && "bg-primary text-primary-foreground hover:brightness-95", // the one amber CTA
         tone === "secondary" && "border border-border bg-card text-foreground hover:bg-muted",
-        disabled && "pointer-events-none opacity-40",
       )}
     >
       {icon}

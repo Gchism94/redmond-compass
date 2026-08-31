@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { Newspaper } from "lucide-react";
+import { ChevronDown, Newspaper } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Toggle, FeedItem, Skeleton, EmptyState, ErrorState } from "@/components";
 import { useNews, useBulletins, useBusinessMap, useCommunityNotices } from "@/data/queries";
 import { relativeTime, formatNoticeDate } from "@/lib/format";
+import type { CommunityNotice } from "@/lib/types";
 import { useI18n } from "@/i18n";
 
 type Tab = "all" | "news" | "bulletins";
@@ -12,10 +13,50 @@ type Entry =
   | { kind: "news"; id: string; title: string; source: string; time: string; ts: number; slug: string; image?: string }
   | { kind: "bulletin"; id: string; title: string; source: string; seed?: string; time: string; ts: number; href?: string };
 
+const RECENT_CONTENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+type ExpirableNotice = CommunityNotice & { activeUntil?: string };
+
+/**
+ * Notice prominence is intentionally time-bounded when editorial expiration data is
+ * absent. A source-provided active-until date always wins; otherwise a notice gets 30 days
+ * in the primary board before moving to the dated archive below it.
+ */
+function isCurrentNotice(notice: ExpirableNotice, now: number): boolean {
+  if (notice.activeUntil) {
+    const activeUntil = Date.parse(notice.activeUntil);
+    if (!Number.isNaN(activeUntil)) return activeUntil >= now;
+  }
+
+  const createdAt = Date.parse(notice.createdAt);
+  return !Number.isNaN(createdAt) && now - createdAt <= RECENT_CONTENT_WINDOW_MS;
+}
+
+function NoticeCard({ notice, past = false }: { notice: CommunityNotice; past?: boolean }) {
+  const { t, lang } = useI18n();
+  return (
+    <li className="rounded-lg border border-border bg-card p-3">
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-heading text-sm font-semibold leading-tight text-foreground">
+          {notice.title}
+        </p>
+        {(past || notice.pinned) && (
+          <span className="mt-0.5 shrink-0 rounded-pill border border-border px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            {t(past ? "community.pastNotice" : "community.pinned")}
+          </span>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">{formatNoticeDate(notice.createdAt, lang)}</p>
+      <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-foreground">{notice.body}</p>
+    </li>
+  );
+}
+
 /** Community / News (C). Blended feed of admin news + business bulletins, type-tagged. */
 export function CommunityScreen() {
   const { t, lang } = useI18n();
   const [tab, setTab] = useState<Tab>("all"); // default All (BUILD-BRIEF §14 — flagged)
+  const [now] = useState(() => Date.now());
   const news = useNews();
   const bulletins = useBulletins();
   const notices = useCommunityNotices();
@@ -59,52 +100,56 @@ export function CommunityScreen() {
   const loading = news.isLoading || bulletins.isLoading;
   // Both feeds must fail before the whole screen errors; one alone just contributes less.
   const failed = news.isError && bulletins.isError;
+  const currentNotices: CommunityNotice[] = [];
+  const pastNotices: CommunityNotice[] = [];
+  for (const notice of notices.data ?? []) {
+    (isCurrentNotice(notice as ExpirableNotice, now) ? currentNotices : pastNotices).push(notice);
+  }
+  pastNotices.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+
+  let latestNewsTimestamp = Number.NEGATIVE_INFINITY;
+  for (const article of news.data ?? []) {
+    const timestamp = Date.parse(article.publishedAt);
+    if (Number.isFinite(timestamp) && timestamp > latestNewsTimestamp) latestNewsTimestamp = timestamp;
+  }
+  const showNewsAge =
+    (tab === "all" || tab === "news") &&
+    Number.isFinite(latestNewsTimestamp) &&
+    now - latestNewsTimestamp > RECENT_CONTENT_WINDOW_MS;
 
   return (
     <div className="pb-4">
       <ScreenHeader title={t("community.title")} />
-      {/* Town notices — the community board.
-          A SEPARATE SECTION rather than a fourth tab, for two reasons. "Bulletins" already
-          means owner posts on this very screen, and two different things under one word is
-          how a reader learns to distrust both. And notices sort PINNED-first, which would
-          fight the feed's reverse-chronological order if they shared it.
-
-          Every notice shows an ABSOLUTE DATE, always, in REDMOND's time zone. These are
-          read to decide whether guidance still applies, and a notice that is quietly six
-          weeks old reads as current. There is deliberately NO staleness threshold in code:
-          one row is not enough to invent a cutoff from and any cutoff is wrong for the next
-          notice — a road closure is stale in a week, a memorial never is. The date lets the
-          reader judge; a magic number would make that judgement for them, wrongly.
-
-          Images and support links are not rendered in v1: the only live row's image is on
-          the expiring base44 CDN, and a donation link is a trust surface that deserves its
-          own design rather than arriving as a side effect. */}
+      {/* Town notices stay separate from owner bulletins. Current notices receive 30 days
+          of prominence unless the source supplies an explicit active-until value. Older
+          notices remain available, with their authored text and absolute Redmond-local
+          date intact, inside the collapsed archive. */}
       {notices.isError ? (
         <section className="px-4 pt-2">
           <ErrorState compact title={t("error.loadNotices")} onRetry={() => notices.refetch()} />
         </section>
-      ) : (notices.data?.length ?? 0) > 0 && (
-        <section className="px-4 pt-2">
-          <h2 className="font-heading text-sm font-semibold text-foreground">{t("community.notices")}</h2>
-          <ul className="mt-2 space-y-2">
-            {notices.data!.map((n) => (
-              <li key={n.id} className="rounded-lg border border-border bg-card p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-heading text-sm font-semibold leading-tight text-foreground">
-                    {n.title}
-                  </p>
-                  {n.pinned && (
-                    <span className="mt-0.5 shrink-0 rounded-pill border border-border px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                      {t("community.pinned")}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">{formatNoticeDate(n.createdAt, lang)}</p>
-                <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-foreground">{n.body}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
+      ) : (
+        <>
+          {currentNotices.length > 0 && (
+            <section className="px-4 pt-2">
+              <h2 className="font-heading text-sm font-semibold text-foreground">{t("community.notices")}</h2>
+              <ul className="mt-2 space-y-2">
+                {currentNotices.map((notice) => <NoticeCard key={notice.id} notice={notice} />)}
+              </ul>
+            </section>
+          )}
+          {pastNotices.length > 0 && (
+            <details className="group mx-4 mt-2 rounded-lg border border-border bg-surface-sunken px-3">
+              <summary className="flex min-h-tap cursor-pointer list-none items-center text-sm font-semibold text-muted-foreground">
+                <span>{t("community.pastNotices", { n: String(pastNotices.length) })}</span>
+                <ChevronDown size={16} className="ml-auto transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              <ul className="space-y-2 pb-3">
+                {pastNotices.map((notice) => <NoticeCard key={notice.id} notice={notice} past />)}
+              </ul>
+            </details>
+          )}
+        </>
       )}
 
       <div className="px-4 pt-1">
@@ -121,6 +166,13 @@ export function CommunityScreen() {
       </div>
 
       <div className="px-4">
+        {showNewsAge && (
+          <p role="status" className="mt-2 rounded-lg border border-border bg-surface-sunken px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+            {t("community.newsLastUpdated", {
+              date: formatNoticeDate(new Date(latestNewsTimestamp).toISOString(), lang),
+            })}
+          </p>
+        )}
         {loading ? (
           <div className="space-y-3 pt-3">
             {Array.from({ length: 4 }).map((_, i) => (

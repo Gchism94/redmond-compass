@@ -97,12 +97,12 @@ export function ClaimScreen() {
             href={`${LIVE_SITE}/for-business-owners`}
             target="_blank"
             rel="noreferrer noopener"
-            className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-positive"
+            className="mt-1.5 inline-flex min-h-tap items-center gap-1 text-sm font-medium text-positive"
           >
             {t("guides.forOwners")} <ExternalLink size={13} />
           </a>
         ) : (
-          <Link to="/for-business-owners" className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-positive">
+          <Link to="/for-business-owners" className="mt-1.5 inline-flex min-h-tap items-center gap-1 text-sm font-medium text-positive">
             {t("guides.forOwners")} <ChevronRight size={14} />
           </Link>
         )}
@@ -180,6 +180,7 @@ export function ClaimScreen() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        className="min-h-tap"
                         onClick={() => claim(b.id)}
                         disabled={claimBusiness.isPending}
                       >

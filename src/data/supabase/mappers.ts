@@ -33,6 +33,7 @@ export function rowToBusiness(r: Row): Business {
     description: r.description ?? "",
     address: r.address ?? "",
     geo: r.lat != null && r.lng != null ? { lat: r.lat, lng: r.lng } : REDMOND_CENTER,
+    hasPreciseLocation: r.lat != null && r.lng != null,
     phone: r.phone ?? undefined,
     website: r.website ?? undefined,
     email: r.email ?? undefined,

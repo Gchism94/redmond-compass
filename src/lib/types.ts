@@ -43,6 +43,8 @@ export interface Business {
   description: string;
   address: string;
   geo: GeoPoint;
+  /** False when `geo` is only the Redmond-center display fallback, not a listing location. */
+  hasPreciseLocation?: boolean;
   phone?: string;
   website?: string;
   email?: string;

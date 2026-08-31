@@ -7,7 +7,7 @@ import { useOwnerBusiness } from "./useOwnerBusiness";
 import { MutationError } from "./MutationError";
 import { useUpdateBusiness } from "@/data/queries";
 import { listingCompleteness } from "@/lib/completeness";
-import { WEEKDAY_ORDER, dayLabel } from "@/lib/hours";
+import { WEEKDAY_ORDER, dayLabel, hasValidWeeklyHours } from "@/lib/hours";
 import { AMENITY_FACETS, BUSINESS_CATEGORIES, categoryLabelFor } from "@/lib/taxonomy";
 import { LIMITS } from "@/lib/entitlements";
 import type { Business, DayHours, Weekday } from "@/lib/types";
@@ -26,6 +26,7 @@ interface FormState {
   photos: string[];
   amenityTags: string[];
   week: Week;
+  hoursEnabled: boolean;
 }
 
 /**
@@ -59,7 +60,8 @@ const blankWeek = (): Week =>
 
 function fromBusiness(b: Business): FormState {
   const week = blankWeek();
-  if (b.hours) for (const d of WEEKDAY_ORDER) week[d] = { ...b.hours.week[d] };
+  const structuredHours = hasValidWeeklyHours(b.hours) ? b.hours : undefined;
+  if (structuredHours) for (const d of WEEKDAY_ORDER) week[d] = { ...structuredHours.week[d] };
   return {
     name: b.name,
     category: b.category,
@@ -71,6 +73,7 @@ function fromBusiness(b: Business): FormState {
     photos: [...b.photos],
     amenityTags: [...b.amenityTags],
     week,
+    hoursEnabled: !!structuredHours,
   };
 }
 
@@ -106,6 +109,8 @@ export function EditListingScreen() {
   }
 
   const photoCap = LIMITS.free.photos ?? 5;
+  const structuredHours = { week: form.week };
+  const scheduleValid = hasValidWeeklyHours(structuredHours);
   const preview: Business = {
     ...business,
     name: form.name,
@@ -117,12 +122,12 @@ export function EditListingScreen() {
     website: form.website || undefined,
     photos: form.photos,
     amenityTags: form.amenityTags,
-    hours: { week: form.week },
+    hours: scheduleValid ? structuredHours : undefined,
   };
   const { percent, nextAction } = listingCompleteness(preview);
 
   const setWeek = (d: Weekday, patch: Partial<DayHours>) =>
-    setForm((f) => (f ? { ...f, week: { ...f.week, [d]: { ...f.week[d], ...patch } } } : f));
+    setForm((f) => (f ? { ...f, hoursEnabled: true, week: { ...f.week, [d]: { ...f.week[d], ...patch } } } : f));
 
   const toggleTag = (t: string) =>
     setForm((f) =>
@@ -151,7 +156,7 @@ export function EditListingScreen() {
           website: form.website.trim() || undefined,
           photos: form.photos,
           amenityTags: form.amenityTags,
-          hours: { week: form.week },
+          ...(scheduleValid ? { hours: structuredHours } : {}),
         },
       });
       navigate("/manage");
@@ -183,9 +188,11 @@ export function EditListingScreen() {
                   type="button"
                   aria-label="Remove photo"
                   onClick={() => setForm((f) => (f ? { ...f, photos: f.photos.filter((_, j) => j !== i) } : f))}
-                  className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-background"
+                  className="absolute -right-3 -top-3 flex h-11 w-11 items-center justify-center rounded-full text-background"
                 >
-                  <X size={12} />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-foreground shadow-sm">
+                    <X size={13} />
+                  </span>
                 </button>
               </div>
             ))}
@@ -248,30 +255,52 @@ export function EditListingScreen() {
         {/* Hours */}
         <section>
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("owner.hours")}</h2>
-          <Card className="divide-y divide-border p-0">
-            {WEEKDAY_ORDER.map((d) => {
-              const dh = form.week[d];
-              return (
-                <div key={d} className="flex items-center gap-2 px-3 py-2.5">
-                  <span className="w-10 shrink-0 text-sm font-medium text-foreground">{dayLabel(d)}</span>
-                  {dh.closed ? (
-                    <span className="flex-1 text-sm text-muted-foreground">{t("owner.closed")}</span>
-                  ) : (
-                    <div className="flex flex-1 items-center gap-1.5">
-                      <input type="time" value={dh.open} onChange={(e) => setWeek(d, { open: e.target.value })} className="min-w-0 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm" />
-                      <span className="text-muted-foreground">–</span>
-                      <input type="time" value={dh.close} onChange={(e) => setWeek(d, { close: e.target.value })} className="min-w-0 flex-1 rounded-md border border-border bg-card px-2 py-1.5 text-sm" />
+          {form.hoursEnabled ? (
+            <>
+              <Card className="divide-y divide-border p-0">
+                {WEEKDAY_ORDER.map((d) => {
+                  const dh = form.week[d];
+                  return (
+                    <div key={d} className="flex items-center gap-2 px-3 py-2.5">
+                      <span className="w-10 shrink-0 text-sm font-medium text-foreground">{dayLabel(d)}</span>
+                      {dh.closed ? (
+                        <span className="flex-1 text-sm text-muted-foreground">{t("owner.closed")}</span>
+                      ) : (
+                        <div className="flex flex-1 items-center gap-1.5">
+                          <input type="time" value={dh.open} onChange={(e) => setWeek(d, { open: e.target.value })} className="min-h-tap min-w-0 flex-1 rounded-md border border-border bg-card px-2 text-sm" />
+                          <span className="text-muted-foreground">–</span>
+                          <input type="time" value={dh.close} onChange={(e) => setWeek(d, { close: e.target.value })} className="min-h-tap min-w-0 flex-1 rounded-md border border-border bg-card px-2 text-sm" />
+                        </div>
+                      )}
+                      <Switch
+                        checked={!dh.closed}
+                        onChange={(open) => setWeek(d, open ? { closed: false, open: dh.open || "09:00", close: dh.close || "17:00" } : { closed: true })}
+                        label={`${dayLabel(d)} open`}
+                      />
                     </div>
-                  )}
-                  <Switch
-                    checked={!dh.closed}
-                    onChange={(open) => setWeek(d, open ? { closed: false, open: dh.open || "09:00", close: dh.close || "17:00" } : { closed: true })}
-                    label={`${dayLabel(d)} open`}
-                  />
-                </div>
-              );
-            })}
-          </Card>
+                  );
+                })}
+              </Card>
+              {!scheduleValid && (
+                <p className="mt-2 text-xs leading-relaxed text-danger">{t("owner.hoursAccuracyHint")}</p>
+              )}
+            </>
+          ) : (
+            <Card className="p-4">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {business.hoursText?.trim() || t("status.hoursNotListed")}
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t("owner.hoursAccuracyHint")}</p>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-3"
+                onClick={() => setForm((f) => (f ? { ...f, hoursEnabled: true } : f))}
+              >
+                <Plus size={15} /> {t("owner.addWeeklyHours")}
+              </Button>
+            </Card>
+          )}
         </section>
 
         {/* Amenity tags */}
@@ -287,7 +316,7 @@ export function EditListingScreen() {
           <p className="mt-1.5 text-xs text-muted-foreground">{t("owner.amenityHint")}</p>
         </section>
 
-        <Link to={`/b/${business.slug}`} className="inline-flex items-center gap-1 text-sm font-semibold text-positive hover:underline">
+        <Link to={`/b/${business.slug}`} className="inline-flex min-h-tap items-center gap-1 text-sm font-semibold text-positive hover:underline">
           {t("owner.previewProfile")} <ArrowRight size={14} />
         </Link>
       </div>
@@ -296,7 +325,7 @@ export function EditListingScreen() {
       <div className="fixed inset-x-0 bottom-[calc(58px+env(safe-area-inset-bottom))] z-20 mx-auto max-w-content border-t border-border bg-background/95 px-4 py-3 backdrop-blur">
         <MutationError error={saveError} onRetry={save} />
 
-        <Button variant="primary" size="lg" fullWidth disabled={update.isPending || !form.name.trim() || !form.address.trim()} onClick={save}>
+        <Button variant="primary" size="lg" fullWidth disabled={update.isPending || !form.name.trim() || !form.address.trim() || (form.hoursEnabled && !scheduleValid)} onClick={save}>
           {update.isPending ? t("owner.saving") : t("owner.saveChanges")}
         </Button>
       </div>

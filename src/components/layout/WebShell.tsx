@@ -78,13 +78,14 @@ export function WebShell() {
 function WebHeader() {
   const { t } = useI18n();
   const session = useSession();
+  const { pathname } = useLocation();
 
   return (
     <header className="sticky top-0 z-20 shadow-sticky">
       {/* Row 1 — white bar: logo · primary links · Get the app / Sign in */}
       <div className="border-b border-border bg-card/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6">
-          <Link to={HOME_PATH} className="flex items-center gap-2.5 focus-visible:outline-none">
+          <Link to={HOME_PATH} className="flex min-h-tap items-center gap-2.5 focus-visible:outline-none">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
               <Compass size={20} />
             </span>
@@ -101,7 +102,7 @@ function WebHeader() {
                 to={l.to}
                 className={({ isActive }) =>
                   cn(
-                    "relative inline-flex h-16 items-center text-sm font-medium transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:transition-transform",
+                    "relative inline-flex h-16 min-w-11 items-center justify-center px-1 text-sm font-medium transition-colors after:absolute after:inset-x-1 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary after:transition-transform",
                     isActive
                       ? "font-semibold text-foreground after:scale-x-100"
                       : "text-muted-foreground after:scale-x-0 hover:text-foreground",
@@ -118,14 +119,14 @@ function WebHeader() {
             {session.isAuthed ? (
               <Link
                 to="/account"
-                className="inline-flex h-10 items-center gap-2 rounded-pill bg-primary px-4 text-sm font-semibold text-primary-foreground hover:brightness-95"
+                className="inline-flex h-11 items-center gap-2 rounded-pill bg-primary px-4 text-sm font-semibold text-primary-foreground hover:brightness-95"
               >
                 {session.user!.name}
               </Link>
-            ) : (
+            ) : pathname === "/login" ? null : (
               <Link
                 to="/login"
-                className="inline-flex h-10 items-center rounded-pill bg-primary px-4 text-sm font-semibold text-primary-foreground hover:brightness-95"
+                className="inline-flex h-11 items-center rounded-pill bg-primary px-4 text-sm font-semibold text-primary-foreground hover:brightness-95"
               >
                 {t("web.signIn")}
               </Link>
@@ -138,7 +139,7 @@ function WebHeader() {
       <div className="border-b border-border bg-background/95 backdrop-blur-md">
         <nav
           aria-label="Guides"
-          className="mx-auto flex max-w-6xl items-center justify-center gap-6 overflow-x-auto px-6 py-2"
+          className="mx-auto flex max-w-6xl items-center justify-center gap-6 overflow-x-auto px-6"
         >
           {GUIDE_LINKS.map((l) =>
             appOnly ? (
@@ -149,7 +150,7 @@ function WebHeader() {
                 href={`${LIVE_SITE}${l.to}`}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="flex min-h-tap shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 <l.icon size={13} className="text-primary" /> {t(l.labelKey)}
                 <ExternalLink size={11} className="text-muted-foreground/70" />
@@ -160,7 +161,7 @@ function WebHeader() {
                 to={l.to}
                 className={({ isActive }) =>
                   cn(
-                    "flex shrink-0 items-center gap-1.5 text-xs font-medium transition-colors hover:text-foreground",
+                    "flex min-h-tap shrink-0 items-center gap-1.5 text-xs font-medium transition-colors hover:text-foreground",
                     isActive ? "font-semibold text-foreground" : "text-muted-foreground",
                   )
                 }
@@ -196,7 +197,7 @@ function GetAppButton() {
       <button
         type="button"
         onClick={onClick}
-        className="inline-flex h-10 items-center gap-1.5 rounded-pill border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted"
+        className="inline-flex h-11 items-center gap-1.5 rounded-pill border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted"
       >
         <Download size={15} /> {t("web.getApp")}
       </button>
@@ -208,7 +209,7 @@ function GetAppButton() {
               type="button"
               aria-label={t("common.dismiss")}
               onClick={() => setShowHint(false)}
-              className="-mr-1 -mt-1 rounded-full p-1 text-muted-foreground hover:text-foreground"
+              className="-mr-2 -mt-2 flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
             >
               <X size={14} />
             </button>
@@ -266,13 +267,13 @@ function WebFooter() {
     <footer className="bg-foreground text-background">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-12 md:grid-cols-4">
         <div>
-          <button type="button" onClick={() => navigate(HOME_PATH)} className="flex items-center gap-2.5">
+          <button type="button" onClick={() => navigate(HOME_PATH)} className="flex min-h-tap items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
               <Compass size={20} />
             </span>
             <span className="text-left leading-none">
               <span className="block font-heading text-lg font-bold">Redmond</span>
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.28em] text-primary">Compass</span>
+              <span className="block text-[10px] font-semibold uppercase tracking-[0.28em] text-chart-4">Compass</span>
             </span>
           </button>
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-background/70">{t("web.footer.tagline")}</p>
@@ -288,12 +289,12 @@ function WebFooter() {
                       href={l.to}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="inline-flex items-center gap-1 text-sm text-background/85 hover:text-background"
+                      className="inline-flex min-h-tap items-center gap-1 text-sm text-background/85 hover:text-background"
                     >
                       {t(l.labelKey)} <ExternalLink size={11} className="text-background/50" />
                     </a>
                   ) : (
-                    <Link to={l.to} className="text-sm text-background/85 hover:text-background">
+                    <Link to={l.to} className="inline-flex min-h-tap items-center text-sm text-background/85 hover:text-background">
                       {t(l.labelKey)}
                     </Link>
                   )}
@@ -306,13 +307,13 @@ function WebFooter() {
       <div className="border-t border-background/10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4 text-xs text-background/60">
           <span>{t("web.footer.rights", { year })}</span>
-          <Link to="/privacy" className="hover:text-background">
+          <Link to="/privacy" className="inline-flex min-h-tap items-center hover:text-background">
             {t("account.privacy")}
           </Link>
           <button
             type="button"
             onClick={() => setLang(lang === "en" ? "es" : "en")}
-            className="font-medium text-background/85 hover:text-background"
+            className="inline-flex min-h-tap items-center font-medium text-background/85 hover:text-background"
           >
             {lang === "en" ? "Español" : "English"}
           </button>

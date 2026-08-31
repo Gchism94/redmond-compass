@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
   Compass, Download, Share, Plus, Search, CalendarDays, Bookmark, UserPlus, WifiOff,
@@ -75,7 +75,7 @@ export function LandingScreen() {
       {/* Header — logo goes BACK to the live site (absolute); slim outbound nav */}
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-16 max-w-5xl items-center gap-4 px-5">
-          <a href={LIVE_SITE} className="flex shrink-0 items-center gap-2.5">
+          <a href={LIVE_SITE} className="flex min-h-tap shrink-0 items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <Compass size={20} />
             </span>
@@ -86,7 +86,7 @@ export function LandingScreen() {
           </a>
           <nav aria-label="redmondcompass.com" className="ml-2 hidden items-center gap-4 md:flex">
             {SITE_NAV.map((l) => (
-              <a key={l.path} href={`${LIVE_SITE}${l.path}`} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+              <a key={l.path} href={`${LIVE_SITE}${l.path}`} className="inline-flex min-h-tap items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                 {t(l.labelKey)}
               </a>
             ))}
@@ -94,7 +94,7 @@ export function LandingScreen() {
           <button
             type="button"
             onClick={install}
-            className="ml-auto inline-flex h-10 shrink-0 items-center gap-1.5 rounded-pill bg-primary px-4 text-sm font-semibold text-primary-foreground hover:brightness-95"
+            className="ml-auto hidden h-11 shrink-0 items-center gap-1.5 rounded-pill bg-primary px-4 text-sm font-semibold text-primary-foreground hover:brightness-95 sm:inline-flex"
           >
             <Download size={15} /> {t("web.getApp")}
           </button>
@@ -103,7 +103,7 @@ export function LandingScreen() {
 
       <main className="mx-auto max-w-5xl px-5 pb-16">
         {/* 1 — Hero */}
-        <section className="grid items-center gap-10 pt-10 lg:grid-cols-[1fr_minmax(0,340px)] lg:pt-14">
+        <section className="grid items-center gap-8 pt-8 sm:gap-10 sm:pt-10 lg:grid-cols-[1fr_minmax(0,340px)] lg:pt-14">
           <div>
             <h1 className="font-heading text-4xl font-bold leading-tight text-foreground lg:text-5xl">
               {t("landing.heroTitle")}
@@ -131,7 +131,7 @@ export function LandingScreen() {
             </p>
           </div>
           {/* Real screenshots from the deployed app, self-hosted */}
-          <div className="relative mx-auto hidden w-full max-w-[340px] sm:block">
+          <div className="relative mx-auto w-full max-w-[220px] sm:max-w-[340px]">
             <img
               src="/landing/app-home.jpg"
               alt="Redmond Compass app — home screen"
@@ -154,7 +154,7 @@ export function LandingScreen() {
         <section id="install" className="mt-14 scroll-mt-6">
           <h2 className="font-heading text-2xl font-bold text-foreground">{t("landing.installTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{t("landing.installSub")}</p>
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="mt-5 grid items-start gap-3 md:grid-cols-3">
             <InstallCard
               icon={Smartphone}
               title={t("landing.installAndroid")}
@@ -165,7 +165,7 @@ export function LandingScreen() {
                   <button
                     type="button"
                     onClick={() => void promptInstall()}
-                    className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+                    className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
                   >
                     <Download size={14} /> {t("pwa.install")}
                   </button>
@@ -254,15 +254,15 @@ export function LandingScreen() {
       <footer className="bg-foreground text-background">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-3 px-5 py-8 text-sm">
           <span className="font-heading font-semibold">Redmond Compass</span>
-          <span className="text-xs uppercase tracking-[0.22em] text-primary">Discover · Connect · Live Local</span>
+          <span className="text-xs uppercase tracking-[0.22em] text-chart-4">Discover · Connect · Live Local</span>
           <span className="ml-auto flex flex-wrap items-center gap-x-5 gap-y-2 text-background/80">
-            <a href={LIVE_SITE} className="hover:text-background">{t("landing.backToSite")}</a>
-            <Link to="/privacy" className="hover:text-background">{t("account.privacy")}</Link>
-            <a href="mailto:RedmondCompass@gmail.com" className="hover:text-background">RedmondCompass@gmail.com</a>
+            <a href={LIVE_SITE} className="inline-flex min-h-tap items-center hover:text-background">{t("landing.backToSite")}</a>
+            <Link to="/privacy" className="inline-flex min-h-tap items-center hover:text-background">{t("account.privacy")}</Link>
+            <a href="mailto:RedmondCompass@gmail.com" className="inline-flex min-h-tap items-center hover:text-background">RedmondCompass@gmail.com</a>
             <button
               type="button"
               onClick={() => setLang(lang === "en" ? "es" : "en")}
-              className="font-medium text-background hover:text-primary"
+              className="inline-flex min-h-tap items-center font-medium text-background hover:text-chart-4"
             >
               {lang === "en" ? "Español" : "English"}
             </button>
@@ -286,6 +286,7 @@ function InstallCard({
   action?: React.ReactNode;
   highlight?: boolean;
 }) {
+  const panelId = useId();
   // The visitor's own platform is expanded by default; the others stay reachable.
   // `highlight` can arrive AFTER mount (beforeinstallprompt fires async) — follow it.
   const [open, setOpen] = useState(!!highlight);
@@ -294,7 +295,13 @@ function InstallCard({
   }, [highlight]);
   return (
     <div className={cn("rounded-lg border bg-card p-4", highlight ? "border-positive/50 ring-1 ring-positive/20" : "border-border")}>
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-2.5 text-left">
+      <button
+        type="button"
+        aria-controls={panelId}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="flex min-h-tap w-full items-center gap-2.5 text-left"
+      >
         <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", highlight ? "bg-positive/10 text-positive" : "bg-secondary text-muted-foreground")}>
           <Icon size={17} />
         </span>
@@ -302,7 +309,7 @@ function InstallCard({
         <ChevronDown size={15} className={cn("text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
       {open && (
-        <div className="mt-2 pl-[46px]">
+        <div id={panelId} className="mt-2 pl-[46px]">
           {body && <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>}
           {action}
         </div>

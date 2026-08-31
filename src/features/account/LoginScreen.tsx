@@ -170,7 +170,7 @@ export function LoginScreen() {
                 setCode("");
                 setError(null);
               }}
-              className="w-full py-1 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="min-h-tap w-full py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               {t("auth.differentEmail")}
             </button>

@@ -200,7 +200,7 @@ export function AuthSheet() {
               setCode("");
               setError(null);
             }}
-            className="w-full py-1 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+            className="min-h-tap w-full py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             {t("auth.differentEmail")}
           </button>
@@ -210,7 +210,7 @@ export function AuthSheet() {
       <button
         type="button"
         onClick={closeAuth}
-        className="mt-3 w-full py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
+        className="mt-3 min-h-tap w-full py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
       >
         {t("auth.keepBrowsing")}
       </button>

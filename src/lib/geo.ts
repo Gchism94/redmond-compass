@@ -4,7 +4,7 @@
  */
 import type { GeoPoint } from "./types";
 
-/** Downtown Redmond, OR — fallback origin when the user hasn't shared location. */
+/** Downtown Redmond, OR — neutral query/sort fallback, never presented as the user's location. */
 export const REDMOND_CENTER: GeoPoint = { lat: 44.2726, lng: -121.1739 };
 
 const R_MILES = 3958.8;

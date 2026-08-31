@@ -169,9 +169,9 @@ const sess = (page) => page.evaluate(() => ({
   const before = await sess(page);
   ok(!before.authed, "starts as a guest (control)");
 
-  // The Home rail card is one big <Link>; the save control is the overlay button on it.
+  // The rail keeps navigation and Save as sibling controls so the markup stays valid.
   const clicked = await page.evaluate(() => {
-    const btn = document.querySelector('a[href^="/b/"] button[aria-label]');
+    const btn = document.querySelector('[data-result-card="rail"] button[aria-label]');
     if (!btn) return null;
     btn.click();
     return btn.getAttribute("aria-label");
@@ -189,7 +189,7 @@ const sess = (page) => page.evaluate(() => ({
      "the save is persisted to localStorage, so it survives a reload");
 
   // Tapping the same control again un-saves (it is a toggle, not an append).
-  await page.evaluate(() => document.querySelector('a[href^="/b/"] button[aria-label]').click());
+  await page.evaluate(() => document.querySelector('[data-result-card="rail"] button[aria-label]').click());
   await new Promise((r) => setTimeout(r, 300));
   ok((await sess(page)).saved.length === 0, "tapping again un-saves");
   await page.close();
