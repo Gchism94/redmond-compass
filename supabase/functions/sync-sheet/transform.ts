@@ -7,6 +7,8 @@
 // NAME (not column position), so editors can reorder columns freely; only a
 // missing REQUIRED header or an empty sheet aborts the run (data left intact).
 
+import { parseHoursText, type ParsedHours } from "./hours-parser.ts";
+
 export const REQUIRED_HEADERS = ["id", "name", "category", "published"] as const;
 export const KNOWN_HEADERS = [
   "id", "name", "category", "subcategories", "description", "address",
@@ -35,7 +37,8 @@ export interface SheetBusinessRow {
   phone?: string;
   website?: string;
   email?: string;
-  hours_text?: string;
+  hours?: ParsedHours | null;
+  hours_text?: string | null;
   photos?: string[];
   published: boolean;
   synced_at: string;
@@ -53,6 +56,10 @@ export interface SyncPlan {
   publishedBlankIds: string[];
   skipped: { row: number; reason: string }[];
   warnings: { row: number; reason: string }[];
+  hoursTextRows: number;
+  hoursParsed: number;
+  hoursPreservedExisting: number;
+  hoursUnparsed: number;
 }
 
 /**
@@ -66,6 +73,8 @@ export interface ExistingBusinesses {
   publishedById?: Record<string, boolean>;
   /** businesses.id → whether `synced_at` is set (i.e. the sync has touched it before). */
   syncedById?: Record<string, boolean>;
+  /** Claimed-owner canonical schedules always win over a Sheet text parse. */
+  ownerHoursById?: Record<string, boolean>;
 }
 
 /** Read-only preview of what a run would do — the shape `?dry=1` returns. */
@@ -87,6 +96,12 @@ export interface PlanSummary {
   wouldSoftUnpublish: { count: number; sample: string[] };
   skipped: number;
   warnings: number;
+  hours: {
+    textRows: number;
+    parsed: number;
+    preservedExisting: number;
+    leftUnstructured: number;
+  };
 }
 
 /** The set of columns a row supplies, as a stable signature. */
@@ -167,6 +182,12 @@ export function summarizePlan(plan: SyncPlan, existing: ExistingBusinesses): Pla
     wouldSoftUnpublish: { count: softUnpublish.length, sample: softUnpublish.slice(0, 10) },
     skipped: plan.skipped.length,
     warnings: plan.warnings.length,
+    hours: {
+      textRows: plan.hoursTextRows,
+      parsed: plan.hoursParsed,
+      preservedExisting: plan.hoursPreservedExisting,
+      leftUnstructured: plan.hoursUnparsed,
+    },
   };
 }
 
@@ -268,7 +289,17 @@ export function buildSyncPlan(
   existing: ExistingBusinesses = { slugById: {} },
 ): SyncPlan {
   const plan: SyncPlan = {
-    ok: true, headerWarnings: [], upserts: [], sheetIds: [], publishedBlankIds: [], skipped: [], warnings: [],
+    ok: true,
+    headerWarnings: [],
+    upserts: [],
+    sheetIds: [],
+    publishedBlankIds: [],
+    skipped: [],
+    warnings: [],
+    hoursTextRows: 0,
+    hoursParsed: 0,
+    hoursPreservedExisting: 0,
+    hoursUnparsed: 0,
   };
 
   if (!values || values.length === 0) {
@@ -356,7 +387,31 @@ export function buildSyncPlan(
     const addr = get(row, "address"); if (addr) out.address = addr;
     const web = get(row, "website"); if (web) out.website = web;
     const email = get(row, "email"); if (email) out.email = email;
-    const hours = get(row, "hours"); if (hours) out.hours_text = hours;
+    const hours = get(row, "hours");
+    if (hours) {
+      out.hours_text = hours;
+      plan.hoursTextRows++;
+      const parsed = parseHoursText(hours);
+      if (parsed && existing.ownerHoursById?.[id]) {
+        // A human-entered canonical schedule is more authoritative than generated data.
+        // Omitting `hours` keeps it untouched while still refreshing the source prose.
+        plan.hoursPreservedExisting++;
+      } else if (parsed) {
+        out.hours = parsed;
+        plan.hoursParsed++;
+      } else {
+        // Keep the prose and clear any older generated schedule. Otherwise a Sheet edit
+        // from clear hours to appointment/seasonal prose would leave a stale Open claim.
+        // Claimed-owner canonical hours remain protected.
+        if (!existing.ownerHoursById?.[id]) out.hours = null;
+        plan.hoursUnparsed++;
+      }
+    } else if (col("hours") >= 0 && existing.slugById[id]) {
+      // A deliberately cleared Sheet cell must not leave old source prose or an old
+      // generated status behind. Owner-entered structured hours are still preserved.
+      out.hours_text = null;
+      if (!existing.ownerHoursById?.[id]) out.hours = null;
+    }
     const subs = splitList(get(row, "subcategories")); if (subs.length) out.subcategories = subs;
     if (phone) out.phone = phone;
     // Only set photos when the sheet names an image — otherwise leave any existing

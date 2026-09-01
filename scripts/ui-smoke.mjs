@@ -165,8 +165,8 @@ async function newPage(width, height) {
   ok(taps.length === 0, label(`results: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
 
   r = await visit("/b/burger-wild-all-american");
-  ok(/11:00 AM - 10:00 PM/i.test(r.text) && !/hours not listed/i.test(r.text),
-     label("profile: source hours text replaces false missing-hours claim"));
+  ok(/11:00 AM\s*[–-]\s*10:00 PM/i.test(r.text) && /Mon(?:\s*·\s*Today)?\s+Closed/i.test(r.text) && !/hours not listed/i.test(r.text),
+     label("profile: parsed weekly hours include source times and closed days"));
   const unavailableProfileActions = await page.evaluate(() => ({
     call: document.querySelectorAll('a[href^="tel:"]').length,
     blankAddress: /Address:\s*(?:About|$)/i.test(document.body.innerText),

@@ -132,25 +132,34 @@ async function loadExistingBusinesses(): Promise<ExistingBusinesses> {
   const slugById: Record<string, string> = {};
   const publishedById: Record<string, boolean> = {};
   const syncedById: Record<string, boolean> = {};
+  const ownerHoursById: Record<string, boolean> = {};
   const PAGE = 1000;
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await db
       .from("businesses")
-      .select("id,slug,published,synced_at")
+      .select("id,slug,published,synced_at,hours,owner_id")
       .order("id", { ascending: true })
       .range(from, from + PAGE - 1);
     // A failure here would silently regenerate every slug (breaking live /b/ URLs) or
     // collide on insert — so it aborts the run rather than proceeding on partial state.
     if (error) throw new Error(`could not read existing businesses: ${error.message}`);
-    type Row = { id: string; slug: string; published: boolean; synced_at: string | null };
+    type Row = {
+      id: string;
+      slug: string;
+      published: boolean;
+      synced_at: string | null;
+      hours: unknown;
+      owner_id: string | null;
+    };
     for (const r of (data ?? []) as Row[]) {
       if (r.slug) slugById[r.id] = r.slug;
       publishedById[r.id] = !!r.published;
       syncedById[r.id] = r.synced_at != null;
+      ownerHoursById[r.id] = !!r.owner_id && !!r.hours && typeof r.hours === "object";
     }
     if (!data || data.length < PAGE) break;
   }
-  return { slugById, publishedById, syncedById };
+  return { slugById, publishedById, syncedById, ownerHoursById };
 }
 
 Deno.serve(async (req) => {

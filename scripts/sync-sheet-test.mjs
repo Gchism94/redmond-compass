@@ -34,7 +34,7 @@ const HEADERS = ["id", "name", "category", "phone", "address", "hours", "descrip
 let p = buildSyncPlan(
   [
     HEADERS,
-    ["RC-0001", "Axel's Taco Shop", "food-drink", "(541) 555-1234", "1 SW A St", "Mon 9-5", "Tacos", "axels.com", "axels.jpg", "TRUE", "internal note"],
+    ["RC-0001", "Axel's Taco Shop", "food-drink", "(541) 555-1234", "1 SW A St", "Mon 9am-5pm", "Tacos", "axels.com", "axels.jpg", "TRUE", "internal note"],
     ["RC-0002", "Wilson's", "shopping", "5415550000", "2 NW B St", "", "Furniture", "", "", "no"],
   ],
   URL, NOW,
@@ -44,8 +44,41 @@ ok(p.upserts[0].phone === "+15415551234", `phone normalized to E.164 (${p.upsert
 ok(p.upserts[0].published === true && p.upserts[1].published === false, "published TRUE/no parsed");
 ok(p.upserts[0].photos?.[0] === `${URL}/storage/v1/object/public/business-media/axels.jpg`, "image → bucket URL");
 ok(p.upserts[1].photos === undefined, "blank image → photos omitted (existing preserved)");
-ok(p.upserts[0].hours_text === "Mon 9-5" && p.upserts[0].synced_at === NOW, "hours_text + synced_at set");
+ok(p.upserts[0].hours_text === "Mon 9am-5pm" && p.upserts[0].synced_at === NOW, "hours_text + synced_at set");
+ok(p.upserts[0].hours?.week.mon.open === "09:00" && p.upserts[0].hours?.week.sun.closed === true,
+   "parseable prose also produces a complete canonical schedule with closed days");
+ok(p.hoursTextRows === 1 && p.hoursParsed === 1 && p.hoursUnparsed === 0,
+   "hours parsing is counted for dry-run visibility");
 ok(p.sheetIds.length === 2 && p.sheetIds.includes("RC-0001"), "sheetIds collected");
+
+const preservedHours = buildSyncPlan(
+  [HEADERS, ["RC-0001", "Axel's Taco Shop", "food-drink", "", "", "Mon 9am-5pm", "", "", "", "TRUE", ""]],
+  URL,
+  NOW,
+  { slugById: { "RC-0001": "axel-s-taco-shop" }, ownerHoursById: { "RC-0001": true } },
+);
+ok(preservedHours.upserts[0].hours === undefined && preservedHours.upserts[0].hours_text === "Mon 9am-5pm",
+   "claimed-owner canonical hours win; source prose still refreshes");
+ok(preservedHours.hoursPreservedExisting === 1 && preservedHours.hoursParsed === 0,
+   "preserved owner hours are reported separately");
+
+const staleGenerated = buildSyncPlan(
+  [HEADERS, ["RC-0001", "Axel's Taco Shop", "food-drink", "", "", "By Appointment", "", "", "", "TRUE", ""]],
+  URL,
+  NOW,
+  { slugById: { "RC-0001": "axel-s-taco-shop" } },
+);
+ok(staleGenerated.upserts[0].hours === null && staleGenerated.upserts[0].hours_text === "By Appointment",
+   "ambiguous Sheet edits clear an older generated schedule and retain the honest prose");
+
+const clearedHours = buildSyncPlan(
+  [HEADERS, ["RC-0001", "Axel's Taco Shop", "food-drink", "", "", "", "", "", "", "TRUE", ""]],
+  URL,
+  NOW,
+  { slugById: { "RC-0001": "axel-s-taco-shop" } },
+);
+ok(clearedHours.upserts[0].hours === null && clearedHours.upserts[0].hours_text === null,
+   "clearing the Sheet hours cell clears stale generated hours and stale source prose");
 
 // 2) missing REQUIRED header → run-level abort, no writes
 p = buildSyncPlan([["id", "name", "phone", "published"], ["RC-1", "X", "5415550000", "TRUE"]], URL, NOW);
@@ -168,6 +201,8 @@ ok(p.upserts.every((u) => typeof u.slug === "string" && u.slug.length > 0),
    "EVERY upsert carries a non-empty slug (the not-null column that used to abort the run)");
 ok(bySheetId["6a121b80201bcb"].slug === "general-duffy-s-waterhole",
    `existing row KEEPS its slug — /b/ URLs survive a sync (${bySheetId["6a121b80201bcb"].slug})`);
+ok(bySheetId["6a121b80201bcb"].hours?.week.mon.open === "11:00",
+   "an existing unclaimed Sheet row refreshes its generated structured hours");
 ok(bySheetId["6a05e53157c8ee"].slug === "redmond-or-farmers-market",
    "second existing row keeps its slug too");
 ok(bySheetId["6a99newlisting01"].slug === "juniper-ridge-bakery",

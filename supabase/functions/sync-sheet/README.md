@@ -22,6 +22,14 @@ with Greg before it can run.
 - **`image`** — a *filename* in the Supabase Storage `business-media` bucket
   (images do NOT live in the sheet). Workflow: upload to the bucket → paste the
   filename. Blank `image` leaves existing photos untouched.
+- **`hours`** — editors may keep using readable weekly prose. Recognized day ranges,
+  daily hours, overnight closing, and explicit closed days are converted to the canonical
+  seven-day schedule while the original wording remains in `hours_text`. Unmentioned days
+  in a clear weekly schedule are recorded as closed. Appointment-only, seasonal,
+  sold-out-dependent, conflicting, and multi-service/multi-interval text remains prose so
+  the app never makes a false Open/Closed claim. If clear hours become ambiguous or are
+  removed, the old generated schedule is cleared instead of becoming stale. Existing
+  claimed-owner canonical hours always win.
 - **`notes`** — internal editor notes; ignored by the sync.
 - A **`_README` tab** documenting all of the above for future editors.
 - Give the Google **service account** (below) Viewer access to the Sheet.
@@ -61,6 +69,8 @@ Trigger a one-off run to verify: `POST /functions/v1/sync-sheet` (add the
   data left intact (nothing partially written).
 - Row-level problems (blank name, duplicate id, unparseable phone) → skip/log,
   never fatal.
+- Hours parsing is conservative and observable: dry runs report text rows, parsed rows,
+  owner/editor schedules preserved, and rows intentionally left unstructured.
 - Rows that leave the sheet → `published = false` (soft-unpublish). **Never a
   hard delete.** Only rows the sync has touched before are auto-unpublished, so
   owner-created listings are never affected.
