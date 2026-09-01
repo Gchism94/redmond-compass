@@ -33,6 +33,10 @@ const OwnerDashboard = named(() => import("@/features/owner/OwnerDashboard"), "O
 const EditListingScreen = named(() => import("@/features/owner/EditListingScreen"), "EditListingScreen");
 const PostBulletinScreen = named(() => import("@/features/owner/PostBulletinScreen"), "PostBulletinScreen");
 const SubmitEventScreen = named(() => import("@/features/owner/SubmitEventScreen"), "SubmitEventScreen");
+const ManageBulletinsScreen = named(() => import("@/features/owner/ManageBulletinsScreen"), "ManageBulletinsScreen");
+const BulletinEditorScreen = named(() => import("@/features/owner/ManageBulletinsScreen"), "BulletinEditorScreen");
+const ManageEventsScreen = named(() => import("@/features/owner/ManageEventsScreen"), "ManageEventsScreen");
+const EventEditorScreen = named(() => import("@/features/owner/ManageEventsScreen"), "EventEditorScreen");
 const ManageClassesScreen = named(() => import("@/features/owner/ManageClassesScreen"), "ManageClassesScreen");
 const ClassEditorScreen = named(() => import("@/features/owner/ManageClassesScreen"), "ClassEditorScreen");
 const NotFoundPage = named(() => import("./pages"), "NotFoundPage");
@@ -85,6 +89,10 @@ export const router = createBrowserRouter([
       { path: "/manage/edit", element: <EditListingScreen /> },
       { path: "/manage/bulletin/new", element: <PostBulletinScreen /> },
       { path: "/manage/event/new", element: <SubmitEventScreen /> },
+      { path: "/manage/bulletins", element: <ManageBulletinsScreen /> },
+      { path: "/manage/bulletins/:id/edit", element: <BulletinEditorScreen /> },
+      { path: "/manage/events", element: <ManageEventsScreen /> },
+      { path: "/manage/events/:id/edit", element: <EventEditorScreen /> },
       { path: "/manage/classes", element: <ManageClassesScreen /> },
       { path: "/manage/classes/new", element: <ClassEditorScreen /> },
       { path: "/manage/classes/:id/edit", element: <ClassEditorScreen /> },

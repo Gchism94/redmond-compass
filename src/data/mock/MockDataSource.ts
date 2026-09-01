@@ -34,6 +34,8 @@ import type {
   NewBusinessInput,
   NewBulletinInput,
   NewEventInput,
+  BulletinPatch,
+  EventPatch,
   NewBusinessClassInput,
   BusinessClassPatch,
   AuthUser,
@@ -62,7 +64,11 @@ interface Overlay {
   newBusinesses: Business[];
   patches: Record<string, Partial<Business>>;
   newBulletins: Bulletin[];
+  bulletinPatches: Record<string, BulletinPatch>;
+  deletedBulletinIds: string[];
   newEvents: EventItem[];
+  eventPatches: Record<string, EventPatch>;
+  deletedEventIds: string[];
   newBusinessClasses: BusinessClass[];
   businessClassPatches: Record<string, BusinessClassPatch>;
   deletedBusinessClassIds: string[];
@@ -74,7 +80,11 @@ const EMPTY_OVERLAY: Overlay = {
   newBusinesses: [],
   patches: {},
   newBulletins: [],
+  bulletinPatches: {},
+  deletedBulletinIds: [],
   newEvents: [],
+  eventPatches: {},
+  deletedEventIds: [],
   newBusinessClasses: [],
   businessClassPatches: {},
   deletedBusinessClassIds: [],
@@ -160,10 +170,22 @@ export class MockDataSource implements DataSource {
     return [...baseBusinesses, ...this.overlay.newBusinesses].map((b) => this.applyPatch(b));
   }
   private bulletinList(): Bulletin[] {
-    return [...baseBulletins, ...this.overlay.newBulletins];
+    const deleted = new Set(this.overlay.deletedBulletinIds);
+    const now = Date.now();
+    return [...baseBulletins, ...this.overlay.newBulletins]
+      .filter((item) => !deleted.has(item.id))
+      .map((item) => ({ ...item, ...(this.overlay.bulletinPatches[item.id] ?? {}) }))
+      .map((item) =>
+        item.status === "scheduled" && item.scheduledFor && +new Date(item.scheduledFor) <= now
+          ? { ...item, status: "live" as const }
+          : item,
+      );
   }
   private eventList(): EventItem[] {
-    return [...baseEvents, ...this.overlay.newEvents];
+    const deleted = new Set(this.overlay.deletedEventIds);
+    return [...baseEvents, ...this.overlay.newEvents]
+      .filter((item) => !deleted.has(item.id))
+      .map((item) => ({ ...item, ...(this.overlay.eventPatches[item.id] ?? {}) }));
   }
   private businessClassList(): BusinessClass[] {
     const deleted = new Set(this.overlay.deletedBusinessClassIds);
@@ -300,9 +322,10 @@ export class MockDataSource implements DataSource {
   async countBulletinsThisMonth(businessId: ID): Promise<number> {
     const now = new Date();
     const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const n = this.bulletinList().filter(
-      (b) => b.businessId === businessId && b.createdAt.slice(0, 7) === ym,
-    ).length;
+    const n = this.bulletinList().filter((b) => {
+      const effectiveMonth = (b.scheduledFor ?? b.createdAt).slice(0, 7);
+      return b.businessId === businessId && effectiveMonth === ym && b.status !== "draft";
+    }).length;
     return delay(n);
   }
 
@@ -312,7 +335,7 @@ export class MockDataSource implements DataSource {
     if (query.businessId) items = items.filter((e) => e.businessId === query.businessId);
     if (!query.includePast) {
       const now = Date.now();
-      items = items.filter((e) => +new Date(e.endAt ?? e.startAt) >= now && e.status !== "past");
+      items = items.filter((e) => +new Date(e.endAt ?? e.startAt) >= now && e.status === "upcoming");
     }
     if (query.category) items = items.filter((e) => e.category === query.category);
     if (query.text) {
@@ -370,7 +393,7 @@ export class MockDataSource implements DataSource {
     }
     if (types.includes("event")) {
       for (const e of this.eventList()) {
-        if (e.title.toLowerCase().includes(term) || (e.category ?? "").toLowerCase().includes(term))
+        if (e.status === "upcoming" && (e.title.toLowerCase().includes(term) || (e.category ?? "").toLowerCase().includes(term)))
           out.push({ type: "event", item: e });
       }
     }
@@ -543,6 +566,21 @@ export class MockDataSource implements DataSource {
     return delay(bulletin);
   }
 
+  async updateBulletin(id: ID, patch: BulletinPatch): Promise<Bulletin> {
+    const current = this.bulletinList().find((item) => item.id === id);
+    if (!current) throw new Error(`Bulletin ${id} not found`);
+    this.overlay.bulletinPatches[id] = { ...(this.overlay.bulletinPatches[id] ?? {}), ...patch };
+    this.persist();
+    return delay({ ...current, ...patch });
+  }
+
+  async deleteBulletin(id: ID): Promise<void> {
+    if (!this.bulletinList().some((item) => item.id === id)) throw new Error(`Bulletin ${id} not found`);
+    this.overlay.deletedBulletinIds = [...new Set([...this.overlay.deletedBulletinIds, id])];
+    this.persist();
+    return delay(undefined);
+  }
+
   async createEvent(input: NewEventInput): Promise<EventItem> {
     const event: EventItem = {
       id: `e_${Date.now().toString(36)}`,
@@ -561,6 +599,24 @@ export class MockDataSource implements DataSource {
     this.overlay.newEvents.push(event);
     this.persist();
     return delay(event);
+  }
+
+  async updateEvent(id: ID, patch: EventPatch): Promise<EventItem> {
+    const current = this.eventList().find((item) => item.id === id);
+    if (!current) throw new Error(`Event ${id} not found`);
+    if (current.gcalEventId) throw new Error("Calendar-managed events are read-only");
+    this.overlay.eventPatches[id] = { ...(this.overlay.eventPatches[id] ?? {}), ...patch };
+    this.persist();
+    return delay({ ...current, ...patch });
+  }
+
+  async deleteEvent(id: ID): Promise<void> {
+    const current = this.eventList().find((item) => item.id === id);
+    if (!current) throw new Error(`Event ${id} not found`);
+    if (current.gcalEventId) throw new Error("Calendar-managed events are read-only");
+    this.overlay.deletedEventIds = [...new Set([...this.overlay.deletedEventIds, id])];
+    this.persist();
+    return delay(undefined);
   }
 
   async createBusinessClass(input: NewBusinessClassInput): Promise<BusinessClass> {

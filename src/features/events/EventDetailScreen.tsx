@@ -81,6 +81,12 @@ export function EventDetailScreen() {
       )}
 
       <div className="px-4 pt-4">
+        {event.status === "cancelled" && (
+          <div className="mb-4 rounded-lg border border-accent/30 bg-accent/10 px-3 py-3 text-sm leading-relaxed text-foreground" role="status">
+            <p className="font-semibold text-accent">{t("events.cancelled")}</p>
+            <p className="mt-1 text-muted-foreground">{t("events.cancelledNotice")}</p>
+          </div>
+        )}
         <div className="flex items-start gap-3">
           <div className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-secondary px-3 py-2 leading-none text-secondary-foreground">
             <span className="font-heading text-lg font-bold">{badge.day}</span>
@@ -118,7 +124,7 @@ export function EventDetailScreen() {
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <AddToCalendar event={event} align="left" />
+          {event.status !== "cancelled" && <AddToCalendar event={event} align="left" />}
           {eventLink && (
             <a
               href={eventLink.href}

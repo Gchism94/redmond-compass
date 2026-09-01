@@ -34,6 +34,8 @@ import type {
   NewBusinessInput,
   NewBulletinInput,
   NewEventInput,
+  BulletinPatch,
+  EventPatch,
   NewBusinessClassInput,
   BusinessClassPatch,
   AuthUser,
@@ -167,6 +169,10 @@ class SupabaseDataSource implements DataSource {
   async listBulletins(
     params: { businessId?: ID; limit?: number; status?: "live" | "all" } = {},
   ): Promise<Bulletin[]> {
+    // Publishing is demand-driven: the first reader after a scheduled time promotes due
+    // posts before fetching. The RPC is idempotent and only touches already-due rows.
+    const { error: publishError } = await this.sb.rpc("publish_due_bulletins");
+    if (publishError) throw publishError;
     let qb = this.sb.from("bulletins").select("*").order("created_at", { ascending: false });
     if (params.status !== "all") qb = qb.eq("status", "live");
     if (params.businessId) qb = qb.eq("business_id", params.businessId);
@@ -225,16 +231,14 @@ class SupabaseDataSource implements DataSource {
   }
 
   async countBulletinsThisMonth(businessId: ID): Promise<number> {
-    const start = new Date();
-    start.setDate(1);
-    start.setHours(0, 0, 0, 0);
-    const { count, error } = await this.sb
+    const ym = redmondDateYmd().slice(0, 7);
+    const { data, error } = await this.sb
       .from("bulletins")
-      .select("id", { count: "exact", head: true })
+      .select("created_at,scheduled_for,status")
       .eq("business_id", businessId)
-      .gte("created_at", start.toISOString());
+      .in("status", ["live", "scheduled", "expired"]);
     if (error) throw error;
-    return count ?? 0;
+    return (data ?? []).filter((row) => (row.scheduled_for ?? row.created_at).slice(0, 7) === ym).length;
   }
 
   // ---- Events ----
@@ -244,12 +248,13 @@ class SupabaseDataSource implements DataSource {
     if (query.category) qb = qb.eq("category", query.category);
     if (query.from) qb = qb.gte("start_at", query.from);
     if (query.to) qb = qb.lte("start_at", query.to);
+    if (!query.includePast) qb = qb.eq("status", "upcoming");
     const { data, error } = await qb;
     if (error) throw error;
     let items = (data ?? []).map(rowToEvent);
     if (!query.includePast) {
       const now = Date.now();
-      items = items.filter((e) => +new Date(e.endAt ?? e.startAt) >= now && e.status !== "past");
+      items = items.filter((e) => +new Date(e.endAt ?? e.startAt) >= now && e.status === "upcoming");
     }
     if (query.text) {
       const t = query.text.toLowerCase();
@@ -315,7 +320,7 @@ class SupabaseDataSource implements DataSource {
       });
     }
     if (types.includes("event")) {
-      const { data } = await this.sb.from("events").select("*").ilike("title", like);
+      const { data } = await this.sb.from("events").select("*").eq("status", "upcoming").ilike("title", like);
       (data ?? []).forEach((r) => out.push({ type: "event", item: rowToEvent(r) }));
     }
     if (types.includes("bulletin")) {
@@ -598,6 +603,27 @@ class SupabaseDataSource implements DataSource {
     return rowToBulletin(data);
   }
 
+  async updateBulletin(id: ID, patch: BulletinPatch): Promise<Bulletin> {
+    const row: Record<string, unknown> = {};
+    const columns: Record<keyof BulletinPatch, string> = {
+      body: "body",
+      linkCta: "link_cta",
+      scheduledFor: "scheduled_for",
+      status: "status",
+    };
+    for (const [key, column] of Object.entries(columns)) {
+      if (key in patch) row[column] = patch[key as keyof BulletinPatch] ?? null;
+    }
+    const { data, error } = await this.sb.from("bulletins").update(row).eq("id", id).select("*").single();
+    if (error) throw error;
+    return rowToBulletin(data);
+  }
+
+  async deleteBulletin(id: ID): Promise<void> {
+    const { error } = await this.sb.from("bulletins").delete().eq("id", id).select("id").single();
+    if (error) throw error;
+  }
+
   async createEvent(input: NewEventInput): Promise<EventItem> {
     // Event times are naive Redmond/Pacific → store the true instant (timestamptz).
     const { data, error } = await this.sb
@@ -620,6 +646,40 @@ class SupabaseDataSource implements DataSource {
       .single();
     if (error) throw error;
     return rowToEvent(data);
+  }
+
+  async updateEvent(id: ID, patch: EventPatch): Promise<EventItem> {
+    const row: Record<string, unknown> = {};
+    const columns: Record<Exclude<keyof EventPatch, "geo">, string> = {
+      title: "title",
+      startAt: "start_at",
+      endAt: "end_at",
+      venueName: "venue_name",
+      address: "address",
+      description: "description",
+      category: "category",
+      tags: "tags",
+      status: "status",
+    };
+    for (const [key, column] of Object.entries(columns)) {
+      if (!(key in patch)) continue;
+      const value = patch[key as Exclude<keyof EventPatch, "geo">];
+      row[column] = (key === "startAt" || key === "endAt") && value
+        ? eventStartToUtc(value as string).toISOString()
+        : value ?? null;
+    }
+    if ("geo" in patch) {
+      row.lat = patch.geo?.lat ?? null;
+      row.lng = patch.geo?.lng ?? null;
+    }
+    const { data, error } = await this.sb.from("events").update(row).eq("id", id).select("*").single();
+    if (error) throw error;
+    return rowToEvent(data);
+  }
+
+  async deleteEvent(id: ID): Promise<void> {
+    const { error } = await this.sb.from("events").delete().eq("id", id).select("id").single();
+    if (error) throw error;
   }
 
   async createBusinessClass(input: NewBusinessClassInput): Promise<BusinessClass> {

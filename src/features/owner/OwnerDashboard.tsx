@@ -87,14 +87,14 @@ export function OwnerDashboard() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <ActionTile
             icon={<Megaphone size={20} />}
-            label={t("owner.postBulletin")}
+            label={t("owner.manageBulletins")}
             badge={`${used}/${cap}`}
-            onClick={() => navigate("/manage/bulletin/new")}
+            onClick={() => navigate("/manage/bulletins")}
           />
           <ActionTile
             icon={<CalendarPlus size={20} />}
-            label={t("owner.submitEventBtn")}
-            onClick={() => navigate("/manage/event/new")}
+            label={t("owner.manageEvents")}
+            onClick={() => navigate("/manage/events")}
           />
           <ActionTile
             icon={<BookOpen size={20} />}

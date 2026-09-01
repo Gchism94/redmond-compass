@@ -69,6 +69,26 @@ export interface NewEventInput {
   tags?: string[];
 }
 
+export type BulletinPatch = Partial<
+  Pick<Bulletin, "body" | "linkCta" | "scheduledFor" | "status">
+>;
+
+export type EventPatch = Partial<
+  Pick<
+    EventItem,
+    | "title"
+    | "startAt"
+    | "endAt"
+    | "venueName"
+    | "address"
+    | "geo"
+    | "description"
+    | "category"
+    | "tags"
+    | "status"
+  >
+>;
+
 export interface NewBusinessClassInput {
   businessId: ID;
   title: string;
@@ -211,7 +231,7 @@ export interface DataSource {
   listBusinessClasses(businessId: ID): Promise<BusinessClass[]>;
   /** Owner view: the business's complete class history, including past/cancelled entries. */
   listManagedBusinessClasses(businessId: ID): Promise<BusinessClass[]>;
-  /** count toward the free monthly cap (all statuses, current month) */
+  /** Count publish slots in the current month (archiving does not refund a used slot). */
   countBulletinsThisMonth(businessId: ID): Promise<number>;
 
   // ---- Events ----
@@ -279,8 +299,12 @@ export interface DataSource {
   claimBusiness(id: ID, ownerId: ID): Promise<Business>;
   /** Post a bulletin (free monthly cap enforced in the UI, never destroys work). */
   createBulletin(input: NewBulletinInput): Promise<Bulletin>;
+  updateBulletin(id: ID, patch: BulletinPatch): Promise<Bulletin>;
+  deleteBulletin(id: ID): Promise<void>;
   /** Submit an event (free + uncapped for all tiers). */
   createEvent(input: NewEventInput): Promise<EventItem>;
+  updateEvent(id: ID, patch: EventPatch): Promise<EventItem>;
+  deleteEvent(id: ID): Promise<void>;
   createBusinessClass(input: NewBusinessClassInput): Promise<BusinessClass>;
   updateBusinessClass(id: ID, patch: BusinessClassPatch): Promise<BusinessClass>;
   deleteBusinessClass(id: ID): Promise<void>;

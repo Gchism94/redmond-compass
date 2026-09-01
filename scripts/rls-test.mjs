@@ -259,12 +259,59 @@ for (const t of ["businesses", "bulletins", "events", "news_articles", "resource
   const forgedBul = await a.client.from("bulletins").insert({ business_id: bizB, body: "posted as B" }).select();
   ok(!!forgedBul.error, "bulletins: owner A CANNOT post under owner B's business (forgery denied)");
 
+  const ownBulId = ownBul.data?.[0]?.id;
+  const editOwnBul = await a.client.from("bulletins").update({ body: "legitimate edit" }).eq("id", ownBulId).select();
+  ok(!editOwnBul.error && (editOwnBul.data?.length ?? 0) === 1, "bulletins: owner A can edit their own bulletin");
+  const crossEditBul = await b.client.from("bulletins").update({ body: "HACKED" }).eq("id", ownBulId).select();
+  ok(!crossEditBul.error && (crossEditBul.data?.length ?? 0) === 0, "bulletins: owner B CANNOT edit A's bulletin");
+
+  const dueTime = new Date(Date.now() - 60_000).toISOString();
+  const dueBul = await a.client.from("bulletins").insert({ business_id: bizA, body: "scheduled promotion", status: "scheduled", scheduled_for: dueTime }).select().single();
+  ok(!dueBul.error && !!dueBul.data?.id, "bulletins: owner can schedule an available monthly slot");
+  const promote = await anon.rpc("publish_due_bulletins");
+  ok(!promote.error && promote.data >= 1, "bulletins: the public-safe publisher promotes due scheduled posts");
+  const promotedRead = await anon.from("bulletins").select("id,status").eq("id", dueBul.data.id);
+  ok((promotedRead.data?.length ?? 0) === 1 && promotedRead.data[0].status === "live", "bulletins: a promoted post is publicly readable as live");
+  const deleteOwnBul = await a.client.from("bulletins").delete().eq("id", ownBulId).select();
+  ok(!deleteOwnBul.error && (deleteOwnBul.data?.length ?? 0) === 1, "bulletins: owner A can permanently delete their own bulletin");
+  const futureStamp = new Date(Date.now() + 370 * 864e5).toISOString();
+  const slot2 = await a.client.from("bulletins").insert({ business_id: bizA, body: "monthly slot two", status: "live", scheduled_for: futureStamp }).select().single();
+  const slot3 = await a.client.from("bulletins").insert({ business_id: bizA, body: "monthly slot three" }).select().single();
+  ok(!slot2.error && !slot3.error, "bulletins: all three monthly publish slots remain usable");
+  ok(slot2.data?.scheduled_for === null, "bulletins: a live insert cannot smuggle in a future cap month");
+  const archiveSlot = await a.client.from("bulletins").update({ status: "expired" }).eq("id", slot2.data.id).select();
+  ok(!archiveSlot.error && archiveSlot.data?.[0]?.status === "expired", "bulletins: owner can archive a live bulletin");
+  const refundProbe = await a.client.from("bulletins").insert({ business_id: bizA, body: "must not bypass cap" }).select();
+  ok(!!refundProbe.error, "bulletins: archiving does NOT refund a monthly publish slot");
+
+  const futureScheduled = await a.client.from("bulletins").insert({ business_id: bizA, body: "future scheduled post", status: "scheduled", scheduled_for: futureStamp }).select().single();
+  const premature = await a.client.from("bulletins").update({ status: "live" }).eq("id", futureScheduled.data.id).select();
+  ok(!!premature.error, "bulletins: an owner cannot publish a future scheduled post early through the REST API");
+
   const soon = new Date(Date.now() + 7 * 864e5).toISOString();
   const ownEv = await a.client.from("events").insert({ business_id: bizA, title: "legit event", start_at: soon }).select();
   ok(!ownEv.error && (ownEv.data?.length ?? 0) === 1, "events: owner A CAN submit for their own business (control)");
 
   const forgedEv = await a.client.from("events").insert({ business_id: bizB, title: "event as B", start_at: soon }).select();
   ok(!!forgedEv.error, "events: owner A CANNOT submit under owner B's business (forgery denied)");
+
+  const ownEvId = ownEv.data?.[0]?.id;
+  const editOwnEv = await a.client.from("events").update({ title: "edited legit event" }).eq("id", ownEvId).select();
+  ok(!editOwnEv.error && (editOwnEv.data?.length ?? 0) === 1, "events: owner A can edit their app-authored event");
+  const crossEditEv = await b.client.from("events").update({ title: "HACKED" }).eq("id", ownEvId).select();
+  ok(!crossEditEv.error && (crossEditEv.data?.length ?? 0) === 0, "events: owner B CANNOT edit A's event");
+
+  const synced = await admin.from("events").insert({ business_id: bizA, title: "sync owned", start_at: soon, gcal_event_id: `rls-gcal-${Date.now()}` }).select().single();
+  const editSynced = await a.client.from("events").update({ title: "owner overwrite" }).eq("id", synced.data.id).select();
+  ok(!editSynced.error && (editSynced.data?.length ?? 0) === 0, "events: owner CANNOT overwrite a Google Calendar-managed event");
+  const deleteSynced = await a.client.from("events").delete().eq("id", synced.data.id).select();
+  ok(!deleteSynced.error && (deleteSynced.data?.length ?? 0) === 0, "events: owner CANNOT delete a Google Calendar-managed event");
+  const forgeSyncKey = await a.client.from("events").insert({ business_id: bizA, title: "fake sync", start_at: soon, gcal_event_id: `forged-${Date.now()}` }).select();
+  ok(!!forgeSyncKey.error, "events: owner CANNOT create a fake calendar-managed event");
+  const cancelOwnEv = await a.client.from("events").update({ status: "cancelled" }).eq("id", ownEvId).select();
+  ok(!cancelOwnEv.error && cancelOwnEv.data?.[0]?.status === "cancelled", "events: owner A can cancel their own event");
+  const deleteOwnEv = await a.client.from("events").delete().eq("id", ownEvId).select();
+  ok(!deleteOwnEv.error && (deleteOwnEv.data?.length ?? 0) === 1, "events: owner A can permanently delete their own event");
 
   const classDate = soon.slice(0, 10);
   const ownClass = await a.client.from("business_classes")

@@ -50,8 +50,9 @@ export function EventCard({
         <span className="text-[10px] font-medium uppercase text-muted-foreground">{badge.mo}</span>
       </div>
       <Link to={`/events/${event.id}`} className="flex min-h-tap min-w-0 flex-1 flex-col justify-center focus-visible:outline-none">
-        <div className="font-heading text-sm font-semibold leading-tight text-foreground">
-          {event.title}
+        <div className="flex flex-wrap items-center gap-1.5 font-heading text-sm font-semibold leading-tight text-foreground">
+          <span>{event.title}</span>
+          {event.status === "cancelled" && <span className="rounded-pill bg-accent/15 px-1.5 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-wide text-accent">{t("events.cancelled")}</span>}
         </div>
         <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
           {event.venueName && <MapPin size={11} className="shrink-0" />}
@@ -60,7 +61,7 @@ export function EventCard({
       </Link>
       {(onSave || addToCalendar) && (
         <div className="flex shrink-0 items-center">
-          {addToCalendar && (
+          {addToCalendar && event.status !== "cancelled" && (
             <AddToCalendar event={event} iconOnly variant="ghost" menuPlacement={calendarMenuPlacement} />
           )}
           {onSave && (

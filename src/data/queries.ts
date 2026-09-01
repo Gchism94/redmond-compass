@@ -15,6 +15,8 @@ import type {
   NewBusinessInput,
   NewBulletinInput,
   NewEventInput,
+  BulletinPatch,
+  EventPatch,
   NewBusinessClassInput,
   BusinessClassPatch,
 } from "./DataSource";
@@ -24,7 +26,7 @@ export const qk = {
   businesses: (q?: BusinessQuery) => ["businesses", q ?? {}] as const,
   business: (slug: string) => ["business", slug] as const,
   categories: () => ["categories"] as const,
-  bulletins: (p?: { businessId?: ID; limit?: number }) => ["bulletins", p ?? {}] as const,
+  bulletins: (p?: { businessId?: ID; limit?: number; status?: "live" | "all" }) => ["bulletins", p ?? {}] as const,
   events: (q?: EventQuery) => ["events", q ?? {}] as const,
   businessClasses: (id?: ID) => ["business-classes", id ?? ""] as const,
   managedBusinessClasses: (id?: ID) => ["managed-business-classes", id ?? ""] as const,
@@ -97,9 +99,13 @@ export function useCategories() {
   return useQuery({ queryKey: qk.categories(), queryFn: async () => (await getDS()).listCategories() });
 }
 
-export function useBulletins(params?: { businessId?: ID; limit?: number }) {
+export function useBulletins(params?: { businessId?: ID; limit?: number; status?: "live" | "all" }) {
   const getDS = useDataSource();
-  return useQuery({ queryKey: qk.bulletins(params), queryFn: async () => (await getDS()).listBulletins(params) });
+  return useQuery({
+    queryKey: qk.bulletins(params),
+    queryFn: async () => (await getDS()).listBulletins(params),
+    enabled: !params || !("businessId" in params) || !!params.businessId,
+  });
 }
 
 export function useCommunityNotices() {
@@ -127,7 +133,11 @@ export function useManagedBusinessClasses(businessId?: ID) {
 
 export function useEvents(query?: EventQuery) {
   const getDS = useDataSource();
-  return useQuery({ queryKey: qk.events(query), queryFn: async () => (await getDS()).listEvents(query) });
+  return useQuery({
+    queryKey: qk.events(query),
+    queryFn: async () => (await getDS()).listEvents(query),
+    enabled: !query || !("businessId" in query) || !!query.businessId,
+  });
 }
 
 export function useEvent(id: string | undefined) {
@@ -265,6 +275,34 @@ export function useCreateBulletin() {
   });
 }
 
+function useInvalidateBulletins() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ["bulletins"] });
+    qc.invalidateQueries({ queryKey: ["bulletin-count"] });
+    qc.invalidateQueries({ queryKey: ["search"] });
+  };
+}
+
+export function useUpdateBulletin() {
+  const getDS = useDataSource();
+  const invalidate = useInvalidateBulletins();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: ID; patch: BulletinPatch }) =>
+      (await getDS()).updateBulletin(id, patch),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteBulletin() {
+  const getDS = useDataSource();
+  const invalidate = useInvalidateBulletins();
+  return useMutation({
+    mutationFn: async (id: ID) => (await getDS()).deleteBulletin(id),
+    onSuccess: invalidate,
+  });
+}
+
 export function useCreateEvent() {
   const getDS = useDataSource();
   const qc = useQueryClient();
@@ -274,6 +312,34 @@ export function useCreateEvent() {
       qc.invalidateQueries({ queryKey: ["events"] });
       qc.invalidateQueries({ queryKey: ["search"] });
     },
+  });
+}
+
+function useInvalidateEvents() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ["events"] });
+    qc.invalidateQueries({ queryKey: ["event"] });
+    qc.invalidateQueries({ queryKey: ["search"] });
+  };
+}
+
+export function useUpdateEvent() {
+  const getDS = useDataSource();
+  const invalidate = useInvalidateEvents();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: ID; patch: EventPatch }) =>
+      (await getDS()).updateEvent(id, patch),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteEvent() {
+  const getDS = useDataSource();
+  const invalidate = useInvalidateEvents();
+  return useMutation({
+    mutationFn: async (id: ID) => (await getDS()).deleteEvent(id),
+    onSuccess: invalidate,
   });
 }
 

@@ -36,6 +36,7 @@ export function SavedScreen() {
     .map((id) => bizById.get(id))
     .filter((b): b is Business => !!b);
   const savedEvents = (allEvents.data ?? []).filter((e) => session.savedEventIds.includes(e.id));
+  const calendarEvents = savedEvents.filter((event) => event.status !== "cancelled");
 
   return (
     <div className="pb-4">
@@ -135,13 +136,15 @@ export function SavedScreen() {
           )
         ) : savedEvents.length ? (
           <>
-            <button
-              type="button"
-              onClick={() => downloadICS("redmond-compass-events", eventsToICS(savedEvents))}
-              className="mb-1 inline-flex min-h-tap items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none"
-            >
-              <CalendarPlus size={16} strokeWidth={1.75} /> {t("events.addAll")}
-            </button>
+            {calendarEvents.length > 0 && (
+              <button
+                type="button"
+                onClick={() => downloadICS("redmond-compass-events", eventsToICS(calendarEvents))}
+                className="mb-1 inline-flex min-h-tap items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none"
+              >
+                <CalendarPlus size={16} strokeWidth={1.75} /> {t("events.addAll")}
+              </button>
+            )}
             <div className="divide-y divide-border">
               {savedEvents.map((e) => (
                 <EventCard
