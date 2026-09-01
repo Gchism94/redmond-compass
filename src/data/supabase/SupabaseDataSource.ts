@@ -34,6 +34,8 @@ import type {
   NewBusinessInput,
   NewBulletinInput,
   NewEventInput,
+  NewBusinessClassInput,
+  BusinessClassPatch,
   AuthUser,
   StartAuthResult,
   PersistedProfile,
@@ -203,7 +205,20 @@ class SupabaseDataSource implements DataSource {
       .from("business_classes")
       .select("*")
       .eq("business_id", businessId)
+      .neq("status", "cancelled")
       .gte("date", ymd)
+      .order("date", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(rowToBusinessClass);
+  }
+
+  async listManagedBusinessClasses(businessId: ID): Promise<BusinessClass[]> {
+    // RLS makes cancelled rows visible only to this business's owner. No status/date
+    // predicate here: the management screen needs a complete audit trail.
+    const { data, error } = await this.sb
+      .from("business_classes")
+      .select("*")
+      .eq("business_id", businessId)
       .order("date", { ascending: true });
     if (error) throw error;
     return (data ?? []).map(rowToBusinessClass);
@@ -605,6 +620,61 @@ class SupabaseDataSource implements DataSource {
       .single();
     if (error) throw error;
     return rowToEvent(data);
+  }
+
+  async createBusinessClass(input: NewBusinessClassInput): Promise<BusinessClass> {
+    const { data, error } = await this.sb
+      .from("business_classes")
+      .insert({
+        business_id: input.businessId,
+        title: input.title,
+        date: input.date,
+        time_text: input.timeText ?? null,
+        location: input.location ?? null,
+        description: input.description ?? null,
+        link: input.link ?? null,
+        status: input.status ?? "open",
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    return rowToBusinessClass(data);
+  }
+
+  async updateBusinessClass(id: ID, patch: BusinessClassPatch): Promise<BusinessClass> {
+    const row: Record<string, unknown> = {};
+    const columns: Record<keyof BusinessClassPatch, string> = {
+      title: "title",
+      date: "date",
+      timeText: "time_text",
+      location: "location",
+      description: "description",
+      link: "link",
+      status: "status",
+    };
+    for (const [key, column] of Object.entries(columns)) {
+      if (key in patch) row[column] = patch[key as keyof BusinessClassPatch] ?? null;
+    }
+    const { data, error } = await this.sb
+      .from("business_classes")
+      .update(row)
+      .eq("id", id)
+      .select("*")
+      .single();
+    if (error) throw error;
+    return rowToBusinessClass(data);
+  }
+
+  async deleteBusinessClass(id: ID): Promise<void> {
+    // Selecting the deleted id makes a 0-row RLS denial observable instead of reporting a
+    // misleading success while the entry remains in the database.
+    const { error } = await this.sb
+      .from("business_classes")
+      .delete()
+      .eq("id", id)
+      .select("id")
+      .single();
+    if (error) throw error;
   }
 
   private slugify(name: string): string {

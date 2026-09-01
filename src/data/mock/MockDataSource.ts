@@ -34,6 +34,8 @@ import type {
   NewBusinessInput,
   NewBulletinInput,
   NewEventInput,
+  NewBusinessClassInput,
+  BusinessClassPatch,
   AuthUser,
   StartAuthResult,
   PersistedProfile,
@@ -61,6 +63,9 @@ interface Overlay {
   patches: Record<string, Partial<Business>>;
   newBulletins: Bulletin[];
   newEvents: EventItem[];
+  newBusinessClasses: BusinessClass[];
+  businessClassPatches: Record<string, BusinessClassPatch>;
+  deletedBusinessClassIds: string[];
   /** business ids the current (mock) user has recommended — positive-only */
   recommendedBusinessIds: string[];
 }
@@ -70,6 +75,9 @@ const EMPTY_OVERLAY: Overlay = {
   patches: {},
   newBulletins: [],
   newEvents: [],
+  newBusinessClasses: [],
+  businessClassPatches: {},
+  deletedBusinessClassIds: [],
   recommendedBusinessIds: [],
 };
 
@@ -156,6 +164,12 @@ export class MockDataSource implements DataSource {
   }
   private eventList(): EventItem[] {
     return [...baseEvents, ...this.overlay.newEvents];
+  }
+  private businessClassList(): BusinessClass[] {
+    const deleted = new Set(this.overlay.deletedBusinessClassIds);
+    return [...businessClasses, ...this.overlay.newBusinessClasses]
+      .filter((item) => !deleted.has(item.id))
+      .map((item) => ({ ...item, ...(this.overlay.businessClassPatches[item.id] ?? {}) }));
   }
 
   private uniqueSlug(name: string): string {
@@ -269,10 +283,18 @@ export class MockDataSource implements DataSource {
     // still counts), soonest first. "Today" is Redmond's day, not the viewer's: an
     // out-of-state visitor must not lose tonight's class because midnight passed there.
     const ymd = redmondDateYmd();
-    const items = businessClasses
-      .filter((c) => c.businessId === businessId && c.date >= ymd)
+    const items = this.businessClassList()
+      .filter((c) => c.businessId === businessId && c.date >= ymd && c.status !== "cancelled")
       .sort((a, b) => a.date.localeCompare(b.date));
     return delay(items);
+  }
+
+  async listManagedBusinessClasses(businessId: ID): Promise<BusinessClass[]> {
+    return delay(
+      this.businessClassList()
+        .filter((item) => item.businessId === businessId)
+        .sort((a, b) => a.date.localeCompare(b.date)),
+    );
   }
 
   async countBulletinsThisMonth(businessId: ID): Promise<number> {
@@ -539,5 +561,44 @@ export class MockDataSource implements DataSource {
     this.overlay.newEvents.push(event);
     this.persist();
     return delay(event);
+  }
+
+  async createBusinessClass(input: NewBusinessClassInput): Promise<BusinessClass> {
+    const item: BusinessClass = {
+      id: `bc_${Date.now().toString(36)}`,
+      businessId: input.businessId,
+      title: input.title,
+      date: input.date,
+      timeText: input.timeText,
+      location: input.location,
+      description: input.description,
+      link: input.link,
+      status: input.status ?? "open",
+      createdAt: new Date().toISOString(),
+    };
+    this.overlay.newBusinessClasses.push(item);
+    this.persist();
+    return delay(item);
+  }
+
+  async updateBusinessClass(id: ID, patch: BusinessClassPatch): Promise<BusinessClass> {
+    const current = this.businessClassList().find((item) => item.id === id);
+    if (!current) throw new Error(`Business class ${id} not found`);
+    this.overlay.businessClassPatches[id] = {
+      ...(this.overlay.businessClassPatches[id] ?? {}),
+      ...patch,
+    };
+    this.persist();
+    return delay({ ...current, ...patch });
+  }
+
+  async deleteBusinessClass(id: ID): Promise<void> {
+    if (!this.businessClassList().some((item) => item.id === id))
+      throw new Error(`Business class ${id} not found`);
+    this.overlay.deletedBusinessClassIds = [
+      ...new Set([...this.overlay.deletedBusinessClassIds, id]),
+    ];
+    this.persist();
+    return delay(undefined);
   }
 }

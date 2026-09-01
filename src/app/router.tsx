@@ -33,6 +33,8 @@ const OwnerDashboard = named(() => import("@/features/owner/OwnerDashboard"), "O
 const EditListingScreen = named(() => import("@/features/owner/EditListingScreen"), "EditListingScreen");
 const PostBulletinScreen = named(() => import("@/features/owner/PostBulletinScreen"), "PostBulletinScreen");
 const SubmitEventScreen = named(() => import("@/features/owner/SubmitEventScreen"), "SubmitEventScreen");
+const ManageClassesScreen = named(() => import("@/features/owner/ManageClassesScreen"), "ManageClassesScreen");
+const ClassEditorScreen = named(() => import("@/features/owner/ManageClassesScreen"), "ClassEditorScreen");
 const NotFoundPage = named(() => import("./pages"), "NotFoundPage");
 const GuideScreen = named(() => import("@/features/guides/GuideScreen"), "GuideScreen");
 const LandingGate = named(() => import("@/features/landing/LandingScreen"), "LandingGate");
@@ -83,6 +85,9 @@ export const router = createBrowserRouter([
       { path: "/manage/edit", element: <EditListingScreen /> },
       { path: "/manage/bulletin/new", element: <PostBulletinScreen /> },
       { path: "/manage/event/new", element: <SubmitEventScreen /> },
+      { path: "/manage/classes", element: <ManageClassesScreen /> },
+      { path: "/manage/classes/new", element: <ClassEditorScreen /> },
+      { path: "/manage/classes/:id/edit", element: <ClassEditorScreen /> },
       // Component gallery: a DEV-only surface, never a reachable route in production (#8).
       // The lazy() lives INSIDE this branch on purpose — declared at module scope it was a
       // top-level call Rollup couldn't prove pure, so the 14.7 KB gallery chunk shipped to

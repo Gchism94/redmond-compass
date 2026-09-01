@@ -71,6 +71,8 @@ const ALL = [
     status: "sold_out", createdAt: "x" },
   { id: "c_wait",  businessId: "b_test", title: "Crate of Pumpkins Paint Party", date: ymd(60),
     timeText: "6:00–8:00 PM", status: "waitlist", createdAt: "x" },
+  { id: "c_cancelled", businessId: "b_test", title: "CANCELLED Hidden Workshop", date: ymd(12),
+    status: "cancelled", createdAt: "x" },
 ];
 window.__EXPECT_SOON_DATE = ALL[2].date;
 
@@ -93,7 +95,7 @@ function source() {
         if (RAW) return ALL;
         const today = new Date();
         const t0 = today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
-        return ALL.filter((c) => c.date >= t0).sort((a,b) => a.date.localeCompare(b.date));
+        return ALL.filter((c) => c.date >= t0 && c.status !== "cancelled").sort((a,b) => a.date.localeCompare(b.date));
       };
       const v = Reflect.get(t, prop, r);
       return typeof v === "function" ? v.bind(t) : v;
@@ -153,6 +155,7 @@ const bodyText = (p) => p.evaluate(() => document.body.innerText);
   ok(/Classes & workshops/i.test(txt), "the Classes section renders");
   ok(/Fall Highlander Cow Paint Party/.test(txt), "an upcoming class is listed");
   ok(!/PAST /.test(txt), `no past class is listed (${(txt.match(/PAST [^\n]*/g) ?? []).join(", ") || "none"})`);
+  ok(!/CANCELLED Hidden/.test(txt), "a cancelled class is not exposed on the public profile");
 
   // Order: soonest first.
   const iSoon = txt.indexOf("Fall Highlander Cow");
@@ -284,6 +287,12 @@ server.kill();
   ok(rows.every((c) => c.date >= t0),
      `the SOURCE filters to upcoming (${rows.map((c) => c.date).join(", ")})`);
   ok(!rows.some((c) => c.id === "bc_past"), "the seeded past class is excluded — the filter has something to do");
+  const cancelled = await ds.createBusinessClass({ businessId: "b_juniper", title: "Hidden cancellation", date: "2099-01-01" });
+  await ds.updateBusinessClass(cancelled.id, { status: "cancelled" });
+  ok(!(await ds.listBusinessClasses("b_juniper")).some((c) => c.id === cancelled.id),
+     "the SOURCE excludes a future cancelled class from the public list");
+  ok((await ds.listManagedBusinessClasses("b_juniper")).some((c) => c.id === cancelled.id && c.status === "cancelled"),
+     "the owner source retains the cancelled class in management history");
   ok(rows.map((c) => c.date).join() === [...rows.map((c) => c.date)].sort().join(),
      "the source returns them soonest-first");
   ok((await ds.listBusinessClasses("b_nonexistent")).length === 0, "a business with no classes gets an empty list");

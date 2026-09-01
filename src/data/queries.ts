@@ -15,6 +15,8 @@ import type {
   NewBusinessInput,
   NewBulletinInput,
   NewEventInput,
+  NewBusinessClassInput,
+  BusinessClassPatch,
 } from "./DataSource";
 import type { Business, ResourceCategory, ID } from "@/lib/types";
 
@@ -25,6 +27,7 @@ export const qk = {
   bulletins: (p?: { businessId?: ID; limit?: number }) => ["bulletins", p ?? {}] as const,
   events: (q?: EventQuery) => ["events", q ?? {}] as const,
   businessClasses: (id?: ID) => ["business-classes", id ?? ""] as const,
+  managedBusinessClasses: (id?: ID) => ["managed-business-classes", id ?? ""] as const,
   communityNotices: () => ["community-notices"] as const,
   event: (id: ID) => ["event", id] as const,
   news: (p?: { limit?: number }) => ["news", p ?? {}] as const,
@@ -110,6 +113,15 @@ export function useBusinessClasses(businessId?: ID) {
     queryKey: qk.businessClasses(businessId),
     enabled: !!businessId,
     queryFn: async () => (await getDS()).listBusinessClasses(businessId!),
+  });
+}
+
+export function useManagedBusinessClasses(businessId?: ID) {
+  const getDS = useDataSource();
+  return useQuery({
+    queryKey: qk.managedBusinessClasses(businessId),
+    enabled: !!businessId,
+    queryFn: async () => (await getDS()).listManagedBusinessClasses(businessId!),
   });
 }
 
@@ -262,5 +274,42 @@ export function useCreateEvent() {
       qc.invalidateQueries({ queryKey: ["events"] });
       qc.invalidateQueries({ queryKey: ["search"] });
     },
+  });
+}
+
+function useInvalidateBusinessClasses() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ["business-classes"] });
+    qc.invalidateQueries({ queryKey: ["managed-business-classes"] });
+  };
+}
+
+export function useCreateBusinessClass() {
+  const getDS = useDataSource();
+  const invalidate = useInvalidateBusinessClasses();
+  return useMutation({
+    mutationFn: async (input: NewBusinessClassInput) =>
+      (await getDS()).createBusinessClass(input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateBusinessClass() {
+  const getDS = useDataSource();
+  const invalidate = useInvalidateBusinessClasses();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: ID; patch: BusinessClassPatch }) =>
+      (await getDS()).updateBusinessClass(id, patch),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteBusinessClass() {
+  const getDS = useDataSource();
+  const invalidate = useInvalidateBusinessClasses();
+  return useMutation({
+    mutationFn: async (id: ID) => (await getDS()).deleteBusinessClass(id),
+    onSuccess: invalidate,
   });
 }

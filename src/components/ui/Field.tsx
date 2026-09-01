@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { tGlobal } from "@/i18n";
 
 /** Shared input styling for owner forms (parity with AuthSheet/Login inputs). */
 export const fieldInputClass =
@@ -24,7 +25,7 @@ export function Field({
     <div className={cn("space-y-1.5", className)}>
       <label htmlFor={htmlFor} className="flex items-center gap-2 text-xs font-semibold text-foreground">
         {label}
-        {required && <span className="font-normal text-positive">required</span>}
+        {required && <span className="font-normal text-positive">{tGlobal("common.required")}</span>}
       </label>
       {children}
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}

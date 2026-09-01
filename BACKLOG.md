@@ -15,7 +15,6 @@ bugs in the current release.
 | Fast-follow | **Map search** | Results ship as a complete list experience; the unfinished toggle has been removed so it cannot masquerade as a live feature. | Choose a map provider; implement pins, viewport-aware results, clustering, and list/map selection sync, then restore the toggle. |
 | Fast-follow | **Yard sales** | Database table and basic RLS exist; there are no live rows. | Resident submission, browse/detail UI, pending-by-default moderation rules, and an identified moderator. |
 | Fast-follow | **Verified-customer recommendations** | Positive-only Recommend is live and never changes ranking. | Define qualifying evidence and show the verified-customer distinction without creating a star-rating system. |
-| Next | **Classes & workshops management** | Upcoming classes render on business profiles and owner RLS permits writes. | Owner create/edit/cancel UI and validation; keep town-wide promotion out until there is representative inventory. |
 | Next | **Membership and business insights** | Tier fields and the Member/Pro entitlement matrix are modeled. | Billing/paywall, member analytics, and demand signals with clear privacy and value propositions. |
 | Next | **Live calendar subscriptions** | Per-event and bulk `.ics` export plus Google/Outlook links are live. | A stable `webcal` feed backed by a Supabase function, including update/cancellation behavior. |
 | Later | **Pro business tools** | Entitlement seams exist. | Bookings, inquiry inbox, loyalty tools, and follower announcements/perks. |

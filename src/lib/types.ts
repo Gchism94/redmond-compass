@@ -121,7 +121,8 @@ export interface BusinessClass {
   description?: string;
   link?: string;
   imageUrl?: string;
-  status: "open" | "sold_out" | "waitlist";
+  /** Cancelled entries remain visible to the owner but never appear on the public profile. */
+  status: "open" | "sold_out" | "waitlist" | "cancelled";
   createdAt: string;
 }
 

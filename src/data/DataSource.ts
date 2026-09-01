@@ -69,6 +69,22 @@ export interface NewEventInput {
   tags?: string[];
 }
 
+export interface NewBusinessClassInput {
+  businessId: ID;
+  title: string;
+  /** YYYY-MM-DD in Redmond local calendar time. */
+  date: string;
+  timeText?: string;
+  location?: string;
+  description?: string;
+  link?: string;
+  status?: Exclude<BusinessClass["status"], "cancelled">;
+}
+
+export type BusinessClassPatch = Partial<
+  Pick<BusinessClass, "title" | "date" | "timeText" | "location" | "description" | "link" | "status">
+>;
+
 /** Lightweight authed identity (the session surface). */
 export interface AuthUser {
   id: ID;
@@ -191,8 +207,10 @@ export interface DataSource {
   listCommunityNotices(): Promise<CommunityNotice[]>;
 
   /** Classes/workshops for one business, soonest first. Implementations return UPCOMING
-   *  only — a past class is not a listing, and 4 of the 10 live rows are already past. */
+   *  non-cancelled entries only — a past class is not a public listing. */
   listBusinessClasses(businessId: ID): Promise<BusinessClass[]>;
+  /** Owner view: the business's complete class history, including past/cancelled entries. */
+  listManagedBusinessClasses(businessId: ID): Promise<BusinessClass[]>;
   /** count toward the free monthly cap (all statuses, current month) */
   countBulletinsThisMonth(businessId: ID): Promise<number>;
 
@@ -263,4 +281,7 @@ export interface DataSource {
   createBulletin(input: NewBulletinInput): Promise<Bulletin>;
   /** Submit an event (free + uncapped for all tiers). */
   createEvent(input: NewEventInput): Promise<EventItem>;
+  createBusinessClass(input: NewBusinessClassInput): Promise<BusinessClass>;
+  updateBusinessClass(id: ID, patch: BusinessClassPatch): Promise<BusinessClass>;
+  deleteBusinessClass(id: ID): Promise<void>;
 }

@@ -71,8 +71,8 @@ const bizB = await mk(b.id, `rls-b-${Date.now()}`);
 
 const anon = createClient(URL, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
 
-// 1) GUEST READ works (all five)
-for (const t of ["businesses", "bulletins", "events", "news_articles", "resources"]) {
+// 1) GUEST READ works across public content tables
+for (const t of ["businesses", "bulletins", "events", "news_articles", "resources", "business_classes"]) {
   const { error } = await anon.from(t).select("*").limit(1);
   ok(!error, `guest reads ${t}`);
 }
@@ -249,7 +249,7 @@ for (const t of ["businesses", "bulletins", "events", "news_articles", "resource
 }
 
 // 10) CONTENT FORGERY — can owner A publish under owner B's business name?
-//     `bulletins_insert` and `events_insert` both guard on is_business_owner(business_id).
+//     Bulletins, events, and classes all guard on is_business_owner(business_id).
 //     A read leak exposes data; this would let someone put words in another business's
 //     mouth on a community directory, so it's tested with positive controls either side.
 {
@@ -266,6 +266,34 @@ for (const t of ["businesses", "bulletins", "events", "news_articles", "resource
   const forgedEv = await a.client.from("events").insert({ business_id: bizB, title: "event as B", start_at: soon }).select();
   ok(!!forgedEv.error, "events: owner A CANNOT submit under owner B's business (forgery denied)");
 
+  const classDate = soon.slice(0, 10);
+  const ownClass = await a.client.from("business_classes")
+    .insert({ business_id: bizA, title: "legit class", date: classDate }).select().single();
+  ok(!ownClass.error && !!ownClass.data?.id,
+     "classes: owner A CAN create a class for their own business (control)");
+
+  const forgedClass = await a.client.from("business_classes")
+    .insert({ business_id: bizB, title: "class as B", date: classDate }).select();
+  ok(!!forgedClass.error,
+     "classes: owner A CANNOT create a class under owner B's business (forgery denied)");
+
+  // Cancellation retains owner history but is private everywhere else — direct REST
+  // requests must not be able to bypass the UI's upcoming/active filter.
+  const cancelled = await a.client.from("business_classes")
+    .update({ status: "cancelled" }).eq("id", ownClass.data.id).select();
+  ok(!cancelled.error && (cancelled.data?.length ?? 0) === 1,
+     "classes: owner A can cancel their own class");
+  const ownerHistory = await a.client.from("business_classes")
+    .select("id,status").eq("id", ownClass.data.id);
+  ok((ownerHistory.data?.length ?? 0) === 1 && ownerHistory.data[0].status === "cancelled",
+     "classes: owner A still sees the cancelled class in management history");
+  const anonCancelled = await anon.from("business_classes").select("id").eq("id", ownClass.data.id);
+  ok((anonCancelled.data?.length ?? 0) === 0,
+     "classes: a guest CANNOT read a cancelled class");
+  const otherOwnerCancelled = await b.client.from("business_classes").select("id").eq("id", ownClass.data.id);
+  ok((otherOwnerCancelled.data?.length ?? 0) === 0,
+     "classes: another signed-in owner CANNOT read a cancelled class");
+
   // events_insert requires business_id not null — no anonymous community events from the
   // client, which would otherwise be an unattributed write channel into the public feed.
   const orphanEv = await a.client.from("events").insert({ business_id: null, title: "unattributed", start_at: soon }).select();
@@ -276,6 +304,8 @@ for (const t of ["businesses", "bulletins", "events", "news_articles", "resource
   ok((bBul?.length ?? 0) === 0, "no forged bulletin exists under B's business");
   const { data: bEv } = await admin.from("events").select("id").eq("business_id", bizB);
   ok((bEv?.length ?? 0) === 0, "no forged event exists under B's business");
+  const { data: bClasses } = await admin.from("business_classes").select("id").eq("business_id", bizB);
+  ok((bClasses?.length ?? 0) === 0, "no forged class exists under B's business");
 }
 
 // 11) claim_business — the main privilege-escalation surface.

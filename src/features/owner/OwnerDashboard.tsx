@@ -1,5 +1,5 @@
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { Repeat, Megaphone, CalendarPlus, Pencil, ArrowRight } from "lucide-react";
+import { Repeat, Megaphone, CalendarPlus, Pencil, ArrowRight, BookOpen } from "lucide-react";
 import { Thumb, VerifiedBadge, StatusBadge, CompletenessMeter, Card, Skeleton, ErrorState } from "@/components";
 import { useOwnerBusiness } from "./useOwnerBusiness";
 import { useBulletinCount } from "@/data/queries";
@@ -84,7 +84,7 @@ export function OwnerDashboard() {
       {/* Quick actions */}
       <section className="px-4 pt-4">
         <h2 className="mb-2 font-heading text-md font-semibold text-foreground">{t("owner.quickActions")}</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <ActionTile
             icon={<Megaphone size={20} />}
             label={t("owner.postBulletin")}
@@ -95,6 +95,11 @@ export function OwnerDashboard() {
             icon={<CalendarPlus size={20} />}
             label={t("owner.submitEventBtn")}
             onClick={() => navigate("/manage/event/new")}
+          />
+          <ActionTile
+            icon={<BookOpen size={20} />}
+            label={t("owner.manageClasses")}
+            onClick={() => navigate("/manage/classes")}
           />
           <ActionTile
             icon={<Pencil size={20} />}
