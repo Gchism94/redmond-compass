@@ -69,7 +69,8 @@ export function ResultsScreen() {
 
   const toggleTag = (t: string) => {
     const set = new Set(tags);
-    set.has(t) ? set.delete(t) : set.add(t);
+    if (set.has(t)) set.delete(t);
+    else set.add(t);
     patch({ tags: [...set].join(",") || null });
   };
 

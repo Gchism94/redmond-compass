@@ -386,7 +386,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       active = false;
       unsub();
     };
-  }, [getDS, syncProfileOnSignIn, replayIntent]);
+  }, [getDS, syncProfileOnSignIn, replayIntent, clearAccountScopedState]);
 
   // once signed in (and merged), push later pref changes to the server row
   useEffect(() => {

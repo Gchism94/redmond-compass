@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 
 /**
  * Redmond Compass — Tailwind theme, wired to design-tokens.css.
@@ -74,5 +75,5 @@ export default {
       maxWidth: { content: "480px" }, // mobile content column cap
     },
   },
-  plugins: [require("tailwindcss-animate")], // for shadcn animations; optional
+  plugins: [animate], // for shadcn animations; optional
 } satisfies Config;

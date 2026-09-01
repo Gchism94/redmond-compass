@@ -95,7 +95,7 @@ export function CommunityScreen() {
     });
     const merged = tab === "news" ? n : tab === "bulletins" ? b : [...n, ...b];
     return merged.sort((x, y) => y.ts - x.ts);
-  }, [news.data, bulletins.data, bizById, tab]);
+  }, [news.data, bulletins.data, bizById, tab, t]);
 
   const loading = news.isLoading || bulletins.isLoading;
   // Both feeds must fail before the whole screen errors; one alone just contributes less.
