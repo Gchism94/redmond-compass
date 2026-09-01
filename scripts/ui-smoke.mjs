@@ -251,6 +251,35 @@ async function newPage(width, height) {
   await page.close();
 }
 
+// ---------------- 1024px — compact desktop landing breakpoint ----------------
+if (APP_ONLY) {
+  const { page, errors, visit } = await newPage(1024, 700);
+  const label = (m) => `[1024] ${m}`;
+  const L = await visit("/");
+  const composition = await page.$eval("[data-landing-hero]", (hero) => {
+    const visual = hero.querySelector("[data-landing-visual]");
+    const preview = hero.querySelector("[data-landing-preview]");
+    const mural = hero.querySelector("[data-landing-mural]");
+    const rect = (element) => {
+      const value = element.getBoundingClientRect();
+      return { top: value.top, right: value.right, bottom: value.bottom, left: value.left, height: value.height };
+    };
+    return {
+      hero: rect(hero),
+      visual: rect(visual),
+      preview: rect(preview),
+      muralFit: getComputedStyle(mural).objectFit,
+    };
+  });
+  ok(L.overflowX === 0, label(`landing: no horizontal overflow (${L.overflowX})`));
+  ok(composition.preview.top >= composition.visual.top && composition.preview.bottom <= composition.visual.bottom,
+     label("landing: app preview is fully contained in the mural panel"));
+  ok(composition.muralFit === "contain", label("landing: mural is shown whole rather than cropped"));
+  ok(composition.hero.height <= 460, label(`landing: compact hero height (${Math.round(composition.hero.height)}px)`));
+  ok(errors.length === 0, label(`zero console errors (${errors.length ? errors.join(" | ").slice(0, 160) : "clean"})`));
+  await page.close();
+}
+
 // ---------------- 1280px — WebShell (desktop) + landing + SEO guards ----------------
 {
   const { page, errors, visit } = await newPage(1280, 900);

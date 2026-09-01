@@ -90,30 +90,31 @@ export function LandingScreen() {
 
       <main className="pb-16">
         <section className="mx-auto max-w-6xl px-5 pt-5 sm:pt-8">
-          <div className="overflow-hidden rounded-[28px] border border-foreground/10 bg-foreground shadow-lift lg:grid lg:min-h-[470px] lg:grid-cols-[1fr_1.35fr]">
-            <div className="relative z-10 flex flex-col justify-center px-7 py-8 text-background sm:px-10 sm:py-10 lg:px-12">
+          <div data-landing-hero className="overflow-hidden rounded-[28px] border border-foreground/10 bg-foreground shadow-lift lg:grid lg:min-h-[430px] lg:grid-cols-[0.95fr_1.2fr] xl:min-h-[460px] xl:grid-cols-[1fr_1.35fr]">
+            <div className="relative z-10 flex flex-col justify-center px-7 py-8 text-background sm:px-10 sm:py-10 lg:px-8 lg:py-7 xl:px-10 xl:py-8">
               <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-chart-4">
                 <MapPin size={14} /> {t("landing.eyebrow")}
               </p>
-              <h1 className="mt-4 max-w-xl font-heading text-4xl font-bold leading-[1.06] sm:mt-5 sm:text-5xl">{t("landing.heroTitle")}</h1>
-              <p className="mt-4 max-w-xl text-base leading-7 text-background/80 sm:mt-5">{t("landing.heroSub")}</p>
-              <div className="mt-6 grid gap-3 sm:mt-7 sm:flex sm:flex-wrap">
-                <button type="button" onClick={() => navigate(HOME_PATH)} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-secondary sm:w-auto">
+              <h1 className="mt-4 max-w-xl font-heading text-4xl font-bold leading-[1.06] sm:mt-5 sm:text-5xl lg:mt-4 lg:text-[2.375rem] xl:text-[2.75rem]">{t("landing.heroTitle")}</h1>
+              <p className="mt-4 max-w-xl text-base leading-7 text-background/80 sm:mt-5 lg:mt-4 lg:text-sm lg:leading-[1.45rem] xl:text-[15px] xl:leading-6">{t("landing.heroSub")}</p>
+              <div className="mt-6 grid gap-3 sm:mt-7 sm:flex sm:flex-wrap lg:mt-4 xl:mt-5">
+                <button type="button" onClick={() => navigate(HOME_PATH)} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-secondary sm:w-auto lg:h-11 lg:px-5 lg:text-sm xl:h-12 xl:px-6 xl:text-base">
                   {t("landing.open")} <ArrowRight size={17} />
                 </button>
-                <button type="button" onClick={install} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-background/35 px-6 text-base font-semibold text-background transition-colors hover:bg-background/10 sm:w-auto">
+                <button type="button" onClick={install} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-background/35 px-6 text-base font-semibold text-background transition-colors hover:bg-background/10 sm:w-auto lg:h-11 lg:px-5 lg:text-sm xl:h-12 xl:px-6 xl:text-base">
                   <Download size={17} /> {t("landing.install")}
                 </button>
               </div>
-              <p className="mt-5 flex max-w-xl items-start gap-2 text-xs leading-relaxed text-background/70 sm:mt-6">
+              <p className="mt-5 flex max-w-xl items-start gap-2 text-xs leading-relaxed text-background/70 sm:mt-6 lg:mt-3 xl:mt-4">
                 <Info size={14} className="mt-0.5 shrink-0 text-chart-4" /> {t("landing.accountNote")}
               </p>
             </div>
 
-            <div className="relative aspect-[2/1] overflow-hidden bg-secondary sm:aspect-auto sm:min-h-[430px] lg:min-h-full">
-              <img src="/web/hero.jpg" alt={t("web.hero.imageAlt")} className="absolute inset-0 h-full w-full object-cover object-center" width={1200} height={600} />
-              <div className="absolute inset-0 hidden bg-gradient-to-t from-foreground/35 via-transparent to-transparent sm:block" />
-              <div className="absolute inset-x-0 bottom-0 hidden justify-center px-5 sm:flex sm:justify-end sm:px-9">
+            <div data-landing-visual className="relative aspect-[2/1] overflow-hidden bg-secondary sm:aspect-auto sm:min-h-[430px] lg:min-h-full">
+              <img src="/web/hero.jpg" alt="" aria-hidden="true" className="absolute inset-0 hidden h-full w-full scale-110 object-cover opacity-50 blur-xl lg:block" width={1200} height={600} />
+              <img data-landing-mural src="/web/hero.jpg" alt={t("web.hero.imageAlt")} className="absolute inset-0 h-full w-full object-cover object-center lg:object-contain" width={1200} height={600} />
+              <div className="absolute inset-0 hidden bg-gradient-to-t from-foreground/30 via-transparent to-transparent sm:block" />
+              <div data-landing-preview-wrap className="absolute inset-x-0 bottom-0 hidden justify-center px-5 sm:inset-y-4 sm:flex sm:items-center sm:justify-end sm:px-7 lg:inset-x-auto lg:right-5 lg:px-0 xl:right-7">
                 <AppPreview />
               </div>
             </div>
@@ -215,7 +216,7 @@ export function LandingScreen() {
 function AppPreview() {
   const { t } = useI18n();
   return (
-    <div aria-hidden="true" className="w-[250px] translate-y-8 rounded-t-[32px] border-[7px] border-b-0 border-foreground bg-background p-3 shadow-2xl sm:w-[278px]">
+    <div data-landing-preview aria-hidden="true" className="w-[250px] rounded-[30px] border-[7px] border-foreground bg-background p-3 shadow-2xl sm:w-[268px] lg:w-[238px] lg:p-2.5 xl:w-[250px] xl:p-3">
       <div className="mx-auto mb-3 h-1.5 w-14 rounded-pill bg-foreground/20" />
       <div className="flex items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Compass size={16} /></span>
@@ -224,18 +225,18 @@ function AppPreview() {
           <p className="mt-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-primary">Redmond, Oregon</p>
         </div>
       </div>
-      <div className="mt-4 flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-3 text-[11px] text-muted-foreground shadow-sm">
+      <div className="mt-4 flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-3 text-[11px] text-muted-foreground shadow-sm lg:mt-3 xl:mt-4">
         <Search size={13} /> {t("landing.previewSearch")}
       </div>
       <div className="mt-2 inline-flex items-center gap-1 rounded-pill bg-positive-tint px-2.5 py-1 text-[9px] font-semibold text-positive">
         <MapPin size={10} /> {t("landing.previewNearby")}
       </div>
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 space-y-2 lg:mt-3 xl:mt-4">
         <PreviewRow icon={Store} label={t("landing.previewDirectory")} />
         <PreviewRow icon={CalendarDays} label={t("landing.previewEvents")} />
         <PreviewRow icon={BookOpen} label={t("landing.previewResources")} />
       </div>
-      <div className="mt-4 grid grid-cols-4 border-t border-border pt-2 text-positive">
+      <div className="mt-4 grid grid-cols-4 border-t border-border pt-2 text-positive lg:mt-3 xl:mt-4">
         {[Home, Search, CalendarDays, Bookmark].map((Icon, index) => <span key={index} className="flex justify-center"><Icon size={14} /></span>)}
       </div>
     </div>
@@ -244,7 +245,7 @@ function AppPreview() {
 
 function PreviewRow({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-lg border border-border bg-card p-2.5 shadow-sm">
+    <div className="flex items-center gap-2.5 rounded-lg border border-border bg-card p-2.5 shadow-sm lg:p-2 xl:p-2.5">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary"><Icon size={15} /></span>
       <span className="text-[11px] font-semibold text-foreground">{label}</span>
       <ArrowRight size={12} className="ml-auto text-muted-foreground" />
