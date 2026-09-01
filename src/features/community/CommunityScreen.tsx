@@ -10,8 +10,8 @@ import { useI18n } from "@/i18n";
 type Tab = "all" | "news" | "bulletins";
 
 type Entry =
-  | { kind: "news"; id: string; title: string; source: string; time: string; ts: number; slug: string; image?: string }
-  | { kind: "bulletin"; id: string; title: string; source: string; seed?: string; time: string; ts: number; href?: string };
+  | { kind: "news"; id: string; title: string; source: string; time: string; ts: number; slug: string; image?: string; excerpt?: string; category?: string }
+  | { kind: "bulletin"; id: string; title: string; source: string; seed?: string; time: string; ts: number; href?: string; image?: string; businessCategory?: string };
 
 const RECENT_CONTENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -79,6 +79,8 @@ export function CommunityScreen() {
       ts: +new Date(a.publishedAt),
       slug: a.slug,
       image: a.image,
+      excerpt: a.excerpt,
+      category: a.category,
     }));
     const b: Entry[] = (bulletins.data ?? []).map((bl) => {
       const biz = bizById.get(bl.businessId);
@@ -88,6 +90,8 @@ export function CommunityScreen() {
         title: bl.body,
         source: biz?.name ?? t("community.localBusiness"),
         seed: biz?.name,
+        image: biz?.photos[0],
+        businessCategory: biz?.category,
         time: relativeTime(bl.createdAt),
         ts: +new Date(bl.createdAt),
         href: biz ? `/b/${biz.slug}` : undefined,
@@ -205,6 +209,9 @@ export function CommunityScreen() {
                 sourceLabel={e.source}
                 seed={e.kind === "bulletin" ? e.seed : e.source}
                 image={e.kind === "news" ? e.image : undefined}
+                excerpt={e.kind === "news" ? e.excerpt : undefined}
+                category={e.kind === "news" ? e.category : undefined}
+                businessCategory={e.kind === "bulletin" ? e.businessCategory : undefined}
                 time={e.time}
                 href={e.kind === "news" ? `/news/${e.slug}` : e.href}
               />

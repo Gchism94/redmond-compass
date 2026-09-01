@@ -17,6 +17,7 @@ export { Field, fieldInputClass } from "./ui/Field";
 export { Sheet } from "./ui/Sheet";
 
 export { ResultCard } from "./ResultCard";
+export { BusinessThumb, BusinessImageFallback } from "./BusinessThumb";
 export { ActionBar } from "./ActionBar";
 export { BottomTabNav } from "./BottomTabNav";
 export { SearchField } from "./SearchField";

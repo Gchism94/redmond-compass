@@ -1,0 +1,26 @@
+# Temporary Base44 NewsPost → Supabase bridge. The main site's daily news automation is
+# still the authoring system; the app receives those rows by stable id without deleting
+# its archive. Remove this workflow when both sites read the shared Supabase news table.
+name: main-site-news-sync
+on:
+  schedule:
+    - cron: "37 */6 * * *"
+  workflow_dispatch: {}
+concurrency: main-site-news-sync
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify the NewsPost mapping before writes
+        run: npm run test:news-sync
+      - name: Upsert main-site news into Supabase
+        run: node scripts/sync-base44-news.mjs
+        env:
+          SUPABASE_URL: https://jdrhcmkqtewlzlojixpd.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

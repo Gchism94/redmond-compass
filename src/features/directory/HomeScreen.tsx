@@ -180,6 +180,8 @@ export function HomeScreen() {
                     title={bl.body}
                     sourceLabel={biz?.name ?? t("home.aLocalBusiness")}
                     seed={biz?.name}
+                    image={biz?.photos[0]}
+                    businessCategory={biz?.category}
                     time={relativeTime(bl.createdAt)}
                     href={biz ? `/b/${biz.slug}` : undefined}
                     showTypeTag={false}
@@ -237,6 +239,8 @@ export function HomeScreen() {
               seed={n.source}
               time={relativeTime(n.publishedAt)}
               image={n.image}
+              excerpt={n.excerpt}
+              category={n.category}
               href={`/news/${n.slug}`}
               showTypeTag={false}
             />

@@ -323,7 +323,7 @@ async function newPage(width, height) {
     const card = document.querySelector('[data-result-card="desktop"]');
     const frame = card?.querySelector(".brand-image-frame");
     const img = frame?.querySelector("img");
-    const fallback = frame?.querySelector('[data-thumb-fallback="brand"]');
+    const fallback = frame?.querySelector('[data-business-image-fallback], [data-thumb-fallback="brand"]');
     const actions = [...(card?.querySelectorAll("[data-card-actions] a") ?? [])];
     const rects = actions.map((el) => el.getBoundingClientRect());
     return {

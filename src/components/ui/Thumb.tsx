@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Compass, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -13,6 +13,8 @@ export interface ThumbProps {
   rounded?: string;
   /** auto chooses from aspect ratio; contain preserves identity artwork such as logos. */
   fit?: "auto" | "cover" | "contain";
+  /** Content-specific empty state. Business cards use a category mark; news uses a newsroom mark. */
+  fallback?: ReactNode;
 }
 
 // ONE consistent on-brand placeholder everywhere: a warm tan (secondary) frame
@@ -71,6 +73,7 @@ export function Thumb({
   imageClassName,
   rounded = "rounded-md",
   fit = "auto",
+  fallback,
 }: ThumbProps) {
   const [failedSrc, setFailedSrc] = useState<string>();
   const [contain, setContain] = useState(false);
@@ -115,6 +118,10 @@ export function Thumb({
             imageClassName,
           )}
         />
+      ) : fallback ? (
+        <span aria-hidden data-thumb-fallback="custom" className="flex h-full w-full items-center justify-center">
+          {fallback}
+        </span>
       ) : seed ? (
         <span
           aria-hidden

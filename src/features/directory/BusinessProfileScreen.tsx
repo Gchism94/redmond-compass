@@ -248,6 +248,8 @@ export function BusinessProfileScreen() {
                 title={bl.body}
                 sourceLabel={business.name}
                 seed={business.name}
+                image={business.photos[0]}
+                businessCategory={business.category}
                 time={relativeTime(bl.createdAt)}
                 showTypeTag={false}
               />

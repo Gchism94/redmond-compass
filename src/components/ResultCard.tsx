@@ -6,7 +6,7 @@ import { businessHref, directionsHref, telHref } from "@/lib/links";
 import { formatDistance, distanceMiles } from "@/lib/geo";
 import type { GeoPoint } from "@/lib/types";
 import { OpenStatusLabel } from "./ui/OpenStatusLabel";
-import { Thumb } from "./ui/Thumb";
+import { BusinessThumb } from "./BusinessThumb";
 import { VerifiedBadge } from "./ui/StatusBadge";
 import { useI18n } from "@/i18n";
 import { categoryLabelFor } from "@/lib/taxonomy";
@@ -76,10 +76,8 @@ export function ResultCard({
             aria-label={business.name}
             className="block rounded-lg focus-visible:outline-none"
           >
-            <Thumb
-              src={business.photos[0]}
-              seed={business.name}
-              alt={business.name}
+            <BusinessThumb
+              business={business}
               className="brand-image-frame h-20 w-full lg:h-28"
               imageClassName="lg:p-3"
               rounded="rounded-lg"
@@ -145,10 +143,8 @@ export function ResultCard({
             aria-label={business.name}
             className="block focus-visible:outline-none"
           >
-            <Thumb
-              src={business.photos[0]}
-              seed={business.name}
-              alt={business.name}
+            <BusinessThumb
+              business={business}
               className="brand-image-frame aspect-[16/9] w-full border-b border-border"
               imageClassName="p-4"
               rounded="rounded-none"
@@ -249,10 +245,8 @@ export function ResultCard({
         aria-label={business.name}
         className="shrink-0 focus-visible:outline-none"
       >
-        <Thumb
-          src={business.photos[0]}
-          seed={business.name}
-          alt={business.name}
+        <BusinessThumb
+          business={business}
           className="brand-image-frame h-[58px] w-[58px] ring-1 ring-border/70"
           rounded="rounded-lg"
         />

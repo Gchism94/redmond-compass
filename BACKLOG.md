@@ -12,6 +12,7 @@ bugs in the current release.
 
 | Priority | Feature | What exists today | What remains |
 |---|---|---|---|
+| Fast-follow | **Shared main-site content source** | The app has one-way Sheet → Supabase businesses, Google Calendar → Supabase events, and a guarded Base44 NewsPost → Supabase bridge. `CONTENT-SYNC.md` records ownership and evidence. | Inventory the private Base44 automations, make the main site read published Supabase businesses/events/news, migrate remaining Base44 media, then retire the temporary news bridge. |
 | Fast-follow | **Map search** | Results ship as a complete list experience; the unfinished toggle has been removed so it cannot masquerade as a live feature. | Choose a map provider; implement pins, viewport-aware results, clustering, and list/map selection sync, then restore the toggle. |
 | Fast-follow | **Yard sales** | Database table and basic RLS exist; there are no live rows. | Resident submission, browse/detail UI, pending-by-default moderation rules, and an identified moderator. |
 | Fast-follow | **Verified-customer recommendations** | Positive-only Recommend is live and never changes ranking. | Define qualifying evidence and show the verified-customer distinction without creating a star-rating system. |

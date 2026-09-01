@@ -311,6 +311,9 @@ export function ResultsScreen() {
                         title={r.item.title}
                         sourceLabel={r.item.source}
                         time={relativeTime(r.item.publishedAt)}
+                        image={r.item.image}
+                        excerpt={r.item.excerpt}
+                        category={r.item.category}
                         href={`/news/${r.item.slug}`}
                       />
                     );
