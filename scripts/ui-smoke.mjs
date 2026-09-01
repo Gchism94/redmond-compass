@@ -99,7 +99,7 @@ async function newPage(width, height) {
     ok(L.text.includes("Terrebonne") && L.text.includes("Crooked River Ranch"), label("landing names all three towns"));
     ok(!/skip for now|omitir por ahora/i.test(L.text), label("no onboarding overlay on landing"));
     ok((await page.$("nav a[href='/saved']")) === null, label("no app tab bar on landing"));
-    ok(/own sign-in/i.test(L.text), label("account-separation note present"));
+    ok(/sign-in is separate/i.test(L.text), label("account-separation note present"));
     ok(L.overflowX === 0, label(`landing: no horizontal overflow (${L.overflowX})`));
     await page.evaluate(() => {
       [...document.querySelectorAll("button")].find((b) => /open the app/i.test(b.textContent))?.click();

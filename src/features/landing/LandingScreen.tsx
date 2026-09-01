@@ -91,29 +91,29 @@ export function LandingScreen() {
       <main className="pb-16">
         <section className="mx-auto max-w-6xl px-5 pt-5 sm:pt-8">
           <div className="overflow-hidden rounded-[28px] border border-foreground/10 bg-foreground shadow-lift lg:grid lg:min-h-[470px] lg:grid-cols-[1fr_1.35fr]">
-            <div className="relative z-10 flex flex-col justify-center px-7 py-10 text-background sm:px-10 lg:px-12">
+            <div className="relative z-10 flex flex-col justify-center px-7 py-8 text-background sm:px-10 sm:py-10 lg:px-12">
               <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-chart-4">
                 <MapPin size={14} /> {t("landing.eyebrow")}
               </p>
-              <h1 className="mt-5 max-w-xl font-heading text-4xl font-bold leading-[1.06] sm:text-5xl">{t("landing.heroTitle")}</h1>
-              <p className="mt-5 max-w-xl text-base leading-7 text-background/80">{t("landing.heroSub")}</p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <button type="button" onClick={() => navigate(HOME_PATH)} className="inline-flex h-12 items-center gap-2 rounded-lg bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-secondary">
+              <h1 className="mt-4 max-w-xl font-heading text-4xl font-bold leading-[1.06] sm:mt-5 sm:text-5xl">{t("landing.heroTitle")}</h1>
+              <p className="mt-4 max-w-xl text-base leading-7 text-background/80 sm:mt-5">{t("landing.heroSub")}</p>
+              <div className="mt-6 grid gap-3 sm:mt-7 sm:flex sm:flex-wrap">
+                <button type="button" onClick={() => navigate(HOME_PATH)} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-secondary sm:w-auto">
                   {t("landing.open")} <ArrowRight size={17} />
                 </button>
-                <button type="button" onClick={install} className="inline-flex h-12 items-center gap-2 rounded-lg border border-background/35 px-6 text-base font-semibold text-background transition-colors hover:bg-background/10">
+                <button type="button" onClick={install} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-background/35 px-6 text-base font-semibold text-background transition-colors hover:bg-background/10 sm:w-auto">
                   <Download size={17} /> {t("landing.install")}
                 </button>
               </div>
-              <p className="mt-6 flex max-w-xl items-start gap-2 text-xs leading-relaxed text-background/70">
+              <p className="mt-5 flex max-w-xl items-start gap-2 text-xs leading-relaxed text-background/70 sm:mt-6">
                 <Info size={14} className="mt-0.5 shrink-0 text-chart-4" /> {t("landing.accountNote")}
               </p>
             </div>
 
-            <div className="relative min-h-[390px] overflow-hidden bg-secondary sm:min-h-[430px] lg:min-h-full">
+            <div className="relative aspect-[2/1] overflow-hidden bg-secondary sm:aspect-auto sm:min-h-[430px] lg:min-h-full">
               <img src="/web/hero.jpg" alt={t("web.hero.imageAlt")} className="absolute inset-0 h-full w-full object-cover object-center" width={1200} height={600} />
-              <div className="absolute inset-0 bg-gradient-to-t from-foreground/35 via-transparent to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 flex justify-center px-5 sm:justify-end sm:px-9">
+              <div className="absolute inset-0 hidden bg-gradient-to-t from-foreground/35 via-transparent to-transparent sm:block" />
+              <div className="absolute inset-x-0 bottom-0 hidden justify-center px-5 sm:flex sm:justify-end sm:px-9">
                 <AppPreview />
               </div>
             </div>

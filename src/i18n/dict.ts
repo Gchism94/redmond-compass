@@ -358,7 +358,7 @@ export const en = {
   "landing.ownersTitle": "Own a local business?",
   "landing.ownersBody": "Business listings are free and receive the same placement. Claim yours to correct hours, contact details, events, classes, and bulletins.",
   "landing.ownersCta": "For business owners",
-  "landing.accountNote": "The app uses its own sign-in — Google, or a code by email. An account on the redmondcompass.com website isn't connected yet.",
+  "landing.accountNote": "App sign-in is separate from your redmondcompass.com account.",
   "landing.backToSite": "Back to redmondcompass.com",
 
   // ---- saved ----
@@ -991,7 +991,7 @@ export const es: Record<DictKey, string> = {
   "landing.ownersTitle": "¿Tienes un negocio local?",
   "landing.ownersBody": "Los listados son gratis y reciben la misma ubicación. Reclama el tuyo para corregir horarios, contacto, eventos, clases y avisos.",
   "landing.ownersCta": "Para dueños de negocios",
-  "landing.accountNote": "La app usa su propio inicio de sesión: Google o un código por correo. Una cuenta del sitio redmondcompass.com aún no está conectada.",
+  "landing.accountNote": "El inicio de sesión de la app es independiente de tu cuenta de redmondcompass.com.",
   "landing.backToSite": "Volver a redmondcompass.com",
 
   "saved.title": "Guardados",
