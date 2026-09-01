@@ -95,7 +95,7 @@ async function newPage(width, height) {
 
   if (APP_ONLY) {
     const L = await visit("/");
-    ok(/now on your phone/i.test(L.text), label("landing hero present"));
+    ok(/local directory/i.test(L.text), label("landing hero present"));
     ok(L.text.includes("Terrebonne") && L.text.includes("Crooked River Ranch"), label("landing names all three towns"));
     ok(!/skip for now|omitir por ahora/i.test(L.text), label("no onboarding overlay on landing"));
     ok((await page.$("nav a[href='/saved']")) === null, label("no app tab bar on landing"));
@@ -228,7 +228,7 @@ async function newPage(width, height) {
   await page.evaluate(() => localStorage.setItem("rc.lang", "es"));
   if (APP_ONLY) {
     const Les = await visit("/");
-    ok(/ahora en tu teléfono/i.test(Les.text), label("landing Spanish renders"));
+    ok(/directorio local de Redmond/i.test(Les.text), label("landing Spanish renders"));
   }
   r = await visit("/getting-settled");
   ok(r.lang === "es" && r.text.includes("Primeros pasos"), label("Spanish guide renders"));
@@ -258,7 +258,7 @@ async function newPage(width, height) {
 
   if (APP_ONLY) {
     const L = await visit("/");
-    ok(/now on your phone/i.test(L.text) && L.text.includes("Terrebonne"), label("landing renders"));
+    ok(/local directory/i.test(L.text) && L.text.includes("Terrebonne"), label("landing renders"));
     ok(!L.text.includes("Your Guide to Redmond Living"), label("site home NOT presented at /"));
     ok(!/featured/i.test(L.text), label("no Featured on landing (equal ranking)"));
     ok(L.overflowX === 0, label(`landing: no horizontal overflow (${L.overflowX})`));
