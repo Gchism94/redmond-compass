@@ -285,7 +285,13 @@ async function newPage(width, height) {
   }
   ok(/sign in/i.test(r.text) && /get the app/i.test(r.text), label("Sign in / Get the app present"));
   ok(r.text.includes("Your Guide to Redmond Living"), label("app desktop home hero"));
-  ok((await page.$("img[src='/web/hero.jpg']")) !== null, label("hero mural (self-hosted)"));
+  const desktopMural = await page.$eval("img[data-desktop-hero-mural]", (img) => ({
+    fit: getComputedStyle(img).objectFit,
+    width: Math.round(img.getBoundingClientRect().width),
+    naturalRatio: img.naturalWidth / img.naturalHeight,
+  }));
+  ok(desktopMural.fit === "contain" && desktopMural.width > 0 && desktopMural.naturalRatio === 2,
+     label("hero mural is self-hosted and shown whole rather than cropped"));
   ok((await page.$("footer")) !== null && /explore/i.test(r.text) && /contribute/i.test(r.text) && /made with/i.test(r.text), label("footer columns present"));
   ok(!/skip for now/i.test(r.text), label("no mobile onboarding overlay"));
   ok((await page.$("nav a[href='/saved']")) === null, label("no bottom tab nav"));

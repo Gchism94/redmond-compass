@@ -40,45 +40,61 @@ export function WebHero() {
   return (
     <div className="pt-6">
       {/* Split hero — navy panel + mural, per the original site */}
-      <section className="grid overflow-hidden rounded-xl ring-1 ring-foreground/5 shadow-lift lg:grid-cols-2">
-        <div className="bg-foreground p-10 text-background">
+      <section className="grid overflow-hidden rounded-xl ring-1 ring-foreground/5 shadow-lift lg:grid-cols-[5fr_7fr]">
+        <div className="bg-foreground p-8 text-background xl:p-10">
           <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-background/70">
             <MapPin size={13} /> {t("web.hero.eyebrow")}
           </p>
-          <h1 className="mt-3 font-heading text-[42px] font-bold leading-[1.08]">{t("web.hero.title")}</h1>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-background/75">{t("web.hero.sub")}</p>
-          <div className="mt-6 flex max-w-xs flex-col gap-2.5">
+          <h1 className="mt-3 font-heading text-[38px] font-bold leading-[1.08] xl:text-[42px]">{t("web.hero.title")}</h1>
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-background/75 xl:mt-4">{t("web.hero.sub")}</p>
+          <div className="mt-5 grid grid-cols-2 gap-2.5 xl:mt-6">
             <button
               type="button"
               onClick={() => navigate("/search")}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-background text-sm font-semibold text-foreground hover:brightness-95"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-background px-2 text-xs font-semibold text-foreground hover:brightness-95"
             >
               <Store size={15} /> {t("web.hero.explore")}
             </button>
             <button
               type="button"
               onClick={() => navigate("/events")}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-background/30 text-sm font-semibold text-background hover:bg-background/10"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-background/30 px-2 text-xs font-semibold text-background hover:bg-background/10"
             >
               <CalendarDays size={15} /> {t("web.hero.events")}
             </button>
             <button
               type="button"
               onClick={() => navigate("/for-business-owners")}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:brightness-95"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-2 text-xs font-semibold text-primary-foreground hover:brightness-95"
             >
               <TrendingUp size={15} /> {t("web.hero.owners")}
             </button>
             <button
               type="button"
               onClick={share}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-background/10 text-sm font-semibold text-background/85 hover:bg-background/20"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-background/10 px-2 text-xs font-semibold text-background/85 hover:bg-background/20"
             >
               <Share2 size={15} /> {t("web.hero.share")}
             </button>
           </div>
         </div>
-        <img src="/web/hero.jpg" alt={t("web.hero.imageAlt")} className="h-full min-h-[380px] w-full object-cover" />
+        <div className="relative min-h-[340px] overflow-hidden bg-[#c47f9a]">
+          {/* A softly blurred copy fills the panel behind the full mural. The foreground
+              uses `contain` so desktop never crops away the eagle, Oregon, or the ends of
+              the REDMOND wordmark at the narrower edge of the desktop breakpoint. */}
+          <img
+            src="/web/hero.jpg"
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-xl"
+          />
+          <img
+            src="/web/hero.jpg"
+            alt={t("web.hero.imageAlt")}
+            data-desktop-hero-mural
+            className="relative h-full min-h-[340px] w-full object-contain"
+          />
+        </div>
       </section>
 
       {/* Quick-link tiles */}
