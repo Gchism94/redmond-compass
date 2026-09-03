@@ -56,6 +56,18 @@ try {
   ok(appointment?.hours_text === "By appointment" && !("hours" in appointment), "claimed-owner structured hours are never overwritten by prose");
   ok(summary.newIds.count === 1 && summary.hours.parsed === 1, "dry-run summary reports inserts and parsed schedules");
 
+  const protectedOwner = [{ id: "owner-coffee", name: "Coffee Test" }];
+  const protectedResult = buildMainSiteBusinessPlan(
+    payload,
+    "https://example.supabase.co",
+    "2026-09-02T00:00:00Z",
+    existing,
+    2,
+    protectedOwner,
+  );
+  ok(protectedResult.plan.upserts.length === 1, "same-name owner-created listing suppresses a duplicate source id");
+  ok(protectedResult.ownerNameCollisions[0]?.ownerId === "owner-coffee", "owner/source id collision is observable in the run output");
+
   let refused = false;
   try { mainSiteBusinessesToValues({ businesses: [] }, 2); } catch { refused = true; }
   ok(refused, "unexpectedly small feed is rejected before writes");

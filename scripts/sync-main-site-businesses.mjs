@@ -48,7 +48,7 @@ try {
   for (let from = 0; ; from += 1000) {
     const { data, error } = await db
       .from("businesses")
-      .select("id,slug,published,synced_at,hours,owner_id")
+      .select("id,name,slug,published,synced_at,hours,owner_id")
       .order("id", { ascending: true })
       .range(from, from + 999);
     if (error) throw new Error(`could not read existing businesses: ${error.message}`);
@@ -64,11 +64,16 @@ try {
       existingRows.map((row) => [row.id, !!row.owner_id && !!row.hours && typeof row.hours === "object"]),
     ),
   };
-  const { plan, summary, groupByKeySet } = buildMainSiteBusinessPlan(
+  const owners = existingRows
+    .filter((row) => !!row.owner_id)
+    .map((row) => ({ id: row.id, name: row.name }));
+  const { plan, summary, groupByKeySet, ownerNameCollisions } = buildMainSiteBusinessPlan(
     upstream,
     SUPABASE_URL,
     new Date().toISOString(),
     existing,
+    undefined,
+    owners,
   );
   if (!plan.ok) throw new Error(plan.abortReason);
 
@@ -80,6 +85,7 @@ try {
     ok: true,
     dryRun: DRY_RUN,
     source: "redmondcompass.com/listBusinessesPublic",
+    ownerNameCollisions,
     ...summary,
     wouldSoftUnpublish: { count: wouldUnpublish.length, sample: wouldUnpublish.slice(0, 10) },
   };
@@ -136,4 +142,3 @@ try {
 } finally {
   await rm(buildDir, { recursive: true, force: true });
 }
-

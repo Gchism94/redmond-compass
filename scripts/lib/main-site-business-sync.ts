@@ -35,6 +35,11 @@ export interface MainSiteBusiness {
   profile_enabled?: boolean;
 }
 
+export interface ExistingOwnerBusiness {
+  id: string;
+  name: string;
+}
+
 const HEADERS = [
   "id",
   "name",
@@ -53,10 +58,35 @@ function uniqueList(values: Array<string | undefined>): string[] {
   return [...new Set(values.map((value) => value?.trim()).filter((value): value is string => !!value))];
 }
 
+const normalizedName = (value: string | undefined) => (value ?? "")
+  .normalize("NFKD")
+  .replace(/[^a-z0-9]+/gi, "")
+  .toLowerCase();
+
+export function ownerNameCollisions(payload: unknown, owners: ExistingOwnerBusiness[]): Array<{
+  sourceId: string;
+  sourceName: string;
+  ownerId: string;
+}> {
+  const records = Array.isArray(payload)
+    ? payload
+    : (payload && typeof payload === "object" && Array.isArray((payload as { businesses?: unknown }).businesses)
+      ? (payload as { businesses: MainSiteBusiness[] }).businesses
+      : []);
+  const ownerByName = new Map(owners.map((owner) => [normalizedName(owner.name), owner]));
+  return (records as MainSiteBusiness[]).flatMap((record) => {
+    const owner = ownerByName.get(normalizedName(record.name));
+    return owner && owner.id !== record.id
+      ? [{ sourceId: record.id ?? "", sourceName: record.name ?? "", ownerId: owner.id }]
+      : [];
+  });
+}
+
 /** Convert the public feed to the canonical transform input. Throws before any write. */
 export function mainSiteBusinessesToValues(
   payload: unknown,
   minimum = MIN_EXPECTED_BUSINESSES,
+  owners: ExistingOwnerBusiness[] = [],
 ): string[][] {
   const records = Array.isArray(payload)
     ? payload
@@ -67,14 +97,16 @@ export function mainSiteBusinessesToValues(
 
   // listBusinessesPublic already applies this visibility contract. Repeating it here makes
   // the sync safe if that function later returns a broader administrative payload.
-  const publicRows = (records as MainSiteBusiness[]).filter(
+  const allPublicRows = (records as MainSiteBusiness[]).filter(
     (record) => record?.status === "approved" && record.profile_enabled === true,
   );
-  if (publicRows.length < minimum) {
+  if (allPublicRows.length < minimum) {
     throw new Error(
-      `Main-site business feed returned ${publicRows.length} public rows; expected at least ${minimum}. Refusing a destructive partial sync.`,
+      `Main-site business feed returned ${allPublicRows.length} public rows; expected at least ${minimum}. Refusing a destructive partial sync.`,
     );
   }
+  const collidedIds = new Set(ownerNameCollisions(allPublicRows, owners).map((row) => row.sourceId));
+  const publicRows = allPublicRows.filter((record) => !collidedIds.has(record.id ?? ""));
 
   return [
     HEADERS,
@@ -106,9 +138,10 @@ export function buildMainSiteBusinessPlan(
   nowIso: string,
   existing: ExistingBusinesses,
   minimum = MIN_EXPECTED_BUSINESSES,
+  owners: ExistingOwnerBusiness[] = [],
 ) {
-  const values = mainSiteBusinessesToValues(payload, minimum);
+  const collisions = ownerNameCollisions(payload, owners);
+  const values = mainSiteBusinessesToValues(payload, minimum, owners);
   const plan = buildSyncPlan(values, supabaseUrl, nowIso, existing);
-  return { plan, summary: summarizePlan(plan, existing), groupByKeySet };
+  return { plan, summary: summarizePlan(plan, existing), groupByKeySet, ownerNameCollisions: collisions };
 }
-

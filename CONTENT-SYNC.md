@@ -48,6 +48,8 @@ The business and news bridges are intentionally narrow:
 - clear business-hours prose is parsed into the canonical seven-day schedule, including
   closed days; ambiguous/appointment/seasonal hours remain faithful prose;
 - claimed-owner structured hours are never overwritten by generated schedules;
+- an owner-created listing wins over a same-name main-site row with a different id, so a
+  source-system id change cannot create a duplicate business in the app;
 - the business job rejects fewer than 100 public rows before writing, so an upstream outage
   cannot empty the app directory;
 - an unexpected empty upstream response aborts when Supabase already contains news;
@@ -57,8 +59,10 @@ The business and news bridges are intentionally narrow:
 ## Verified cadence and freshness
 
 - Businesses: GitHub Actions at `47 */6 * * *` UTC. The first reconciliation found 147
-  approved, profile-enabled main-site listings versus 133 published app rows: 33 inserts,
-  114 matches, and 18 stale app rows to soft-unpublish. Of the 147 live source listings,
+  approved, profile-enabled main-site listings versus 133 published app rows: 33 source ids
+  were new, 114 matched, and 18 stale app rows were soft-unpublished. One new source id was
+  the same business as an owner-created Steppe listing and is suppressed in favor of the
+  owner record. Of the 147 live source listings,
   114 have authored hours: 66 parse as a weekly schedule, 46 remain prose, and 2 claimed
   owner schedules are preserved. The remaining 33 are blank on the main site itself.
 - Events: GitHub Actions at `23 */6 * * *` UTC. Scheduled runs were observed succeeding on
