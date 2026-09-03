@@ -7,7 +7,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { RouteFallback } from "./RouteFallback";
 import { OfflineBanner } from "@/pwa/OfflineBanner";
-import { UpdateBanner } from "@/pwa/UpdateBanner";
+import { UpdateController } from "@/pwa/UpdateController";
 import { useInstallPrompt } from "@/pwa/useInstallPrompt";
 import { useSession } from "@/features/account/session";
 import { useI18n, type DictKey } from "@/i18n";
@@ -72,7 +72,7 @@ export function WebShell() {
         </Suspense>
       </main>
       <OfflineBanner />
-      <UpdateBanner />
+      <UpdateController />
       <WebFooter />
     </div>
   );

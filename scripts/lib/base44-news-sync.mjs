@@ -37,6 +37,7 @@ export function buildNewsSyncPlan(records, existing = []) {
   }
 
   const slugById = new Map(existing.map((row) => [row.id, row.slug]));
+  const imageById = new Map(existing.map((row) => [row.id, row.image]).filter(([, image]) => image));
   const taken = new Set(existing.map((row) => row.slug).filter(Boolean));
   const seen = new Set();
   const rows = [];
@@ -70,7 +71,10 @@ export function buildNewsSyncPlan(records, existing = []) {
       slug,
       excerpt: record.summary ?? "",
       body: record.body ?? "",
-      image: record.image_url || null,
+      // The upstream automation does not currently populate image_url. Preserve an
+      // image previously resolved from publisher metadata instead of blanking it on
+      // the next six-hour sync.
+      image: record.image_url || imageById.get(record.id) || null,
       source: record.source_name || "Redmond Compass",
       author: null,
       published_at: publishedAt(record),

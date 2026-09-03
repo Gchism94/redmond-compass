@@ -129,6 +129,18 @@ async function newPage(width, height) {
   ok((await page.$eval("[data-home-open-now-toggle]", (el) =>
     [...el.querySelectorAll('[role="radio"]')].some((radio) => /all businesses/i.test(radio.textContent) && radio.getAttribute("aria-checked") === "true"),
   )), label("home: All businesses defaults on"));
+  const availabilityLayout = await page.$eval("[data-home-open-now-toggle]", (el) => {
+    const radios = [...el.querySelectorAll('[role="radio"]')].map((radio) => radio.getBoundingClientRect());
+    return {
+      count: radios.length,
+      readable: radios.every((rect) => rect.width >= 88 && rect.height >= 44),
+      separated: radios.length === 2 && radios[1].left >= radios[0].right - 0.5,
+    };
+  });
+  ok(
+    availabilityLayout.count === 2 && availabilityLayout.readable && availabilityLayout.separated,
+    label("home: availability labels have readable, non-overlapping segments"),
+  );
   await page.$eval("[data-home-open-now-toggle]", (el) =>
     [...el.querySelectorAll('[role="radio"]')].find((radio) => /open now/i.test(radio.textContent))?.click(),
   );

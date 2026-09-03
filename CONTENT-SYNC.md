@@ -16,8 +16,10 @@ application (`6a05e41957c8ee753cb7380c`) and loads three independent public feed
   have no `gcal_event_id`, and several generated Google Calendar URLs contain malformed
   time strings (`T600 PM00`, `07NaN00`);
 - news: Base44 `NewsPost` records. A service-created “Redmond Compass News Roundup” is
-  appearing daily at about 13:01 UTC. The inspected August 30–September 1 roundups have no
-  `image_url`, which is why image-independent news cards are required.
+  appearing daily at about 13:01 UTC. The inspected August 30–September 3 roundups have no
+  `image_url`. The bridge therefore looks for Open Graph/Twitter artwork on the linked
+  publisher pages, preferring direct article links over home/category pages. Cards retain
+  an image-independent branded fallback when a publisher has no usable metadata.
 
 The public bundle also exposes owner/admin workflows for pending business and event
 approval, business profile editing, newsletter subscribers, business posts, resources,
@@ -56,6 +58,10 @@ The business and news bridges are intentionally narrow:
   cannot empty the app directory;
 - an unexpected empty upstream response aborts when Supabase already contains news;
 - duplicate ids are collapsed and reported before an upsert;
+- news thumbnails supplied upstream or resolved previously are preserved; for the newest
+  missing rows, the bridge reads at most three public HTTPS publisher pages per item in
+  small batches and stores the first usable Open Graph/Twitter image. Publisher failures
+  never abort the content sync;
 - pure mapping tests and a live dry-run run in each scheduled workflow before production writes.
 
 ## Verified cadence and freshness

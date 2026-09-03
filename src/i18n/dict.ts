@@ -38,9 +38,6 @@ export const en = {
   "common.required": "required",
   "feed.news": "News",
   "feed.bulletin": "Bulletin",
-  "pwa.updateReady": "A new version is ready",
-  "pwa.updateMessage": "Refresh to use the latest Redmond Compass improvements.",
-  "pwa.refresh": "Refresh app",
 
   // ---- open status (lib/hours) ----
   "status.open": "Open",
@@ -113,6 +110,7 @@ export const en = {
   "search.openNow": "Open now",
   "availability.label": "Business availability",
   "availability.all": "All businesses",
+  "availability.allShort": "All",
   "search.nearMe": "Near me",
   "search.browseByCategory": "Browse by category",
   "search.recent": "Recent",
@@ -696,9 +694,6 @@ export const es: Record<DictKey, string> = {
   "common.required": "obligatorio",
   "feed.news": "Noticias",
   "feed.bulletin": "Aviso",
-  "pwa.updateReady": "Hay una nueva versión disponible",
-  "pwa.updateMessage": "Actualiza para usar las mejoras más recientes de Redmond Compass.",
-  "pwa.refresh": "Actualizar app",
 
   "status.open": "Abierto",
   "status.closed": "Cerrado",
@@ -762,6 +757,7 @@ export const es: Record<DictKey, string> = {
   "search.openNow": "Abierto ahora",
   "availability.label": "Disponibilidad de negocios",
   "availability.all": "Todos los negocios",
+  "availability.allShort": "Todos",
   "search.nearMe": "Cerca de mí",
   "search.browseByCategory": "Explora por categoría",
   "search.recent": "Recientes",

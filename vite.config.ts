@@ -81,7 +81,9 @@ export default defineConfig({
     requireRealDataSource(),
     react(),
     VitePWA({
-      registerType: "prompt",
+      // Auto-activate updates so an older installed app cannot strand a newer
+      // worker in "waiting" before the update banner code itself has loaded.
+      registerType: "autoUpdate",
       devOptions: { enabled: false },
       includeAssets: ["favicon.svg", "apple-touch-icon.png", "icons/*.png"],
       manifest: {
