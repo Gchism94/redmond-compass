@@ -5,7 +5,7 @@ with `redmondcompass.com`. The rule is one-way publication from a named source o
 pair of jobs writing back and forth between Base44 and Supabase would create loops, stale
 overwrites, and no reliable answer to “which edit wins?”
 
-## What the live main site does today (2026-09-01)
+## What the live main site does today (verified 2026-09-02)
 
 Read-only network inspection of the public home page shows that the site is still a Base44
 application (`6a05e41957c8ee753cb7380c`) and loads three independent public feeds:
@@ -29,7 +29,7 @@ Base44 owner console before it is retired or moved.
 
 | Content | Authoritative source | Current delivery to app | Main-site convergence |
 |---|---|---|---|
-| Businesses | Google Sheet for editorial fields; claimed-owner structured hours win | `sync-sheet` → Supabase `businesses` | Main site should read published Supabase rows, or temporarily pull/upsert them by stable business id. Do not push Base44 edits back into the Sheet. |
+| Businesses | Published main-site `listBusinessesPublic` feed; claimed-owner structured hours win | `business-sync.yml` → Supabase `businesses` every six hours | This is a temporary one-way bridge until both properties read the same Supabase table. The old Google Sheet importer remains an unscheduled recovery tool and must not run concurrently. |
 | Business media | Supabase Storage | Sheet stores a bucket filename; app reads `photos[]` | Move surviving Base44/external identity art into Storage. Preserve distinct `logo` and `cover` roles when the schema is expanded. |
 | Events | Public Google Calendar for calendar-owned rows; owner submissions for owner-owned rows | six-hour ICS job → Supabase `events`; owner tools write Supabase | Replace the main site's separate Base44 event list with the same published Supabase query. This also removes its broken calendar-link time formatting. |
 | News | Base44 daily automation, temporarily | six-hour `news-sync.yml` bridge → Supabase `news_articles` | Short term: Base44 remains the producer. End state: move the automation output to Supabase and have both sites read it. |
@@ -38,15 +38,37 @@ Base44 owner console before it is retired or moved.
 
 ## Bridge safety rules
 
-The news bridge is intentionally narrow:
+The business and news bridges are intentionally narrow:
 
-- public Base44 `NewsPost` is read-only; a Supabase service key is used only for the target;
-- Base44 ids remain `news_articles.id`, making retries idempotent;
+- public main-site functions are read-only; a Supabase service key is used only for the target;
+- Base44 ids remain the Supabase row ids, making retries idempotent;
 - existing Supabase slugs win, so shared article URLs do not change;
-- missing upstream rows are never deleted or unpublished; the archive is preserved;
+- business rows missing from the public main-site feed are soft-unpublished, never deleted;
+- owner-created business rows and the news archive are never auto-unpublished;
+- clear business-hours prose is parsed into the canonical seven-day schedule, including
+  closed days; ambiguous/appointment/seasonal hours remain faithful prose;
+- claimed-owner structured hours are never overwritten by generated schedules;
+- the business job rejects fewer than 100 public rows before writing, so an upstream outage
+  cannot empty the app directory;
 - an unexpected empty upstream response aborts when Supabase already contains news;
 - duplicate ids are collapsed and reported before an upsert;
-- the pure mapping test runs in the scheduled workflow before production writes.
+- pure mapping tests and a live dry-run run in each scheduled workflow before production writes.
+
+## Verified cadence and freshness
+
+- Businesses: GitHub Actions at `47 */6 * * *` UTC. The first reconciliation found 147
+  approved, profile-enabled main-site listings versus 133 published app rows: 33 inserts,
+  114 matches, and 18 stale app rows to soft-unpublish. Of the 147 live source listings,
+  114 have authored hours: 66 parse as a weekly schedule, 46 remain prose, and 2 claimed
+  owner schedules are preserved. The remaining 33 are blank on the main site itself.
+- Events: GitHub Actions at `23 */6 * * *` UTC. Scheduled runs were observed succeeding on
+  September 1–2, 2026.
+- News: GitHub Actions at `37 */6 * * *` UTC. Scheduled runs were observed succeeding on
+  September 1–2, 2026.
+- Legacy Sheet: not scheduled. `sync_runs` contains one successful manual run on August 14,
+  2026 (132 rows), and no later Sheet run. The database has no `cron` schema, confirming the
+  documented pg_cron schedule was never installed. Do not enable it alongside the main-site
+  bridge; two writers would make source precedence depend on whichever ran last.
 
 ## Remaining owner-console audit
 
@@ -57,7 +79,7 @@ Before moving the main site off Base44, export or record:
 3. the `listBusinessesPublic` and `getBusinessPublic` function contracts;
 4. newsletter send/subscriber workflows and unsubscribe handling;
 5. pending-business and pending-event approval notifications;
-6. any workflow that exports businesses to the Google Sheet;
+6. the exact GHL/submission automations that publish businesses into Base44;
 7. media upload/approval rules for `BusinessPhoto` and profile `image_url`.
 
 That inventory determines which jobs are moved, which are replaced by existing Supabase

@@ -124,6 +124,14 @@ async function newPage(width, height) {
   ok(tapH >= 44, label(`tab tap target ≥44px (${tapH}px)`));
   ok(!(await page.$("footer")), label("no desktop footer in the app"));
   ok(r.overflowX === 0, label(`app home: no horizontal overflow (${r.overflowX})`));
+  const homeOpenToggle = await page.$("[data-home-open-now-toggle]");
+  ok(homeOpenToggle !== null, label("home: Open now is an explicit toggle"));
+  ok((await page.$eval("[data-home-open-now-toggle]", (el) => el.getAttribute("aria-checked"))) === "false",
+     label("home: Open now defaults off"));
+  await homeOpenToggle?.click();
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  ok((await page.$eval("[data-home-open-now-toggle]", (el) => el.getAttribute("aria-checked"))) === "true",
+     label("home: Open now can be enabled"));
 
   // Tap-target guarantee (#9): every pressable control on the app surfaces must be ≥44px
   // tall, not just the one nav link. Sweeps buttons + role=button/tab, lists any offenders.

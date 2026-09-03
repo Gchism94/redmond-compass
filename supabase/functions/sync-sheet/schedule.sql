@@ -1,9 +1,12 @@
--- Schedule the sync-sheet edge function — DAILY at 08:15 UTC (sheet-sync-spec §1).
+-- LEGACY / DISABLED: do not schedule while .github/workflows/business-sync.yml is active.
+-- The main-site public directory is the current business publication boundary and mirrors
+-- to Supabase every six hours. Keeping two live writers would create last-run-wins drift.
+-- Retained only as historical recovery documentation.
 --
--- HOLD RELEASED 2026-08-14. This file now schedules a LIVE sync. The dry-run hold existed
--- until the Sheet's 3 drifted Business IDs were corrected; they were, and a real run then
--- completed cleanly (sync_runs #16: 132 read, 132 upserted, 0 unpublished, 0 skipped,
--- owner-claimed rows byte-identical). `&dry=1` remains documented below as a diagnostic.
+-- Historical context: the dry-run hold was released on 2026-08-14 and a manual live run
+-- completed cleanly (sync_runs #16: 132 read, 132 upserted, 0 unpublished, 0 skipped).
+-- The pg_cron job was never installed, and this template was disabled again on 2026-09-02
+-- when the current main-site business bridge became the single scheduled writer.
 -- NOT a migration — run once by hand in the SQL editor AFTER the function is deployed and
 -- its secrets are set, because it hard-codes the project ref + a service-role bearer.
 -- Needs pg_cron + pg_net (Dashboard → Database → Extensions).
@@ -65,6 +68,8 @@ create extension if not exists pg_net;
 
 -- LIVE: this writes. Verified end-to-end on 2026-08-14 before the hold was released.
 -- To go back to a no-write diagnostic run at any time, append `&dry=1` to the url.
+/* Intentionally disabled on 2026-09-02. Do not uncomment without first disabling the
+   main-site business workflow and making an explicit source-of-truth decision.
 select cron.schedule(
   'sync-sheet-daily',
   '15 8 * * *',                          -- 08:15 UTC daily (UTC-only; see DST note above)
@@ -82,6 +87,7 @@ select cron.schedule(
   );
   $$
 );
+*/
 
 -- ── VERIFY WITHOUT FIRING IT ────────────────────────────────────────────────────────────
 -- Confirms the job would construct a correct request, without invoking the function.

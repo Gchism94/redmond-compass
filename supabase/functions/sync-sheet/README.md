@@ -1,9 +1,10 @@
-# sync-sheet — Google Sheet → Supabase (operator guide)
+# sync-sheet — legacy Google Sheet → Supabase recovery importer
 
-The Google Sheet is the **source of truth** for directory data (GHL is out of the
-path). This function pulls it into `public.businesses` on a schedule. The code is
-done and unit-tested; the steps below are the **human setup** that has to happen
-with Greg before it can run.
+This guarded importer is retained for recovery and controlled one-off imports. It is **not
+the production source or scheduler** as of 2026-09-02: published business data now mirrors
+the main site's public directory through `.github/workflows/business-sync.yml` every six
+hours. Do not schedule this Sheet importer concurrently; two writers would overwrite each
+other according to run order rather than a defined source precedence.
 
 ## 1. Sheet setup (makes or breaks the sync)
 
@@ -50,14 +51,11 @@ Create the service account in Google Cloud → IAM → Service Accounts, enable 
 **Google Sheets API**, download a JSON key, and share the Sheet with its
 `client_email` (read-only).
 
-## 3. Deploy + schedule
+## 3. Deploy + manual recovery use
 
 ```
 supabase functions deploy sync-sheet
-# then, once: run supabase/functions/sync-sheet/schedule.sql in the SQL editor
-# (substitute <REF> and <SERVICE_ROLE_KEY>) to run it daily at 08:15 UTC via pg_cron.
-# 08:15 UTC lands just after the owner's Sunday-night Pacific update in both PST and PDT
-# (pg_cron is UTC-only — see the DST note in schedule.sql).
+# Do not install schedule.sql while business-sync.yml is active.
 ```
 
 Trigger a one-off run to verify: `POST /functions/v1/sync-sheet` (add the

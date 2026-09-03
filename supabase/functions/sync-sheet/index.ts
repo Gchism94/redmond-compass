@@ -1,7 +1,8 @@
-// sync-sheet — scheduled pull: Google Sheet → Supabase `businesses`.
+// sync-sheet — legacy/manual Google Sheet → Supabase `businesses` importer.
 //
-// The Google Sheet is the source of truth for directory data (GHL is out of the
-// path). This function reads it via the Google Sheets API using a service account
+// Retained as a guarded recovery path. Production business freshness is owned by the
+// main-site bridge in .github/workflows/business-sync.yml; do not schedule both writers.
+// This function reads the Sheet via the Google Sheets API using a service account
 // (NOT the public "publish to web" CSV), validates the header row, upserts on the
 // sheet's `id`, soft-unpublishes rows that left the sheet, logs the run to
 // `sync_runs`, and — if anything changed — fires the host deploy hook (debounced).
@@ -19,7 +20,7 @@
 // SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are injected automatically.
 //
 // Deploy:  supabase functions deploy sync-sheet
-// Schedule (daily at 08:15 UTC) via pg_cron — see supabase/functions/sync-sheet/schedule.sql
+// Historical schedule template: supabase/functions/sync-sheet/schedule.sql (disabled)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.1";
 import { buildSyncPlan, summarizePlan, groupByKeySet, type ExistingBusinesses } from "./transform.ts";
 

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ChevronRight, MapPin } from "lucide-react";
 import {
@@ -35,6 +35,7 @@ export function HomeScreen() {
   const desktop = useIsDesktop();
   const origin = session.location ?? undefined;
   const locationSort = origin ? "distance" : "relevance";
+  const [onlyOpen, setOnlyOpen] = useState(false);
   const openNow = useBusinesses({ openNow: true, sort: locationSort, limit: 8, origin });
   const bulletins = useBulletins();
   const events = useEvents({ limit: 3, origin });
@@ -44,17 +45,13 @@ export function HomeScreen() {
   // recently-viewed + bulletin attribution, which is what capped those two at 50.)
   const nearby = useBusinesses({ sort: locationSort, limit: 8, origin });
 
-  // Never an empty module: if nothing's open right now (e.g. late night), the rail
-  // degrades from "Open now" to "Nearby in Redmond" rather than going blank.
-  const openItems = openNow.data?.items ?? [];
-  const hasOpen = openItems.length > 0;
-  const railTitle = hasOpen ? t("home.openNow") : t(origin ? "home.nearbyIn" : "home.placesIn");
-  const railItems = hasOpen ? openItems : (nearby.data?.items ?? []).slice(0, 8);
-  const railLoading = openNow.isLoading || (!hasOpen && nearby.isLoading);
-  // Home is a dashboard of independent sections: one failed query must degrade only its own
-  // section, never blank the screen. The rail needs BOTH queries to fail — an empty
-  // "open now" is a normal late-night result, not an error, and falls back to "nearby".
-  const railFailed = openNow.isError && nearby.isError;
+  // The signed-in home used to silently request open businesses and label the result rail
+  // "Open now". That made a filter look like the default directory. Show the complete
+  // nearby/relevant set first; residents can opt into the time-sensitive view explicitly.
+  const railTitle = onlyOpen ? t("home.openNow") : t(origin ? "home.nearbyIn" : "home.placesIn");
+  const railItems = onlyOpen ? (openNow.data?.items ?? []) : (nearby.data?.items ?? []);
+  const railLoading = onlyOpen ? openNow.isLoading : nearby.isLoading;
+  const railFailed = onlyOpen ? openNow.isError : nearby.isError;
 
   // Personalization (BUILD-BRIEF §12 step 6). Follow-feed when following anyone,
   // else t("home.popular"). Recently-viewed rail appears for returning users.
@@ -133,10 +130,30 @@ export function HomeScreen() {
         </>
       )}
 
-      {/* Open now near you — degrades to "Nearby" when nothing is open */}
+      {/* Directory preview. "Open now" is an explicit, off-by-default filter. */}
       <Rail
         title={railTitle}
-        seeAllHref={hasOpen ? "/search/results?openNow=1" : origin ? "/search/results?sort=distance" : "/search/results"}
+        seeAllHref={onlyOpen ? "/search/results?openNow=1" : origin ? "/search/results?sort=distance" : "/search/results"}
+        headerAction={(
+          <button
+            type="button"
+            role="switch"
+            aria-checked={onlyOpen}
+            data-home-open-now-toggle
+            onClick={() => setOnlyOpen((value) => !value)}
+            className="inline-flex min-h-tap items-center gap-2.5 rounded-pill border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-positive/40 hover:bg-positive/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <span
+              aria-hidden
+              className={`relative h-6 w-11 rounded-full transition-colors ${onlyOpen ? "bg-positive" : "bg-muted-foreground/30"}`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${onlyOpen ? "translate-x-5" : "translate-x-0.5"}`}
+              />
+            </span>
+            {t("search.openNow")}
+          </button>
+        )}
       >
         {railFailed ? (
           <ErrorState compact className="w-full" title={t("error.loadBusinesses")} onRetry={() => { openNow.refetch(); nearby.refetch(); }} />
@@ -149,7 +166,18 @@ export function HomeScreen() {
                 <Skeleton className="mt-1 h-4 w-2/3" />
               </div>
             ))
-          : railItems.map((b) => (
+          : railItems.length === 0 ? (
+              <div className="w-full rounded-lg border border-dashed border-border bg-muted/30 px-4 py-4">
+                <p className="text-sm font-medium text-foreground">{t("home.noOpenNow")}</p>
+                <button
+                  type="button"
+                  onClick={() => setOnlyOpen(false)}
+                  className="mt-2 inline-flex min-h-tap items-center text-sm font-semibold text-positive hover:underline"
+                >
+                  {t("home.showAllBusinesses")}
+                </button>
+              </div>
+            ) : railItems.map((b) => (
               <ResultCard
                 key={b.id}
                 business={b}

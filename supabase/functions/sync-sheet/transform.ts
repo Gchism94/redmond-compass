@@ -3,8 +3,8 @@
 // in scripts/sync-sheet-test.mjs (Node, via esbuild) — the sheet→row mapping is
 // unit-tested without ever touching Google.
 //
-// The Google Sheet is the source of truth for directory data. We parse by header
-// NAME (not column position), so editors can reorder columns freely; only a
+// Used by both the legacy Sheet recovery importer and the scheduled main-site bridge.
+// We parse by header NAME (not column position), so editors can reorder columns freely; only a
 // missing REQUIRED header or an empty sheet aborts the run (data left intact).
 
 import { parseHoursText, type ParsedHours } from "./hours-parser.ts";
