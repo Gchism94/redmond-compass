@@ -81,11 +81,13 @@ createRoot(document.getElementById("root")).render(
 `);
 
 const outdir = path.join(tmp, "site");
+const testConfig = path.join(tmp, "compass.config.ts");
+writeFileSync(testConfig, `export const compassConfig = { siteMode: "full-site", liveSite: "https://redmondcompass.com", appOrigin: "http://localhost:${PORT}" };`);
 await build({
   entryPoints: [entry], bundle: true, format: "esm", platform: "browser",
   outfile: path.join(outdir, "app.js"), logLevel: "error", jsx: "automatic",
   absWorkingDir: ROOT, nodePaths: [path.join(ROOT, "node_modules")],
-  alias: { "@": path.join(ROOT, "src"), "@config": path.join(ROOT, "compass.config.ts") },
+  alias: { "@": path.join(ROOT, "src"), "@config": testConfig },
   loader: { ".css": "empty" },
   define: {
     "import.meta.env.DEV": "false", "import.meta.env.PROD": "true",

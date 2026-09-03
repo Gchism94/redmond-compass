@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, Link } from "react-router-dom";
-import { Check, X, Plus, ArrowRight } from "lucide-react";
+import { Check, X, Plus, ArrowRight, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { Field, fieldInputClass, CompletenessMeter, Chip, Switch, Thumb, Button, Card, Skeleton, ErrorState } from "@/components";
 import { useOwnerBusiness } from "./useOwnerBusiness";
 import { MutationError } from "./MutationError";
 import { useUpdateBusiness } from "@/data/queries";
 import { listingCompleteness } from "@/lib/completeness";
-import { WEEKDAY_ORDER, dayLabel, hasValidWeeklyHours } from "@/lib/hours";
+import { WEEKDAY_ORDER, dayLabel, formatClock, hasValidWeeklyHours } from "@/lib/hours";
 import { AMENITY_FACETS, BUSINESS_CATEGORIES, categoryLabelFor } from "@/lib/taxonomy";
 import { LIMITS } from "@/lib/entitlements";
 import type { Business, DayHours, Weekday } from "@/lib/types";
 import { useI18n } from "@/i18n";
+import { appOnly, LIVE_SITE } from "@/lib/siteMode";
 
 type Week = Record<Weekday, DayHours>;
 
@@ -77,9 +78,148 @@ function fromBusiness(b: Business): FormState {
   };
 }
 
-/** Edit Listing (B4) — free, current-site parity. Member "enhanced profile" fields
- *  (story/menu/gallery) are deferred and not rendered (no modules at MVP). */
 export function EditListingScreen() {
+  return appOnly ? <MainSiteListingHandoff /> : <LocalEditListingScreen />;
+}
+
+function listingDetailsText(business: Business, labels: {
+  category: string;
+  subcategories: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+  description: string;
+  longDescription: string;
+  photos: string;
+  socialLinks: string;
+  license: string;
+  specials: string;
+  additionalLocations: string;
+  hours: string;
+  closed: string;
+  notListed: string;
+}): string {
+  const weekly = hasValidWeeklyHours(business.hours)
+    ? WEEKDAY_ORDER.map((day) => {
+        const value = business.hours!.week[day];
+        return `${dayLabel(day)}: ${value.closed ? labels.closed : `${formatClock(value.open)}–${formatClock(value.close)}`}`;
+      }).join("\n")
+    : business.hoursText?.trim() || labels.notListed;
+  return [
+    business.name,
+    `${labels.category}: ${categoryLabelFor(business.category)}`,
+    business.subcategories?.length ? `${labels.subcategories}: ${business.subcategories.join(", ")}` : "",
+    `${labels.address}: ${business.address || labels.notListed}`,
+    `${labels.phone}: ${business.phone || labels.notListed}`,
+    `${labels.email}: ${business.email || labels.notListed}`,
+    `${labels.website}: ${business.website || labels.notListed}`,
+    `${labels.description}: ${business.description || labels.notListed}`,
+    business.longDescription ? `${labels.longDescription}: ${business.longDescription}` : "",
+    business.photos?.length ? `${labels.photos}: ${business.photos.join(", ")}` : "",
+    business.socials && Object.keys(business.socials).length
+      ? `${labels.socialLinks}: ${Object.entries(business.socials).map(([network, url]) => `${network}: ${url}`).join(", ")}`
+      : "",
+    business.licenseNumber || business.licenseType
+      ? `${labels.license}: ${[business.licenseType, business.licenseNumber].filter(Boolean).join(" — ")}`
+      : "",
+    business.specials ? `${labels.specials}: ${business.specials}` : "",
+    business.additionalLocations?.length
+      ? `${labels.additionalLocations}: ${JSON.stringify(business.additionalLocations)}`
+      : "",
+    `${labels.hours}:`,
+    weekly,
+  ].filter(Boolean).join("\n");
+}
+
+/**
+ * In app-only mode the owner's Base44/GHL workflow is authoritative. This handoff keeps
+ * canonical directory edits out of Supabase, where the next inbound refresh could undo
+ * them, while still giving an owner a copyable packet when the app contains richer data.
+ */
+function MainSiteListingHandoff() {
+  const { t } = useI18n();
+  const { ownerBusinessId, data: business, isLoading, isError, refetch } = useOwnerBusiness();
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+
+  if (!ownerBusinessId) return <Navigate to="/claim" replace />;
+  if (isError) return <ErrorState title={t("error.loadProfile")} onRetry={() => refetch()} />;
+  if (isLoading || !business) {
+    return <><ScreenHeader title={t("owner.editListing")} back /><div className="px-4 pt-2"><Skeleton className="h-72 w-full" /></div></>;
+  }
+
+  const details = listingDetailsText(business, {
+    category: t("owner.category"),
+    subcategories: t("owner.subcategories"),
+    address: t("owner.address"),
+    phone: t("owner.phone"),
+    email: t("owner.email"),
+    website: t("owner.website"),
+    description: t("owner.description"),
+    longDescription: t("owner.longDescription"),
+    photos: t("owner.photos"),
+    socialLinks: t("owner.socialLinks"),
+    license: t("owner.license"),
+    specials: t("owner.specials"),
+    additionalLocations: t("owner.additionalLocations"),
+    hours: t("owner.hours"),
+    closed: t("owner.closed"),
+    notListed: t("owner.notListed"),
+  });
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(details);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
+  };
+
+  return (
+    <div className="pb-8">
+      <ScreenHeader title={t("owner.mainSiteHandoffTitle")} back />
+      <div className="space-y-4 px-4 pt-2">
+        <Card className="border-positive/25 bg-positive/5 p-4">
+          <div className="flex items-start gap-3">
+            <RefreshCw size={20} className="mt-0.5 shrink-0 text-positive" aria-hidden />
+            <div>
+              <h2 className="font-heading text-md font-semibold text-foreground">{t("owner.mainSiteSourceTitle")}</h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t("owner.mainSiteHandoffBody")}</p>
+            </div>
+          </div>
+          <a
+            href={`${LIVE_SITE}/dashboard`}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-4 flex min-h-tap w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground"
+          >
+            {t("owner.openMainSiteDashboard")} <ExternalLink size={16} />
+          </a>
+        </Card>
+
+        <section>
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("owner.appDetailsLabel")}</h2>
+          <textarea
+            readOnly
+            value={details}
+            rows={12}
+            aria-label={t("owner.appDetailsLabel")}
+            className={`${fieldInputClass} h-auto resize-y py-3 font-mono text-xs leading-relaxed`}
+            onFocus={(event) => event.currentTarget.select()}
+          />
+          <Button variant="ghost" fullWidth className="mt-2" onClick={copy}>
+            {copyState === "copied" ? <><Check size={16} /> {t("owner.detailsCopied")}</> : <><Copy size={16} /> {t("owner.copyAppDetails")}</>}
+          </Button>
+          {copyState === "failed" && <p role="alert" className="mt-2 text-xs text-danger">{t("owner.copyFailed")}</p>}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+/** Edit Listing (B4) in full-site mode. Member "enhanced profile" fields
+ *  (story/menu/gallery) are deferred and not rendered (no modules at MVP). */
+function LocalEditListingScreen() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { ownerBusinessId, data: business, isLoading, isError, refetch } = useOwnerBusiness();

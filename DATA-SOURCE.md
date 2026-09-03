@@ -5,16 +5,16 @@ Original guidance: the uploaded `DATASOURCE.md`. This file documents what exists
 
 ## Decision: Path B — read from Supabase
 
-**Source of truth for directory data is the Google Sheet** (architecture change,
-2026-07-11 — supersedes the earlier GHL plan). A scheduled Supabase edge function
-(`sync-sheet`) pulls the Sheet into `businesses`; the app reads only from Supabase.
-News, Resources, Events, and Bulletins are Supabase-native; Events also sync in from
-the public Google Calendar (`sync-gcal-events`). **GoHighLevel is OUT of the data
-path** — it may persist as a human-side CRM, but the platform never reads from it.
+**Source of truth for directory data is the owner's current Base44/GHL-backed main-site
+workflow.** Its sanitized `listBusinessesPublic` function is mirrored into Supabase every
+six hours; the app reads only from that Supabase read model. The legacy Google Sheet
+importer is unscheduled recovery tooling and must not run beside the main-site bridge.
+News mirrors the main site's automation output; events also sync from the public Google
+Calendar (`sync-gcal-events`). See `CONTENT-SYNC.md` and `OWNER-SOURCE-HANDOFF.md`.
 
 ```
-Google Sheet ──sync-sheet (daily)──▶ Supabase (canonical read store, RLS) ──▶ App (PWA + prerendered pages)
-Google Calendar ──sync-gcal-events──▶     ▲ News · Resources · Bulletins authored here
+Main site / Base44-GHL ──6-hour guarded mirror──▶ Supabase read model ──▶ App
+Google Calendar ─────────6-hour event sync─────▶        ▲ app-only owner content
 ```
 
 The app depends on the `DataSource` interface (`src/data/DataSource.ts`), never on
@@ -149,16 +149,17 @@ Business Profile (`RecommendRow`). It's **JIT-gated** like save/follow (AuthReas
 `recommend`), and — critically — the count is display-only and **never reorders results**
 (equal ranking holds). `verified_customer` remains a fast-follow seam.
 
-## Sheet sync (`supabase/functions/sync-sheet`)
+## Business mirror and legacy Sheet importer
 
-The Google Sheet is the source of truth for directory data. The `sync-sheet` edge
-function (scheduled daily at 08:15 UTC via `schedule.sql`) reads it with a Google service
-account, validates the header row (missing required column or empty sheet → **abort**,
-never a partial write), upserts on the sheet's `id` = `businesses.id`, soft-unpublishes
-rows that left the sheet (`published=false`, never a hard delete), logs each run to
-`sync_runs`, and fires the host deploy hook (debounced ≤1×/hr) when data changed. Pure
-sheet→row logic lives in `transform.ts` (unit-tested by `scripts/sync-sheet-test.mjs`).
-`businesses.ghl_id` is retained but **unused** (GHL is out of the data path).
+`.github/workflows/business-sync.yml` runs `scripts/sync-main-site-businesses.mjs` every
+six hours. It validates the public feed, deduplicates source records, mirrors all public
+non-ranking fields, parses trustworthy weekly hours, retains ambiguous prose, preserves
+claimed-owner structured hours, and soft-unpublishes vanished source rows. `featured` is
+deliberately excluded from the equal-ranked app schema.
+
+`supabase/functions/sync-sheet` remains a guarded, unscheduled recovery importer. Its
+parser is shared by the live bridge, but `schedule.sql` is historical documentation only.
+Do not activate it while the main-site bridge is running.
 
 ## Run it locally
 

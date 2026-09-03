@@ -1,9 +1,10 @@
 # Content sync architecture
 
-This document records what currently owns each content type and how the app should converge
-with `redmondcompass.com`. The rule is one-way publication from a named source of truth. A
-pair of jobs writing back and forth between Base44 and Supabase would create loops, stale
-overwrites, and no reliable answer to “which edit wins?”
+This document records what currently owns each content type and how the app mirrors
+`redmondcompass.com`. The owner's Base44/GHL solution remains authoritative for the main
+directory. Supabase is the app's read model, not a replacement source. A pair of automatic
+jobs writing back and forth would create loops, stale overwrites, and no reliable answer to
+“which edit wins?” See `OWNER-SOURCE-HANDOFF.md` for the owner-facing correction path.
 
 ## What the live main site does today (verified 2026-09-02)
 
@@ -31,8 +32,8 @@ Base44 owner console before it is retired or moved.
 
 | Content | Authoritative source | Current delivery to app | Main-site convergence |
 |---|---|---|---|
-| Businesses | Published main-site `listBusinessesPublic` feed; claimed-owner structured hours win | `business-sync.yml` → Supabase `businesses` every six hours | This is a temporary one-way bridge until both properties read the same Supabase table. The old Google Sheet importer remains an unscheduled recovery tool and must not run concurrently. |
-| Business media | Supabase Storage | Sheet stores a bucket filename; app reads `photos[]` | Move surviving Base44/external identity art into Storage. Preserve distinct `logo` and `cover` roles when the schema is expanded. |
+| Businesses | Owner-managed main-site `Business` records, published through `listBusinessesPublic` | `business-sync.yml` → Supabase `businesses` every six hours | Keep the main site authoritative. New listings and core profile edits begin there; app-only `/manage/edit` hands owners back to that workflow. |
+| Business media | Main-site public `image_url` plus previously recovered app media | The main image is mirrored when present; a blank source does not destroy recovered app art | Add a private server-side contract if the owner wants approved `BusinessPhoto` galleries mirrored too. |
 | Events | Public Google Calendar for calendar-owned rows; owner submissions for owner-owned rows | six-hour ICS job → Supabase `events`; owner tools write Supabase | Replace the main site's separate Base44 event list with the same published Supabase query. This also removes its broken calendar-link time formatting. |
 | News | Base44 daily automation, temporarily | six-hour `news-sync.yml` bridge → Supabase `news_articles` | Short term: Base44 remains the producer. End state: move the automation output to Supabase and have both sites read it. |
 | Bulletins/classes | Business owners in this app | Supabase | Main site reads the same public Supabase rows if these surfaces are added there. |
@@ -58,6 +59,8 @@ The business and news bridges are intentionally narrow:
   cannot empty the app directory;
 - an unexpected empty upstream response aborts when Supabase already contains news;
 - duplicate ids are collapsed and reported before an upsert;
+- every public non-ranking Business field is retained in the app read model; `featured` is
+  deliberately excluded from the equal-ranked directory;
 - news thumbnails supplied upstream or resolved previously are preserved; for the newest
   missing rows, the bridge reads at most three public HTTPS publisher pages per item in
   small batches and stores the first usable Open Graph/Twitter image. Publisher failures
@@ -73,6 +76,9 @@ The business and news bridges are intentionally narrow:
   owner record. Of the 147 live source listings,
   114 have authored hours: 66 parse as a weekly schedule, 46 remain prose, and 2 claimed
   owner schedules are preserved. The remaining 33 are blank on the main site itself.
+  A read-only parity audit on September 3 found 147 published rows representing 146 unique
+  businesses: 114 have main-site hours and 32 have no usable hours in either system. The
+  audit also reports any useful app field that is blank in the authoritative record.
 - Events: GitHub Actions at `23 */6 * * *` UTC. Scheduled runs were observed succeeding on
   September 1–2, 2026.
 - News: GitHub Actions at `37 */6 * * *` UTC. Scheduled runs were observed succeeding on

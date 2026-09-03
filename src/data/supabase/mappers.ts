@@ -64,6 +64,14 @@ export function rowToBusiness(r: Row): Business {
     additionalLocations: r.additional_locations ?? undefined,
     extraCategories: r.extra_categories ?? undefined,
     hoursText: r.hours_text ?? undefined,
+    hideAddress: !!r.hide_address,
+    hoursLocationName: r.hours_location_name ?? undefined,
+    videos: r.videos ?? undefined,
+    headshotUrl: r.headshot_url ?? undefined,
+    licenseType: r.license_type ?? undefined,
+    referralEnabled: !!r.referral_enabled,
+    referralPromoCode: r.referral_promo_code ?? undefined,
+    sourceUpdatedAt: r.source_updated_at ?? undefined,
   };
 }
 

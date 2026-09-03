@@ -296,7 +296,7 @@ export interface DataSource {
   createBusiness(input: NewBusinessInput): Promise<Business>;
   updateBusiness(id: ID, patch: Partial<Business>): Promise<Business>;
   /** Claim an existing (unclaimed) listing for an owner. */
-  claimBusiness(id: ID, ownerId: ID): Promise<Business>;
+  claimBusiness(id: ID): Promise<Business>;
   /** Post a bulletin (free monthly cap enforced in the UI, never destroys work). */
   createBulletin(input: NewBulletinInput): Promise<Bulletin>;
   updateBulletin(id: ID, patch: BulletinPatch): Promise<Bulletin>;

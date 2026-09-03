@@ -256,8 +256,7 @@ export function useClaimBusiness() {
   const getDS = useDataSource();
   const invalidate = useInvalidateBusiness();
   return useMutation({
-    mutationFn: async ({ id, ownerId }: { id: ID; ownerId: ID }) =>
-      (await getDS()).claimBusiness(id, ownerId),
+    mutationFn: async (id: ID) => (await getDS()).claimBusiness(id),
     onSuccess: invalidate,
   });
 }

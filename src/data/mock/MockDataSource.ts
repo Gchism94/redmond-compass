@@ -509,6 +509,7 @@ export class MockDataSource implements DataSource {
 
   // ---- Owner writes (step 7) ----
   async createBusiness(input: NewBusinessInput): Promise<Business> {
+    if (!this.authUser) throw new Error("Sign in before creating a business listing.");
     const id = `b_${Date.now().toString(36)}`;
     const biz: Business = {
       id,
@@ -528,7 +529,7 @@ export class MockDataSource implements DataSource {
       amenityTags: input.amenityTags ?? [],
       claimed: true,
       verified: false, // new listings start unverified; "claimed & verified" is earned
-      ownerId: input.ownerId,
+      ownerId: this.authUser.id,
       tier: "free",
       createdAt: new Date().toISOString(),
     };
@@ -547,8 +548,9 @@ export class MockDataSource implements DataSource {
     return delay(updated);
   }
 
-  async claimBusiness(id: ID, ownerId: ID): Promise<Business> {
-    return this.updateBusiness(id, { claimed: true, ownerId });
+  async claimBusiness(id: ID): Promise<Business> {
+    if (!this.authUser) throw new Error("Sign in before claiming a business listing.");
+    return this.updateBusiness(id, { claimed: true, ownerId: this.authUser.id });
   }
 
   async createBulletin(input: NewBulletinInput): Promise<Bulletin> {

@@ -1,5 +1,5 @@
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { Repeat, Megaphone, CalendarPlus, Pencil, ArrowRight, BookOpen } from "lucide-react";
+import { Repeat, Megaphone, CalendarPlus, Pencil, ArrowRight, BookOpen, ExternalLink, RefreshCw } from "lucide-react";
 import { Thumb, VerifiedBadge, StatusBadge, CompletenessMeter, Card, Skeleton, ErrorState } from "@/components";
 import { useOwnerBusiness } from "./useOwnerBusiness";
 import { useBulletinCount } from "@/data/queries";
@@ -7,6 +7,7 @@ import { useSession } from "@/features/account/session";
 import { listingCompleteness } from "@/lib/completeness";
 import { LIMITS } from "@/lib/entitlements";
 import { useI18n } from "@/i18n";
+import { appOnly, HOME_PATH, LIVE_SITE } from "@/lib/siteMode";
 
 /**
  * Owner Dashboard (B1) — light "manage my listing" hub. MVP is FREE only:
@@ -45,7 +46,7 @@ export function OwnerDashboard() {
         <h1 className="font-heading text-xl font-bold text-foreground">{t("owner.dashboard")}</h1>
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(HOME_PATH)}
           className="inline-flex min-h-tap items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground"
         >
           <Repeat size={13} /> {t("owner.consumerView")}
@@ -72,6 +73,28 @@ export function OwnerDashboard() {
           </div>
         </Card>
       </section>
+
+      {appOnly && (
+        <section className="px-4 pt-4">
+          <Card className="border-positive/25 bg-positive/5 p-4">
+            <div className="flex items-start gap-3">
+              <RefreshCw size={18} className="mt-0.5 shrink-0 text-positive" aria-hidden />
+              <div>
+                <h2 className="font-heading text-sm font-semibold text-foreground">{t("owner.mainSiteSourceTitle")}</h2>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("owner.mainSiteSourceBody")}</p>
+                <a
+                  href={`${LIVE_SITE}/dashboard`}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="mt-2 inline-flex min-h-tap items-center gap-1.5 text-sm font-semibold text-positive hover:underline"
+                >
+                  {t("owner.openMainSiteDashboard")} <ExternalLink size={14} />
+                </a>
+              </div>
+            </div>
+          </Card>
+        </section>
+      )}
 
       {/* Completeness */}
       <section className="px-4 pt-4">

@@ -24,13 +24,35 @@ export interface MainSiteBusiness {
   category?: string;
   subcategory?: string;
   categories?: string[];
+  tags?: string[];
   description?: string;
+  long_description?: string;
   address?: string;
   hide_address?: boolean;
   phone?: string;
   website?: string;
   email?: string;
   hours?: string;
+  hours_location_name?: string;
+  image_url?: string;
+  headshot_url?: string;
+  message_link?: string;
+  facebook?: string;
+  instagram?: string;
+  tiktok?: string;
+  youtube?: string;
+  linkedin?: string;
+  twitter?: string;
+  pinterest?: string;
+  license_number?: string;
+  license_type?: string;
+  specials?: string;
+  specials_image_url?: string;
+  additional_locations?: Array<Record<string, unknown>>;
+  videos?: Array<Record<string, unknown>>;
+  referral_enabled?: boolean;
+  referral_promo_code?: string;
+  created_date?: string;
   updated_date?: string;
   status?: string;
   profile_enabled?: boolean;
@@ -153,8 +175,8 @@ export function mainSiteBusinessesToValues(
     ...publicRows.map((record) => {
       const categories = uniqueList([
         record.subcategory,
-        ...(record.categories ?? []),
-      ]).filter((category) => category !== record.category);
+        ...(record.tags ?? []),
+      ]);
       return [
         record.id ?? "",
         record.name ?? "",
@@ -188,7 +210,58 @@ export function buildMainSiteBusinessPlan(
   const dedupedPayload = dedupeSourceBusinesses(visibleRecords).rows;
   const collisions = ownerNameCollisions(dedupedPayload, owners);
   const values = mainSiteBusinessesToValues(payload, minimum, owners);
-  const plan = buildSyncPlan(values, supabaseUrl, nowIso, existing);
+  const basePlan = buildSyncPlan(values, supabaseUrl, nowIso, existing);
+  const collisionIds = new Set(collisions.map((row) => row.sourceId));
+  const sourceById = new Map(
+    dedupedPayload
+      .filter((record) => record.id && !collisionIds.has(record.id))
+      .map((record) => [record.id!, record]),
+  );
+  const nullable = (value: string | undefined) => value?.trim() || null;
+  const validIso = (value: string | undefined) => {
+    if (!value || Number.isNaN(Date.parse(value))) return null;
+    return new Date(value).toISOString();
+  };
+  const plan = {
+    ...basePlan,
+    upserts: basePlan.upserts.map((row) => {
+      const source = sourceById.get(row.id);
+      if (!source) return row;
+      const socials = Object.fromEntries(
+        ["facebook", "instagram", "tiktok", "youtube", "linkedin", "twitter", "pinterest"]
+          .map((key) => [key, nullable(source[key as keyof MainSiteBusiness] as string | undefined)])
+          .filter(([, value]) => value),
+      );
+      const extraCategories = uniqueList(source.categories ?? [])
+        .filter((category) => category !== source.category);
+      const image = nullable(source.image_url);
+      return {
+        ...row,
+        long_description: nullable(source.long_description),
+        message_link: nullable(source.message_link),
+        socials,
+        license_number: nullable(source.license_number),
+        license_type: nullable(source.license_type),
+        specials: nullable(source.specials),
+        specials_image_url: nullable(source.specials_image_url),
+        additional_locations: source.additional_locations?.length ? source.additional_locations : null,
+        extra_categories: extraCategories,
+        hide_address: !!source.hide_address,
+        hours_location_name: nullable(source.hours_location_name),
+        videos: source.videos?.length ? source.videos : null,
+        headshot_url: nullable(source.headshot_url),
+        referral_enabled: !!source.referral_enabled,
+        referral_promo_code: nullable(source.referral_promo_code),
+        source_updated_at: validIso(source.updated_date),
+        ...(validIso(source.created_date) && !existing.slugById[row.id]
+          ? { created_at: validIso(source.created_date) }
+          : {}),
+        // A public main-site identity image is canonical for new/refreshed rows. When the
+        // source is blank, omit photos rather than destroying already-recovered gallery art.
+        ...(image ? { photos: [image] } : {}),
+      };
+    }),
+  };
   return {
     plan,
     summary: summarizePlan(plan, existing),

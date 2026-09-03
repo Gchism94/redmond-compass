@@ -47,8 +47,6 @@ export function ClaimScreen() {
   // A new search starts from the first page again.
   useEffect(() => setShown(PAGE), [query]);
 
-  const ownerId = () => session.user?.id ?? "owner_self";
-
   const becomeOwner = (businessId: string) => {
     session.setOwnerBusinessId(businessId);
     navigate("/manage", { replace: true });
@@ -62,7 +60,7 @@ export function ClaimScreen() {
     session.requireAuth(async () => {
       setActionError(null);
       try {
-        await claimBusiness.mutateAsync({ id, ownerId: ownerId() });
+        await claimBusiness.mutateAsync(id);
         becomeOwner(id);
       } catch (e) {
         setActionError(e);
@@ -73,7 +71,7 @@ export function ClaimScreen() {
     session.requireAuth(async () => {
       setActionError(null);
       try {
-        const created = await createBusiness.mutateAsync({ ...input, ownerId: ownerId() });
+        const created = await createBusiness.mutateAsync(input);
         becomeOwner(created.id);
       } catch (e) {
         setActionError(e);
@@ -108,7 +106,7 @@ export function ClaimScreen() {
         )}
       </div>
 
-      {mode === "new" ? (
+      {mode === "new" && !appOnly ? (
         <NewListingForm
           onCancel={() => setMode("choose")}
           submitting={createBusiness.isPending}
@@ -118,13 +116,29 @@ export function ClaimScreen() {
       ) : (
         <>
           <section className="px-4 pt-4">
-            <button
-              type="button"
-              onClick={() => setMode("new")}
-              className="flex min-h-tap w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground"
-            >
-              <Plus size={18} /> {t("owner.addNew")}
-            </button>
+            {appOnly ? (
+              <a
+                href={`${LIVE_SITE}/for-business-owners`}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="flex min-h-tap w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground"
+              >
+                <Plus size={18} /> {t("owner.addNewMainSite")} <ExternalLink size={15} />
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setMode("new")}
+                className="flex min-h-tap w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground"
+              >
+                <Plus size={18} /> {t("owner.addNew")}
+              </button>
+            )}
+            {appOnly && (
+              <p className="mt-2 text-center text-xs leading-relaxed text-muted-foreground">
+                {t("owner.mainSiteFirstHint")}
+              </p>
+            )}
           </section>
 
           <section className="px-4 pt-5">
@@ -159,7 +173,9 @@ export function ClaimScreen() {
                   icon={<Store size={20} />}
                   title={t("owner.noMatch")}
                   message={t("owner.noMatchMsg")}
-                  action={{ label: t("owner.addNew"), onClick: () => setMode("new") }}
+                  action={appOnly
+                    ? { label: t("owner.addNewMainSite"), onClick: () => window.open(`${LIVE_SITE}/for-business-owners`, "_blank", "noopener,noreferrer") }
+                    : { label: t("owner.addNew"), onClick: () => setMode("new") }}
                 />
               ) : (
                 <p className="py-4 text-sm text-muted-foreground">{t("owner.allClaimed")}</p>

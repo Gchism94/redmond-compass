@@ -529,7 +529,8 @@ class SupabaseDataSource implements DataSource {
   // ---- Owner writes (RLS enforces ownership + tier; needs a Supabase auth session) ----
   async createBusiness(input: NewBusinessInput): Promise<Business> {
     const { data: u } = await this.sb.auth.getUser();
-    const ownerId = input.ownerId ?? u.user?.id;
+    const ownerId = u.user?.id;
+    if (!ownerId) throw new Error("Sign in before creating a business listing.");
     const { data, error } = await this.sb
       .from("businesses")
       .insert({
@@ -580,8 +581,8 @@ class SupabaseDataSource implements DataSource {
     return rowToBusiness(data);
   }
 
-  async claimBusiness(id: ID, _ownerId: ID): Promise<Business> {
-    void _ownerId; // ownership is taken from auth.uid() inside the RPC
+  async claimBusiness(id: ID): Promise<Business> {
+    // Ownership is taken from auth.uid() inside the RPC; never trust a client-supplied id.
     const { data, error } = await this.sb.rpc("claim_business", { b_id: id });
     if (error) throw error;
     return rowToBusiness(Array.isArray(data) ? data[0] : data);

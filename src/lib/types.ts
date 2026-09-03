@@ -64,11 +64,28 @@ export interface Business {
   licenseNumber?: string;
   specials?: string;
   specialsImageUrl?: string;
-  additionalLocations?: { name?: string; address?: string; hours?: string }[];
+  additionalLocations?: {
+    name?: string;
+    label?: string;
+    address?: string;
+    city?: string;
+    phone?: string;
+    hours?: string;
+  }[];
   /** multi-category memberships beyond the primary `category` */
   extraCategories?: string[];
   /** unstructured hours from the legacy site; structured `hours` stays canonical */
   hoursText?: string;
+  /** Additional public fields retained from the owner-managed main-site record. */
+  hideAddress?: boolean;
+  hoursLocationName?: string;
+  videos?: Array<Record<string, unknown>>;
+  headshotUrl?: string;
+  licenseType?: string;
+  referralEnabled?: boolean;
+  referralPromoCode?: string;
+  /** Main-site Business.updated_date, used to make mirror freshness auditable. */
+  sourceUpdatedAt?: string;
   // DEFERRED (post-MVP enhanced/Member + derived presence signals)
   story?: string;
   ownerSpotlight?: { name: string; blurb: string; photo?: string };
