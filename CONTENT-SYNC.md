@@ -61,7 +61,7 @@ The business and news bridges are intentionally narrow:
 - news thumbnails supplied upstream or resolved previously are preserved; for the newest
   missing rows, the bridge reads at most three public HTTPS publisher pages per item in
   small batches and stores the first usable Open Graph/Twitter image. Publisher failures
-  never abort the content sync;
+  never abort the content sync, and short-lived Facebook CDN images are rejected;
 - pure mapping tests and a live dry-run run in each scheduled workflow before production writes.
 
 ## Verified cadence and freshness

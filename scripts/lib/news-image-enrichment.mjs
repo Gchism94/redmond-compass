@@ -51,6 +51,15 @@ export function safePublicUrl(value, base) {
   }
 }
 
+/** Facebook CDN URLs are signed, short-lived, and unsuitable as stored card art. */
+export function stableNewsImageUrl(value, base) {
+  const image = safePublicUrl(value, base);
+  if (!image) return null;
+  const hostname = new URL(image).hostname.toLowerCase();
+  if (hostname === "fbcdn.net" || hostname.endsWith(".fbcdn.net")) return null;
+  return image;
+}
+
 function linkSpecificity(value) {
   try {
     const url = new URL(value);
@@ -95,7 +104,7 @@ export function extractSocialImage(html, pageUrl) {
   }
 
   for (const key of ["og:image:secure_url", "og:image", "twitter:image", "twitter:image:src"]) {
-    const image = safePublicUrl(found.get(key), pageUrl);
+    const image = stableNewsImageUrl(found.get(key), pageUrl);
     if (image) return image;
   }
   return null;
@@ -167,7 +176,7 @@ export async function enrichNewsImages(rows, {
   concurrency = 3,
   timeoutMs = DEFAULT_TIMEOUT_MS,
 } = {}) {
-  const nextRows = rows.map((row) => ({ ...row }));
+  const nextRows = rows.map((row) => ({ ...row, image: stableNewsImageUrl(row.image) }));
   const pending = nextRows
     .map((row, index) => ({ row, index }))
     .filter(({ row }) => !row.image && newsSourceCandidates(row).length > 0)

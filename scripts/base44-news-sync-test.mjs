@@ -1,5 +1,5 @@
 import { buildNewsSyncPlan, newsFeedUrl, slugify } from "./lib/base44-news-sync.mjs";
-import { enrichNewsImages, extractSocialImage, newsSourceCandidates, safePublicUrl } from "./lib/news-image-enrichment.mjs";
+import { enrichNewsImages, extractSocialImage, newsSourceCandidates, safePublicUrl, stableNewsImageUrl } from "./lib/news-image-enrichment.mjs";
 
 let pass = 0;
 let fail = 0;
@@ -45,6 +45,7 @@ ok(
   safePublicUrl("http://127.0.0.1/private") === null && safePublicUrl("https://[::1]/private") === null,
   "metadata enrichment rejects private and non-HTTPS targets",
 );
+ok(stableNewsImageUrl("https://scontent.example.fbcdn.net/signed.jpg?expires=soon") === null, "expiring Facebook CDN images are never persisted");
 ok(
   extractSocialImage('<meta content="https://cdn.example.com/photo.jpg?width=800&amp;height=450" property="og:image">', "https://news.example.com/story")
     === "https://cdn.example.com/photo.jpg?width=800&height=450",

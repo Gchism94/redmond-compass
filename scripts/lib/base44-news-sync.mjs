@@ -1,5 +1,7 @@
 /** Pure planning logic for the temporary main-site NewsPost → Supabase bridge. */
 
+import { stableNewsImageUrl } from "./news-image-enrichment.mjs";
+
 export const MAIN_SITE_URL = "https://redmondcompass.com";
 export const BASE44_APP_ID = "6a05e41957c8ee753cb7380c";
 
@@ -37,7 +39,11 @@ export function buildNewsSyncPlan(records, existing = []) {
   }
 
   const slugById = new Map(existing.map((row) => [row.id, row.slug]));
-  const imageById = new Map(existing.map((row) => [row.id, row.image]).filter(([, image]) => image));
+  const imageById = new Map(
+    existing
+      .map((row) => [row.id, stableNewsImageUrl(row.image)])
+      .filter(([, image]) => image),
+  );
   const taken = new Set(existing.map((row) => row.slug).filter(Boolean));
   const seen = new Set();
   const rows = [];
@@ -74,7 +80,7 @@ export function buildNewsSyncPlan(records, existing = []) {
       // The upstream automation does not currently populate image_url. Preserve an
       // image previously resolved from publisher metadata instead of blanking it on
       // the next six-hour sync.
-      image: record.image_url || imageById.get(record.id) || null,
+      image: stableNewsImageUrl(record.image_url) || imageById.get(record.id) || null,
       source: record.source_name || "Redmond Compass",
       author: null,
       published_at: publishedAt(record),
