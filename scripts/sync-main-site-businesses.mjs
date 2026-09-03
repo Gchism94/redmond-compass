@@ -67,7 +67,7 @@ try {
   const owners = existingRows
     .filter((row) => !!row.owner_id)
     .map((row) => ({ id: row.id, name: row.name }));
-  const { plan, summary, groupByKeySet, ownerNameCollisions } = buildMainSiteBusinessPlan(
+  const { plan, summary, groupByKeySet, ownerNameCollisions, sourceNameCollisions } = buildMainSiteBusinessPlan(
     upstream,
     SUPABASE_URL,
     new Date().toISOString(),
@@ -86,6 +86,7 @@ try {
     dryRun: DRY_RUN,
     source: "redmondcompass.com/listBusinessesPublic",
     ownerNameCollisions,
+    sourceNameCollisions,
     ...summary,
     wouldSoftUnpublish: { count: wouldUnpublish.length, sample: wouldUnpublish.slice(0, 10) },
   };

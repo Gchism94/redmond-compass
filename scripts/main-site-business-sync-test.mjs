@@ -35,10 +35,14 @@ try {
       id: "b2", name: "Appointment Test", category: "services", hours: "By appointment",
       status: "approved", profile_enabled: true,
     },
+    {
+      id: "b2-old", name: "Appointment Test", category: "services", hours: "",
+      status: "approved", profile_enabled: true, updated_date: "2026-01-01",
+    },
     { id: "hidden", name: "Hidden", category: "services", status: "pending", profile_enabled: true },
   ] };
   const values = mainSiteBusinessesToValues(payload, 2);
-  ok(values.length === 3, "only approved, profile-enabled businesses enter the plan");
+  ok(values.length === 3, "only approved, profile-enabled, unique businesses enter the plan");
   ok(values[1][4] === "Cafe; Coffee", "primary category is not duplicated in subcategories");
 
   const existing = {
@@ -55,6 +59,7 @@ try {
   const appointment = plan.upserts.find((row) => row.id === "b2");
   ok(appointment?.hours_text === "By appointment" && !("hours" in appointment), "claimed-owner structured hours are never overwritten by prose");
   ok(summary.newIds.count === 1 && summary.hours.parsed === 1, "dry-run summary reports inserts and parsed schedules");
+  ok(plan.upserts.some((row) => row.id === "b2") && !plan.upserts.some((row) => row.id === "b2-old"), "richer duplicate source record wins deterministically");
 
   const protectedOwner = [{ id: "owner-coffee", name: "Coffee Test" }];
   const protectedResult = buildMainSiteBusinessPlan(
@@ -67,6 +72,7 @@ try {
   );
   ok(protectedResult.plan.upserts.length === 1, "same-name owner-created listing suppresses a duplicate source id");
   ok(protectedResult.ownerNameCollisions[0]?.ownerId === "owner-coffee", "owner/source id collision is observable in the run output");
+  ok(protectedResult.sourceNameCollisions[0]?.suppressedIds[0] === "b2-old", "duplicate source ids are observable in the run output");
 
   let refused = false;
   try { mainSiteBusinessesToValues({ businesses: [] }, 2); } catch { refused = true; }

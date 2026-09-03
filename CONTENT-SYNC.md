@@ -50,6 +50,8 @@ The business and news bridges are intentionally narrow:
 - claimed-owner structured hours are never overwritten by generated schedules;
 - an owner-created listing wins over a same-name main-site row with a different id, so a
   source-system id change cannot create a duplicate business in the app;
+- duplicate same-name rows inside the main-site feed are collapsed deterministically; the
+  more complete, then newer profile wins and every suppressed id is logged;
 - the business job rejects fewer than 100 public rows before writing, so an upstream outage
   cannot empty the app directory;
 - an unexpected empty upstream response aborts when Supabase already contains news;

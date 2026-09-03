@@ -31,6 +31,7 @@ export interface MainSiteBusiness {
   website?: string;
   email?: string;
   hours?: string;
+  updated_date?: string;
   status?: string;
   profile_enabled?: boolean;
 }
@@ -62,6 +63,44 @@ const normalizedName = (value: string | undefined) => (value ?? "")
   .normalize("NFKD")
   .replace(/[^a-z0-9]+/gi, "")
   .toLowerCase();
+
+function completeness(record: MainSiteBusiness): number {
+  return [record.hours, record.phone, record.website, record.email, record.address, record.description]
+    .filter((value) => !!value?.trim()).length;
+}
+
+/** Pick one public row per normalized business name, favoring complete and then newer data. */
+export function dedupeSourceBusinesses(records: MainSiteBusiness[]): {
+  rows: MainSiteBusiness[];
+  collisions: Array<{ name: string; keptId: string; suppressedIds: string[] }>;
+} {
+  const groups = new Map<string, MainSiteBusiness[]>();
+  for (const record of records) {
+    const key = normalizedName(record.name) || `id:${record.id ?? ""}`;
+    const group = groups.get(key);
+    if (group) group.push(record);
+    else groups.set(key, [record]);
+  }
+  const rows: MainSiteBusiness[] = [];
+  const collisions: Array<{ name: string; keptId: string; suppressedIds: string[] }> = [];
+  for (const group of groups.values()) {
+    const ordered = [...group].sort((a, b) =>
+      completeness(b) - completeness(a)
+      || String(b.updated_date ?? "").localeCompare(String(a.updated_date ?? ""))
+      || String(a.id ?? "").localeCompare(String(b.id ?? "")),
+    );
+    const winner = ordered[0];
+    rows.push(winner);
+    if (ordered.length > 1) {
+      collisions.push({
+        name: winner.name ?? "",
+        keptId: winner.id ?? "",
+        suppressedIds: ordered.slice(1).map((record) => record.id ?? ""),
+      });
+    }
+  }
+  return { rows, collisions };
+}
 
 export function ownerNameCollisions(payload: unknown, owners: ExistingOwnerBusiness[]): Array<{
   sourceId: string;
@@ -105,8 +144,9 @@ export function mainSiteBusinessesToValues(
       `Main-site business feed returned ${allPublicRows.length} public rows; expected at least ${minimum}. Refusing a destructive partial sync.`,
     );
   }
-  const collidedIds = new Set(ownerNameCollisions(allPublicRows, owners).map((row) => row.sourceId));
-  const publicRows = allPublicRows.filter((record) => !collidedIds.has(record.id ?? ""));
+  const deduped = dedupeSourceBusinesses(allPublicRows).rows;
+  const collidedIds = new Set(ownerNameCollisions(deduped, owners).map((row) => row.sourceId));
+  const publicRows = deduped.filter((record) => !collidedIds.has(record.id ?? ""));
 
   return [
     HEADERS,
@@ -140,8 +180,20 @@ export function buildMainSiteBusinessPlan(
   minimum = MIN_EXPECTED_BUSINESSES,
   owners: ExistingOwnerBusiness[] = [],
 ) {
-  const collisions = ownerNameCollisions(payload, owners);
+  const rawRecords = Array.isArray(payload)
+    ? payload as MainSiteBusiness[]
+    : ((payload as { businesses?: MainSiteBusiness[] } | null)?.businesses ?? []);
+  const visibleRecords = rawRecords.filter((record) => record?.status === "approved" && record.profile_enabled === true);
+  const sourceNameCollisions = dedupeSourceBusinesses(visibleRecords).collisions;
+  const dedupedPayload = dedupeSourceBusinesses(visibleRecords).rows;
+  const collisions = ownerNameCollisions(dedupedPayload, owners);
   const values = mainSiteBusinessesToValues(payload, minimum, owners);
   const plan = buildSyncPlan(values, supabaseUrl, nowIso, existing);
-  return { plan, summary: summarizePlan(plan, existing), groupByKeySet, ownerNameCollisions: collisions };
+  return {
+    plan,
+    summary: summarizePlan(plan, existing),
+    groupByKeySet,
+    ownerNameCollisions: collisions,
+    sourceNameCollisions,
+  };
 }
