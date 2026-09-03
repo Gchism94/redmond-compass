@@ -21,6 +21,22 @@ export function telHref(phone?: string): string | undefined {
   return `tel:${subscriber}${extension ? `;ext=${extension}` : ""}`;
 }
 
+/** Format North American numbers for display without changing the callable value. */
+export function formatPhoneDisplay(phone?: string): string {
+  const raw = phone?.trim() ?? "";
+  if (!raw) return "";
+
+  const extensionMatch = raw.match(/(?:\bext(?:ension)?\.?|\bx)\s*[:#.-]?\s*(\d+)\s*$/i);
+  const extension = extensionMatch?.[1];
+  const base = extensionMatch ? raw.slice(0, extensionMatch.index).trim() : raw;
+  const digits = base.replace(/\D/g, "");
+  const national = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  if (national.length !== 10) return raw;
+
+  const formatted = `(${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`;
+  return `${formatted}${extension ? ` ext. ${extension}` : ""}`;
+}
+
 export function directionsHref(opts: { address?: string; geo?: GeoPoint }): string {
   const dest = opts.geo
     ? `${opts.geo.lat},${opts.geo.lng}`

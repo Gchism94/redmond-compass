@@ -124,14 +124,18 @@ async function newPage(width, height) {
   ok(tapH >= 44, label(`tab tap target ≥44px (${tapH}px)`));
   ok(!(await page.$("footer")), label("no desktop footer in the app"));
   ok(r.overflowX === 0, label(`app home: no horizontal overflow (${r.overflowX})`));
-  const homeOpenToggle = await page.$("[data-home-open-now-toggle]");
-  ok(homeOpenToggle !== null, label("home: Open now is an explicit toggle"));
-  ok((await page.$eval("[data-home-open-now-toggle]", (el) => el.getAttribute("aria-checked"))) === "false",
-     label("home: Open now defaults off"));
-  await homeOpenToggle?.click();
+  const homeAvailability = await page.$("[data-home-open-now-toggle]");
+  ok(homeAvailability !== null, label("home: availability is an explicit two-state control"));
+  ok((await page.$eval("[data-home-open-now-toggle]", (el) =>
+    [...el.querySelectorAll('[role="radio"]')].some((radio) => /all businesses/i.test(radio.textContent) && radio.getAttribute("aria-checked") === "true"),
+  )), label("home: All businesses defaults on"));
+  await page.$eval("[data-home-open-now-toggle]", (el) =>
+    [...el.querySelectorAll('[role="radio"]')].find((radio) => /open now/i.test(radio.textContent))?.click(),
+  );
   await new Promise((resolve) => setTimeout(resolve, 500));
-  ok((await page.$eval("[data-home-open-now-toggle]", (el) => el.getAttribute("aria-checked"))) === "true",
-     label("home: Open now can be enabled"));
+  ok((await page.$eval("[data-home-open-now-toggle]", (el) =>
+    [...el.querySelectorAll('[role="radio"]')].some((radio) => /open now/i.test(radio.textContent) && radio.getAttribute("aria-checked") === "true"),
+  )), label("home: Open now can be selected"));
 
   // Tap-target guarantee (#9): every pressable control on the app surfaces must be ≥44px
   // tall, not just the one nav link. Sweeps buttons + role=button/tab, lists any offenders.
@@ -153,6 +157,11 @@ async function newPage(width, height) {
 
   r = await visit("/search");
   ok((await page.$("[data-search-layout] h1")) !== null, label("search: visible page heading present"));
+  const searchAvailability = await page.evaluate(() => ({
+    all: [...document.querySelectorAll('[role="radio"]')].some((el) => /all businesses/i.test(el.textContent || "") && el.getAttribute("aria-checked") === "true"),
+    open: [...document.querySelectorAll('[role="radio"]')].some((el) => /open now/i.test(el.textContent || "")),
+  }));
+  ok(searchAvailability.all && searchAvailability.open, label("search: availability uses the same explicit two-state control"));
   taps = await tapOffenders();
   ok(taps.length === 0, label(`search: every tap target ≥44px tall (${taps.length ? taps.join(" · ") : "ok"})`));
 
@@ -163,6 +172,21 @@ async function newPage(width, height) {
   );
   ok(mapControls === 0 && !/map view is coming soon|el mapa llega pronto/i.test(r.text),
      label("results: unfinished Map view is not advertised"));
+  const resultsAvailability = await page.evaluate(() => {
+    const radios = [...document.querySelectorAll('[role="radio"]')];
+    const all = radios.find((el) => /all businesses/i.test(el.textContent || ""));
+    const open = radios.find((el) => /open now/i.test(el.textContent || ""));
+    open?.click();
+    return { allWasDefault: all?.getAttribute("aria-checked") === "true", foundOpen: !!open };
+  });
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  ok(resultsAvailability.allWasDefault && resultsAvailability.foundOpen &&
+     (await page.$eval('[role="radio"]:nth-child(2)', (el) => el.getAttribute("aria-checked"))) === "true",
+     label("results: availability stays visible and Open now can be selected"));
+  await page.evaluate(() =>
+    [...document.querySelectorAll('[role="radio"]')].find((el) => /all businesses/i.test(el.textContent || ""))?.click(),
+  );
+  await new Promise((resolve) => setTimeout(resolve, 400));
   const impreciseDistance = await page.evaluate(() => {
     const card = [...document.querySelectorAll("[data-result-card], article")]
       .find((el) => /Burger Wild - All American/i.test(el.textContent || ""));

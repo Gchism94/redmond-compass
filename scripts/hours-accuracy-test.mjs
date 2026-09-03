@@ -54,6 +54,16 @@ assert.equal(
   "valid schedules can make a live Open claim",
 );
 assert.equal(hours.hoursTextFallback(regular, "old prose"), undefined, "valid structured data stays canonical");
+assert.equal(
+  hours.formatHoursTextDisplay("Open 7 days a week 11am to Close"),
+  "Daily · 11 AM–close",
+  "unstructured hours get a conservative display cleanup",
+);
+assert.equal(
+  hours.formatHoursTextDisplay("By Appointment"),
+  "By Appointment",
+  "non-schedule prose is not rewritten",
+);
 
 const overnight = { week: week({ mon: { open: "20:00", close: "02:00" } }) };
 const overnightStatus = hours.getOpenStatus(overnight, new Date(2026, 8, 1, 1, 0));

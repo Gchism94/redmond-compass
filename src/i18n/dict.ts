@@ -38,6 +38,9 @@ export const en = {
   "common.required": "required",
   "feed.news": "News",
   "feed.bulletin": "Bulletin",
+  "pwa.updateReady": "A new version is ready",
+  "pwa.updateMessage": "Refresh to use the latest Redmond Compass improvements.",
+  "pwa.refresh": "Refresh app",
 
   // ---- open status (lib/hours) ----
   "status.open": "Open",
@@ -108,6 +111,8 @@ export const en = {
   // ---- search ----
   "search.title": "Search",
   "search.openNow": "Open now",
+  "availability.label": "Business availability",
+  "availability.all": "All businesses",
   "search.nearMe": "Near me",
   "search.browseByCategory": "Browse by category",
   "search.recent": "Recent",
@@ -139,6 +144,7 @@ export const en = {
   "results.sort.openNow": "Open now",
   "results.sort.name": "Name",
   "results.availability": "Availability",
+  "results.filtered": "Filters applied",
   "results.distance": "Distance",
   "results.amenities": "Amenities",
   "results.tab.all": "All",
@@ -408,7 +414,7 @@ export const en = {
   "account.deleteConfirm": "Delete account",
   "account.deleteBusy": "Deleting…",
   "account.deleteError": "Couldn't delete your account. Please try again, or email RedmondCompass@gmail.com.",
-  "account.version": "Redmond Compass · v0.1 (MVP)",
+  "account.version": "Redmond Compass",
 
   // ---- auth ----
   "auth.saveTitle": "Sign in to save",
@@ -690,6 +696,9 @@ export const es: Record<DictKey, string> = {
   "common.required": "obligatorio",
   "feed.news": "Noticias",
   "feed.bulletin": "Aviso",
+  "pwa.updateReady": "Hay una nueva versión disponible",
+  "pwa.updateMessage": "Actualiza para usar las mejoras más recientes de Redmond Compass.",
+  "pwa.refresh": "Actualizar app",
 
   "status.open": "Abierto",
   "status.closed": "Cerrado",
@@ -751,6 +760,8 @@ export const es: Record<DictKey, string> = {
 
   "search.title": "Buscar",
   "search.openNow": "Abierto ahora",
+  "availability.label": "Disponibilidad de negocios",
+  "availability.all": "Todos los negocios",
   "search.nearMe": "Cerca de mí",
   "search.browseByCategory": "Explora por categoría",
   "search.recent": "Recientes",
@@ -781,6 +792,7 @@ export const es: Record<DictKey, string> = {
   "results.sort.openNow": "Abierto ahora",
   "results.sort.name": "Nombre",
   "results.availability": "Disponibilidad",
+  "results.filtered": "Filtros aplicados",
   "results.distance": "Distancia",
   "results.amenities": "Comodidades",
   "results.tab.all": "Todo",
@@ -1041,7 +1053,7 @@ export const es: Record<DictKey, string> = {
   "account.deleteConfirm": "Eliminar cuenta",
   "account.deleteBusy": "Eliminando…",
   "account.deleteError": "No pudimos eliminar tu cuenta. Inténtalo de nuevo o escribe a RedmondCompass@gmail.com.",
-  "account.version": "Redmond Compass · v0.1 (MVP)",
+  "account.version": "Redmond Compass",
 
   "auth.saveTitle": "Inicia sesión para guardar",
   "auth.saveSub": "Guarda tus lugares favoritos de Redmond en un solo sitio, sincronizados entre dispositivos.",

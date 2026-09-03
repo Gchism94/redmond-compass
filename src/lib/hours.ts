@@ -59,6 +59,24 @@ export function hoursTextFallback(hours: Hours | undefined, hoursText?: string):
   return text || undefined;
 }
 
+/**
+ * Light presentation cleanup for trustworthy-but-unstructured source hours.
+ * This never invents days or converts prose into an Open/Closed claim; it only
+ * normalizes common spacing, clock, and "open every day" wording.
+ */
+export function formatHoursTextDisplay(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\bopen\s+7\s+days\s+a\s+week\b/i, "Daily")
+    .replace(/\b(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)\b/gi, (_match, hour: string, minutesText: string | undefined, period: string) => {
+      const minutes = minutesText && minutesText !== "00" ? `:${minutesText}` : "";
+      return `${Number(hour)}${minutes} ${period.toLowerCase().startsWith("a") ? "AM" : "PM"}`;
+    })
+    .replace(/\s+(?:to|[-–—])\s+close\b/gi, "–close")
+    .replace(/^Daily\s+(?=\d)/i, "Daily · ");
+}
+
 /** Format "HH:MM" (24h) → "7:00 AM". Returns "" for empty. */
 export function formatClock(hhmm: string): string {
   if (!isValidTime(hhmm)) return "";

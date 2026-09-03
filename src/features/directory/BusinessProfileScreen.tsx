@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ExternalLink, ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock, Heart, Check, Compass } from "lucide-react";
-import { ActionBar, Button, EventCard, FeedItem, StatusBadge, VerifiedBadge, OpenStatusLabel, Chip, Thumb, Skeleton, EmptyState, ErrorState } from "@/components";
+import { ExternalLink, ChevronLeft, Share2, Globe, MapPin, Phone as PhoneIcon, Clock, Heart, Check } from "lucide-react";
+import { ActionBar, BusinessImageFallback, Button, EventCard, FeedItem, StatusBadge, VerifiedBadge, OpenStatusLabel, Chip, Thumb, Skeleton, EmptyState, ErrorState } from "@/components";
 import { IconButton } from "@/components/ui/IconButton";
 import {
   useBusiness,
@@ -12,13 +12,14 @@ import {
   useHasRecommended,
   useRecommend,
 } from "@/data/queries";
-import { WEEKDAY_ORDER, dayLabel, todayKey, formatClock, hasValidWeeklyHours, hoursTextFallback } from "@/lib/hours";
-import { directionsHref, telHref } from "@/lib/links";
+import { WEEKDAY_ORDER, dayLabel, todayKey, formatClock, formatHoursTextDisplay, hasValidWeeklyHours, hoursTextFallback } from "@/lib/hours";
+import { directionsHref, formatPhoneDisplay, telHref } from "@/lib/links";
 import { formatClassDate, relativeTime } from "@/lib/format";
 import { useSession } from "@/features/account/session";
 import type { Business } from "@/lib/types";
 import { useI18n, tGlobal } from "@/i18n";
-import { categoryLabelFor } from "@/lib/taxonomy";
+import { businessCategoryLabels } from "@/lib/taxonomy";
+import { cn } from "@/lib/cn";
 
 /**
  * Business Profile (S5) — the anchor screen. A FREE listing must read COMPLETE:
@@ -103,16 +104,7 @@ export function BusinessProfileScreen() {
   };
 
   return (
-    <div className="pb-6">
-      {/* Topbar over hero */}
-      <div className="absolute left-0 right-0 z-20 mx-auto flex max-w-content items-center justify-between px-2 pt-2">
-        <IconButton label={t("common.back")} variant="solid" onClick={() => navigate(-1)}>
-          <ChevronLeft size={20} />
-        </IconButton>
-        <IconButton label={t("common.share")} variant="solid" onClick={shareBusiness}>
-          <Share2 size={18} />
-        </IconButton>
-      </div>
+    <div className="pb-6 lg:pt-6">
       {shareNotice && (
         <p
           role={shareNotice === "failed" ? "alert" : "status"}
@@ -122,69 +114,74 @@ export function BusinessProfileScreen() {
         </p>
       )}
 
-      {/* Hero (single photo at MVP; gallery is Member) */}
-      {business.photos[0] ? (
-        <Thumb
-          src={business.photos[0]}
-          seed={business.name}
-          alt={business.name}
-          className="brand-image-frame h-44 w-full lg:h-64"
-          rounded="rounded-none"
-        />
-      ) : (
-        <BrandedHero />
-      )}
+      <div className="lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)] lg:items-start lg:gap-6">
+        <div className="relative overflow-hidden lg:rounded-xl lg:border lg:border-border lg:bg-card lg:shadow-card">
+          <div className="absolute inset-x-0 z-20 flex items-center justify-between px-2 pt-2">
+            <IconButton label={t("common.back")} variant="solid" onClick={() => navigate(-1)}>
+              <ChevronLeft size={20} />
+            </IconButton>
+            <IconButton label={t("common.share")} variant="solid" onClick={shareBusiness}>
+              <Share2 size={18} />
+            </IconButton>
+          </div>
 
-      {/* Header */}
-      <div className="px-4 pt-3">
-        <h1 className="font-heading text-xl font-bold leading-tight text-foreground">
-          {business.name}
-        </h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {[categoryLabelFor(business.category), ...(business.subcategories ?? [])].join(" · ")}
-        </p>
-        <div className="mt-2">
-          {hasStructuredHours ? (
-            <OpenStatusLabel hours={business.hours} />
-          ) : fallbackHours ? (
-            <p className="text-sm text-muted-foreground">{fallbackHours}</p>
-          ) : (
-            <OpenStatusLabel />
-          )}
+          <Thumb
+            src={business.photos[0]}
+            seed={business.name}
+            alt={business.name}
+            className="brand-image-frame h-44 w-full lg:h-[430px]"
+            rounded="rounded-none"
+            fallback={<BusinessImageFallback category={business.category} variant="hero" />}
+          />
         </div>
-      </div>
 
-      {/* Sticky action bar — Save/Follow gated by JIT auth via session */}
-      <div className="mt-3">
-        <ActionBar
-          business={business}
-          saved={session.isSaved(business.id)}
-          following={session.isFollowing(business.id)}
-          onSave={() => session.toggleSaveBusiness(business.id)}
-          onFollow={() => session.toggleFollow(business.id)}
-        />
-      </div>
+        <div className="overflow-hidden lg:rounded-xl lg:border lg:border-border lg:bg-card lg:shadow-card">
+          <div className="px-4 pt-3 lg:px-5 lg:pt-5">
+            <h1 className="font-heading text-xl font-bold leading-tight text-foreground lg:text-3xl">
+              {business.name}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {businessCategoryLabels(business.category, business.subcategories).join(" · ")}
+            </p>
+            <div className="mt-3">
+              {hasStructuredHours ? (
+                <OpenStatusLabel hours={business.hours} />
+              ) : fallbackHours ? (
+                <p className="text-sm text-muted-foreground">{formatHoursTextDisplay(fallbackHours)}</p>
+              ) : (
+                <OpenStatusLabel />
+              )}
+            </div>
+          </div>
 
-      {/* Trust signals (factual, no stars) */}
-      <div className="flex flex-wrap gap-2 px-4 pt-4">
-        {business.verified && <VerifiedBadge />}
-        {business.postFrequency === "weekly" && <StatusBadge tone="neutral">{t("status.postsWeekly")}</StatusBadge>}
-        {business.responseTime && <StatusBadge tone="neutral">{business.responseTime}</StatusBadge>}
-        {business.claimed && (
-          <StatusBadge tone="info">{t("status.onCompassSince", { year: new Date(business.createdAt).getFullYear() })}</StatusBadge>
-        )}
-      </div>
+          <div className="mt-3">
+            <ActionBar
+              business={business}
+              saved={session.isSaved(business.id)}
+              following={session.isFollowing(business.id)}
+              onSave={() => session.toggleSaveBusiness(business.id)}
+              onFollow={() => session.toggleFollow(business.id)}
+              className="lg:static lg:shadow-none"
+            />
+          </div>
 
-      {/* Recommend — positive-only social proof (no stars; never affects ranking) */}
-      <RecommendRow businessId={business.id} />
+          <div className="flex flex-wrap gap-2 px-4 pt-4 lg:px-5">
+            {business.verified && <VerifiedBadge />}
+            {business.postFrequency === "weekly" && <StatusBadge tone="neutral">{t("status.postsWeekly")}</StatusBadge>}
+            {business.responseTime && <StatusBadge tone="neutral">{business.responseTime}</StatusBadge>}
+            {business.claimed && (
+              <StatusBadge tone="info">{t("status.onCompassSince", { year: new Date(business.createdAt).getFullYear() })}</StatusBadge>
+            )}
+          </div>
 
-      {/* At a glance */}
-      {hasAtAGlance && (
-        <Section title={t("profile.atAGlance")}>
+          <RecommendRow businessId={business.id} />
+
+          {hasAtAGlance && (
+            <Section title={t("profile.atAGlance")} embedded>
           {hasStructuredHours && <HoursBlock business={business} />}
           {!hasStructuredHours && fallbackHours && (
             <Fact icon={<Clock size={15} />} label={t("profile.hours")}>
-              {fallbackHours}
+              {formatHoursTextDisplay(fallbackHours)}
             </Fact>
           )}
           {address && (
@@ -205,7 +202,7 @@ export function BusinessProfileScreen() {
                 href={phoneHref}
                 className="inline-flex min-h-tap items-center text-positive hover:underline"
               >
-                {phone}
+                {formatPhoneDisplay(phone)}
               </a>
             </Fact>
           )}
@@ -230,8 +227,11 @@ export function BusinessProfileScreen() {
               ))}
             </div>
           )}
-        </Section>
-      )}
+            </Section>
+          )}
+        </div>
+
+        <div className="lg:col-span-2 lg:mt-2 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
 
       {/* What's new — bulletins */}
       {bulletins.isError ? (
@@ -335,12 +335,14 @@ export function BusinessProfileScreen() {
         </Section>
       )}
 
-      <p className="px-4 pt-2 text-center text-xs text-muted-foreground">
+      <p className="px-4 pt-2 text-center text-xs text-muted-foreground lg:col-span-2">
         {t("profile.providedBy")} ·{" "}
         <Link to="/resources" className="inline-flex min-h-tap items-center font-semibold text-positive hover:underline">
           {t("profile.seeResources")}
         </Link>
       </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -398,9 +400,16 @@ function RecommendRow({ businessId }: { businessId: string }) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, embedded = false }: { title: string; children: React.ReactNode; embedded?: boolean }) {
   return (
-    <section className="border-t border-border px-4 py-4">
+    <section
+      className={cn(
+        "border-t border-border px-4 py-4",
+        embedded
+          ? "lg:px-5 lg:pb-5"
+          : "lg:rounded-xl lg:border lg:bg-card lg:p-5 lg:shadow-card",
+      )}
+    >
       <h2 className="mb-3 font-heading text-md font-semibold text-foreground">{title}</h2>
       {children}
     </section>
@@ -455,20 +464,6 @@ function HoursBlock({ business }: { business: Business }) {
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-}
-
-function BrandedHero() {
-  return (
-    <div
-      className="flex h-44 w-full items-center justify-center bg-secondary text-positive lg:h-64"
-      aria-hidden
-    >
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-positive/15 bg-background/35 px-6 py-4">
-        <Compass size={34} strokeWidth={1.6} aria-hidden />
-        <span className="font-heading text-sm font-semibold tracking-wide">Redmond Compass</span>
       </div>
     </div>
   );

@@ -9,8 +9,8 @@ import { OpenStatusLabel } from "./ui/OpenStatusLabel";
 import { BusinessThumb } from "./BusinessThumb";
 import { VerifiedBadge } from "./ui/StatusBadge";
 import { useI18n } from "@/i18n";
-import { categoryLabelFor } from "@/lib/taxonomy";
-import { hasValidWeeklyHours, hoursTextFallback } from "@/lib/hours";
+import { businessCategoryLabels } from "@/lib/taxonomy";
+import { formatHoursTextDisplay, hasValidWeeklyHours, hoursTextFallback } from "@/lib/hours";
 
 export interface ResultCardProps {
   business: Business;
@@ -33,8 +33,8 @@ export interface ResultCardProps {
 }
 
 /**
- * ResultCard — the directory's workhorse. Same Call · Directions · Save verbs as
- * the profile ActionBar, learned once. Equal ranking, no featured slots, no stars.
+ * ResultCard — the directory's workhorse. Same Call · Directions · Save · Follow
+ * vocabulary as the profile, with labels exposed to assistive technology.
  */
 export function ResultCard({
   business,
@@ -50,7 +50,7 @@ export function ResultCard({
   const { t } = useI18n();
   const hasPreciseGeo = business.hasPreciseLocation !== false;
   const dist = origin && hasPreciseGeo ? formatDistance(distanceMiles(origin, business.geo)) : undefined;
-  const catLine = [categoryLabelFor(business.category), ...(business.subcategories ?? [])].slice(0, 3).join(" · ");
+  const catLine = businessCategoryLabels(business.category, business.subcategories, 3).join(" · ");
   const tel = telHref(business.phone);
   // Prefer a real address and fall back only to coordinates known to belong to the
   // listing. Imported Redmond-center placeholders must never become Directions targets.
@@ -357,9 +357,9 @@ function BusinessHours({
   return (
     <span
       className={cn("inline-flex min-w-0 max-w-full items-center gap-x-1.5 text-muted-foreground", className)}
-      title={fallback}
+      title={formatHoursTextDisplay(fallback)}
     >
-      <span className="truncate">{fallback}</span>
+      <span className="truncate">{formatHoursTextDisplay(fallback)}</span>
       {trailing && <span className="shrink-0">· {trailing}</span>}
     </span>
   );

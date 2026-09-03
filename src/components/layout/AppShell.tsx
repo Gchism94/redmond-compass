@@ -3,6 +3,7 @@ import { Suspense, useEffect, useRef } from "react";
 import { BottomTabNav } from "../BottomTabNav";
 import { RouteFallback } from "./RouteFallback";
 import { OfflineBanner } from "@/pwa/OfflineBanner";
+import { UpdateBanner } from "@/pwa/UpdateBanner";
 
 /**
  * Mobile app shell (the installable PWA): ~480px content column + persistent
@@ -37,6 +38,7 @@ export function AppShell() {
         </Suspense>
       </main>
       <OfflineBanner />
+      <UpdateBanner />
       <BottomTabNav />
     </div>
   );

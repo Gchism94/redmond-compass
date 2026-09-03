@@ -18,7 +18,7 @@ await build({
   absWorkingDir: ROOT,
 });
 
-const { telHref } = await import(outfile);
+const { telHref, formatPhoneDisplay } = await import(outfile);
 let pass = 0;
 let fail = 0;
 const ok = (condition, message) => {
@@ -33,6 +33,9 @@ ok(telHref("541-322-7500 ext. 123") === "tel:5413227500;ext=123", "preserves an 
 ok(telHref("541-322-7500 extension: 4") === "tel:5413227500;ext=4", "preserves a written extension");
 ok(telHref("911") === "tel:911", "preserves a valid emergency service code");
 ok(telHref("not listed") === undefined, "omits non-phone text");
+ok(formatPhoneDisplay("+15415261871") === "(541) 526-1871", "formats an imported E.164 number for display");
+ok(formatPhoneDisplay("541-322-7500 ext. 123") === "(541) 322-7500 ext. 123", "formats a display number and preserves its extension");
+ok(formatPhoneDisplay("911") === "911", "leaves service codes unchanged for display");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

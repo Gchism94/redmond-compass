@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowUpDown, SlidersHorizontal, MapPin, ChevronLeft, Search, X } from "lucide-react";
-import { Chip, ResultCard, EventCard, FeedItem, EmptyState, Skeleton, ErrorState } from "@/components";
+import { AvailabilityControl, Chip, ResultCard, EventCard, FeedItem, EmptyState, Skeleton, ErrorState } from "@/components";
 import { IconButton } from "@/components/ui/IconButton";
 import { useBusinesses, useEvents, useSearch } from "@/data/queries";
 import type { BusinessSort } from "@/data/DataSource";
@@ -142,6 +142,18 @@ export function ResultsScreen() {
           </div>
         </div>
 
+        <div className="mt-2.5 flex items-center justify-between gap-3">
+          <AvailabilityControl
+            value={openNow ? "open" : "all"}
+            onChange={(value) => patch({ openNow: value === "open" ? "1" : null })}
+          />
+          {activeFilters.length > 0 && (
+            <span className="hidden text-xs text-muted-foreground sm:inline">
+              {t("results.filtered")}
+            </span>
+          )}
+        </div>
+
         {activeFilters.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {activeFilters.map((f) => (
@@ -194,12 +206,6 @@ export function ResultsScreen() {
       {/* Filters panel */}
       {panel === "filters" && (
         <div className="space-y-3 border-b border-border bg-card px-4 py-3">
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.availability")}</p>
-            <Chip active={openNow} onClick={() => patch({ openNow: openNow ? null : "1" })}>
-              {t("search.openNow")}
-            </Chip>
-          </div>
           {canUseDistance && (
             <div>
               <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{t("results.distance")}</p>
@@ -315,6 +321,7 @@ export function ResultsScreen() {
                         excerpt={r.item.excerpt}
                         category={r.item.category}
                         href={`/news/${r.item.slug}`}
+                        card
                       />
                     );
                   if (r.type === "bulletin")
@@ -325,6 +332,7 @@ export function ResultsScreen() {
                         title={r.item.body}
                         sourceLabel={t("community.localBusiness")}
                         time={relativeTime(r.item.createdAt)}
+                        card
                       />
                     );
                   return null;

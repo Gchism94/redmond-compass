@@ -11,6 +11,7 @@ import {
   CategoryGrid,
   Skeleton,
   ErrorState,
+  AvailabilityControl,
 } from "@/components";
 import { useBusinesses, useBulletins, useEvents, useNews, useBusinessMap } from "@/data/queries";
 import { relativeTime } from "@/lib/format";
@@ -135,24 +136,12 @@ export function HomeScreen() {
         title={railTitle}
         seeAllHref={onlyOpen ? "/search/results?openNow=1" : origin ? "/search/results?sort=distance" : "/search/results"}
         headerAction={(
-          <button
-            type="button"
-            role="switch"
-            aria-checked={onlyOpen}
-            data-home-open-now-toggle
-            onClick={() => setOnlyOpen((value) => !value)}
-            className="inline-flex min-h-tap items-center gap-2.5 rounded-pill border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-positive/40 hover:bg-positive/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            <span
-              aria-hidden
-              className={`relative h-6 w-11 rounded-full transition-colors ${onlyOpen ? "bg-positive" : "bg-muted-foreground/30"}`}
-            >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${onlyOpen ? "translate-x-5" : "translate-x-0.5"}`}
-              />
-            </span>
-            {t("search.openNow")}
-          </button>
+          <div data-home-open-now-toggle>
+            <AvailabilityControl
+              value={onlyOpen ? "open" : "all"}
+              onChange={(value) => setOnlyOpen(value === "open")}
+            />
+          </div>
         )}
       >
         {railFailed ? (

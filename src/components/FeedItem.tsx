@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Megaphone, Newspaper } from "lucide-react";
+import { CalendarDays, Landmark, Megaphone, Newspaper, Store, UsersRound } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Thumb } from "./ui/Thumb";
 import { BusinessImageFallback } from "./BusinessThumb";
@@ -23,6 +23,8 @@ export interface FeedItemProps {
   href?: string;
   /** show the NEWS/BULLETIN tag (Community blends both; Home rails may hide it) */
   showTypeTag?: boolean;
+  /** Card treatment for full feed screens; compact rows remain available for Home/profile. */
+  card?: boolean;
   className?: string;
 }
 
@@ -47,6 +49,7 @@ export function FeedItem({
   seed,
   href,
   showTypeTag = true,
+  card = false,
   className,
 }: FeedItemProps) {
   if (type === "news") {
@@ -67,7 +70,7 @@ export function FeedItem({
           <h3 className="mt-1 line-clamp-2 font-heading text-sm font-semibold leading-snug text-foreground">
             {title}
           </h3>
-          {excerpt && <p className="mt-1 hidden line-clamp-2 text-xs leading-relaxed text-muted-foreground lg:block">{excerpt}</p>}
+          {excerpt && <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{excerpt}</p>}
           <p className="mt-1 text-xs text-muted-foreground">{sourceLabel} · {time}</p>
         </div>
         <Thumb
@@ -76,14 +79,16 @@ export function FeedItem({
           className="h-16 w-20 border border-border/70"
           rounded="rounded-lg"
           fallback={(
-            <span data-news-image-fallback className="flex h-full w-full items-center justify-center bg-primary text-primary-foreground">
-              <Newspaper size={22} strokeWidth={1.6} />
-            </span>
+            <NewsImageFallback title={title} category={category} />
           )}
         />
       </>
     );
-    const newsClass = cn("flex items-start gap-3 py-3", className);
+    const newsClass = cn(
+      "flex items-start gap-3 py-3",
+      card && "rounded-xl border border-border bg-card p-3 shadow-card transition hover:border-border-strong hover:shadow-lift",
+      className,
+    );
     return href ? (
       <Link to={href} className={cn(newsClass, "focus-visible:outline-none")}>{newsBody}</Link>
     ) : (
@@ -126,12 +131,47 @@ export function FeedItem({
     </>
   );
 
-  const cls = cn("flex gap-3 py-3", className);
+  const cls = cn(
+    "flex gap-3 py-3",
+    card && "rounded-xl border border-border bg-card p-3 shadow-card transition hover:border-border-strong hover:shadow-lift",
+    className,
+  );
   return href ? (
     <Link to={href} className={cn(cls, "focus-visible:outline-none")}>
       {body}
     </Link>
   ) : (
     <div className={cls}>{body}</div>
+  );
+}
+
+const NEWS_TONES = [
+  "bg-primary text-primary-foreground",
+  "bg-positive text-background",
+  "bg-foreground text-background",
+  "bg-accent text-accent-foreground",
+] as const;
+
+function NewsImageFallback({ title, category }: { title: string; category?: string }) {
+  const normalized = category?.toLowerCase() ?? "";
+  const Icon = normalized.includes("government") || normalized.includes("civic")
+    ? Landmark
+    : normalized.includes("event")
+      ? CalendarDays
+      : normalized.includes("business")
+        ? Store
+        : normalized.includes("community")
+          ? UsersRound
+          : Newspaper;
+  let hash = 0;
+  for (let index = 0; index < title.length; index++) hash = (hash * 31 + title.charCodeAt(index)) >>> 0;
+
+  return (
+    <span
+      data-news-image-fallback
+      className={cn("flex h-full w-full items-center justify-center", NEWS_TONES[hash % NEWS_TONES.length])}
+    >
+      <Icon size={22} strokeWidth={1.6} />
+    </span>
   );
 }

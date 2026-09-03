@@ -29,7 +29,7 @@ await build({
   bundle: true, format: "esm", platform: "node", outfile: path.join(tmp, "tax.mjs"),
   logLevel: "error", absWorkingDir: ROOT, nodePaths: [path.join(ROOT, "node_modules")],
 });
-const { TOP_CATEGORIES, KNOWN_CATEGORY_VALUES, UNCATEGORIZED_VALUES, BUSINESS_CATEGORIES, PLACED_CATEGORY_VALUES, tallyByTile, topCategoryFor, categoryValuesFor, categoryLabelFor } =
+const { TOP_CATEGORIES, KNOWN_CATEGORY_VALUES, UNCATEGORIZED_VALUES, BUSINESS_CATEGORIES, PLACED_CATEGORY_VALUES, tallyByTile, topCategoryFor, categoryValuesFor, categoryLabelFor, businessCategoryLabels } =
   await import(path.join(tmp, "tax.mjs"));
 
 let pass = 0, fail = 0;
@@ -84,6 +84,14 @@ const ok = (c, m) => { console.log(`${c ? "PASS" : "FAIL"}  ${m}`); c ? pass++ :
   ok(categoryLabelFor("artisan-crafts") === "Artisan Crafts",
      `an UNKNOWN slug is still title-cased, never shown raw ("${categoryLabelFor("artisan-crafts")}")`);
   ok(categoryLabelFor("") === "", "empty input is passed through");
+  ok(
+    businessCategoryLabels("bars-breweries", ["Sports Bar", "food-drink"]).join(" · ") === "Bars & Breweries · Sports Bar",
+    `cards remove a redundant umbrella category ("${businessCategoryLabels("bars-breweries", ["Sports Bar", "food-drink"]).join(" · ")}")`,
+  );
+  ok(
+    businessCategoryLabels("food-drink", ["food-drink", "Cafe"]).join(" · ") === "Food & Drink · Cafe",
+    "cards deduplicate equivalent storage and display labels",
+  );
   // Every value the live data can hold must produce a human-readable label.
   const raw = KNOWN_CATEGORY_VALUES.filter((v) => categoryLabelFor(v) !== v && /^[a-z0-9-]+$/.test(categoryLabelFor(v)));
   ok(raw.length === 0, `no known value renders as raw slug-case (${raw.join(", ") || "none"})`);

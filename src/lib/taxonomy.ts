@@ -147,6 +147,44 @@ export function categoryLabelFor(value: string): string {
     .join(" ");
 }
 
+/**
+ * Human-readable, non-repeating category trail for cards and profiles.
+ *
+ * Main-site imports may include the broad category again in `subcategories`
+ * (for example Bars & Breweries + Sports Bar + food-drink). Keep the specific
+ * primary label and useful subcategories, but do not expose storage slugs or a
+ * redundant umbrella label to visitors.
+ */
+export function businessCategoryLabels(
+  category: string,
+  subcategories: string[] = [],
+  limit?: number,
+): string[] {
+  const primary = categoryLabelFor(category);
+  const primaryTile = topCategoryFor(category);
+  const seen = new Set<string>();
+  const labels: string[] = [];
+
+  for (const [index, raw] of [category, ...subcategories].entries()) {
+    const label = categoryLabelFor(raw.trim());
+    if (!label) continue;
+    const key = label.toLocaleLowerCase();
+    if (seen.has(key)) continue;
+
+    const isRedundantUmbrella =
+      index > 0 &&
+      TOP_CATEGORIES.some((tile) => tile.label === label && tile.slug === primaryTile) &&
+      label !== primary;
+    if (isRedundantUmbrella) continue;
+
+    seen.add(key);
+    labels.push(label);
+    if (limit && labels.length >= limit) break;
+  }
+
+  return labels;
+}
+
 /** Every stored category value that rolls up under `slug` — the list queries must filter on. */
 export function categoryValuesFor(slug: string): string[] {
   const c = TOP_CATEGORIES.find((t) => t.slug === slug);

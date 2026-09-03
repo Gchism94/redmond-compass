@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, TrendingUp, CircleDot, Sparkles, Users, Moon, ChevronRight } from "lucide-react";
-import { SearchField, Chip, SectionHeader, CategoryGrid, Thumb, ErrorState } from "@/components";
+import { AvailabilityControl, SearchField, Chip, SectionHeader, CategoryGrid, Thumb, ErrorState } from "@/components";
 import { useSearch } from "@/data/queries";
 import { addRecentSearch, getRecentSearches } from "@/lib/recents";
 import { eventTimeShort } from "@/lib/format";
@@ -10,7 +10,7 @@ import { useI18n } from "@/i18n";
 
 const TRENDING = ["Farmers market", "New cafes", "Live music", "Gluten-free"];
 import type { DictKey } from "@/i18n";
-import { categoryLabelFor } from "@/lib/taxonomy";
+import { businessCategoryLabels } from "@/lib/taxonomy";
 interface Collection {
   labelKey: DictKey;
   descKey: DictKey;
@@ -79,13 +79,11 @@ export function SearchScreen() {
           />
         </form>
         {!typing && (
-          <div className="mt-2.5 flex gap-2">
-            <Chip
-              onClick={() => navigate("/search/results?openNow=1")}
-              leadingIcon={<CircleDot size={13} />}
-            >
-              {t("search.openNow")}
-            </Chip>
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            <AvailabilityControl
+              value="all"
+              onChange={(value) => navigate(value === "open" ? "/search/results?openNow=1" : "/search/results")}
+            />
             <Chip onClick={() => navigate("/search/results?sort=distance")}>{t("search.nearMe")}</Chip>
           </div>
         )}
@@ -224,7 +222,7 @@ function buildAutocomplete(r: SearchResult): { title: string; sub: string; image
     case "business":
       return {
         title: r.item.name,
-        sub: [categoryLabelFor(r.item.category), ...(r.item.subcategories ?? [])].slice(0, 2).join(" · "),
+        sub: businessCategoryLabels(r.item.category, r.item.subcategories, 2).join(" · "),
         image: r.item.photos[0],
       };
     case "event":

@@ -142,17 +142,6 @@ export function CommunityScreen() {
               </ul>
             </section>
           )}
-          {pastNotices.length > 0 && (
-            <details className="group mx-4 mt-2 rounded-lg border border-border bg-surface-sunken px-3">
-              <summary className="flex min-h-tap cursor-pointer list-none items-center text-sm font-semibold text-muted-foreground">
-                <span>{t("community.pastNotices", { n: String(pastNotices.length) })}</span>
-                <ChevronDown size={16} className="ml-auto transition-transform group-open:rotate-180" aria-hidden />
-              </summary>
-              <ul className="space-y-2 pb-3">
-                {pastNotices.map((notice) => <NoticeCard key={notice.id} notice={notice} past />)}
-              </ul>
-            </details>
-          )}
         </>
       )}
 
@@ -200,7 +189,7 @@ export function CommunityScreen() {
             action={{ label: t("search.title"), href: "/search" }}
           />
         ) : (
-          <div className="divide-y divide-border pt-1">
+          <div className="space-y-2 pt-2">
             {entries.map((e) => (
               <FeedItem
                 key={`${e.kind}-${e.id}`}
@@ -214,11 +203,23 @@ export function CommunityScreen() {
                 businessCategory={e.kind === "bulletin" ? e.businessCategory : undefined}
                 time={e.time}
                 href={e.kind === "news" ? `/news/${e.slug}` : e.href}
+                card
               />
             ))}
           </div>
         )}
       </div>
+      {!notices.isError && pastNotices.length > 0 && (
+        <details className="group mx-4 mt-4 rounded-lg border border-border bg-surface-sunken px-3">
+          <summary className="flex min-h-tap cursor-pointer list-none items-center text-sm font-semibold text-muted-foreground">
+            <span>{t("community.pastNotices", { n: String(pastNotices.length) })}</span>
+            <ChevronDown size={16} className="ml-auto transition-transform group-open:rotate-180" aria-hidden />
+          </summary>
+          <ul className="space-y-2 pb-3">
+            {pastNotices.map((notice) => <NoticeCard key={notice.id} notice={notice} past />)}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }

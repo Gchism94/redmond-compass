@@ -19,6 +19,7 @@ export { Sheet } from "./ui/Sheet";
 export { ResultCard } from "./ResultCard";
 export { BusinessThumb, BusinessImageFallback } from "./BusinessThumb";
 export { ActionBar } from "./ActionBar";
+export { AvailabilityControl } from "./AvailabilityControl";
 export { BottomTabNav } from "./BottomTabNav";
 export { SearchField } from "./SearchField";
 export { EventCard } from "./EventCard";

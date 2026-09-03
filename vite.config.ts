@@ -81,7 +81,7 @@ export default defineConfig({
     requireRealDataSource(),
     react(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       devOptions: { enabled: false },
       includeAssets: ["favicon.svg", "apple-touch-icon.png", "icons/*.png"],
       manifest: {
@@ -161,7 +161,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Split the heavy, rarely-changing libs into their own cached chunks. With the
-        // PWA's autoUpdate, an app-code change then re-downloads only the small app chunk
+        // PWA update prompt, an app-code change then re-downloads only the small app chunk
         // instead of the whole entry (supabase-js + React + Query), and the vendors load
         // in parallel. Screens are already route-split via React.lazy; the supabase chunk
         // is referenced only by the dynamically-imported source, so it stays on-demand.
