@@ -81,6 +81,9 @@ try {
   const wouldUnpublish = existingRows
     .filter((row) => row.published && row.synced_at != null && !row.owner_id && !upstreamIds.has(row.id))
     .map((row) => row.id);
+  const missingHours = plan.upserts
+    .filter((row) => !row.hours && !row.hours_text)
+    .map((row) => ({ id: row.id, name: row.name }));
   const output = {
     ok: true,
     dryRun: DRY_RUN,
@@ -89,6 +92,7 @@ try {
     sourceNameCollisions,
     ...summary,
     wouldSoftUnpublish: { count: wouldUnpublish.length, sample: wouldUnpublish.slice(0, 10) },
+    missingHours: { count: missingHours.length, rows: missingHours },
   };
   if (DRY_RUN) {
     console.log(JSON.stringify({ ...output, wrote: false }, null, 2));
