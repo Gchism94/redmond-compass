@@ -22,11 +22,17 @@ import { relativeTime, redmondDateYmd } from "@/lib/format";
 import type { Bulletin } from "@/lib/types";
 import { getLocale, useI18n } from "@/i18n";
 import { MutationError } from "./MutationError";
+import { MainSiteContentHandoff } from "./MainSiteContentHandoff";
 import { useOwnerBusiness } from "./useOwnerBusiness";
+import { appOnly } from "@/lib/siteMode";
 
 const MAX = 280;
 
 export function ManageBulletinsScreen() {
+  return appOnly ? <MainSiteContentHandoff kind="post" /> : <LocalManageBulletinsScreen />;
+}
+
+function LocalManageBulletinsScreen() {
   const { t, lang } = useI18n();
   const { ownerBusinessId, data: business, isLoading: businessLoading, isError: businessError, refetch: refetchBusiness } = useOwnerBusiness();
   const bulletins = useBulletins({ businessId: ownerBusinessId ?? undefined, status: "all" });
@@ -204,6 +210,10 @@ function BulletinGroup({ title, emptyText, items, lang, confirmDeleteId, busy, o
 }
 
 export function BulletinEditorScreen() {
+  return appOnly ? <MainSiteContentHandoff kind="post" /> : <LocalBulletinEditorScreen />;
+}
+
+function LocalBulletinEditorScreen() {
   const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const { ownerBusinessId, data: business, isLoading: businessLoading, isError: businessError, refetch: refetchBusiness } = useOwnerBusiness();

@@ -8,6 +8,15 @@ export const appOnly = compassConfig.siteMode === "app-only";
 export const LIVE_SITE = compassConfig.liveSite;
 export const APP_ORIGIN = compassConfig.appOrigin;
 
+/** Canonical owner intake routes. New public content is submitted and moderated on
+ *  redmondcompass.com; the app is a read-only mirror of approved records. */
+export const OWNER_LINKS = {
+  dashboard: `${LIVE_SITE}/dashboard`,
+  event: `${LIVE_SITE}/submit-event`,
+  post: `${LIVE_SITE}/submit-post`,
+  business: "https://list.redmondcompass.com/claim-page",
+} as const;
+
 /** Where the app's home screen lives ("/" full-site; "/home" behind the landing). */
 export const HOME_PATH = appOnly ? "/home" : "/";
 

@@ -141,18 +141,24 @@ export interface BusinessClass {
   /** Cancelled entries remain visible to the owner but never appear on the public profile. */
   status: "open" | "sold_out" | "waitlist" | "cancelled";
   createdAt: string;
+  source?: string;
+  sourceUpdatedAt?: string;
 }
 
 export interface Bulletin {
   id: ID;
   businessId: ID;
+  title?: string;
   body: string; // char-limited in UI
   image?: string;
+  galleryImages?: string[];
   linkCta?: { label: string; url: string };
   activeUntil?: string;
   scheduledFor?: string;
   status: "draft" | "scheduled" | "live" | "expired";
   createdAt: string;
+  source?: string;
+  sourceUpdatedAt?: string;
 }
 
 export interface EventItem {
@@ -175,6 +181,9 @@ export interface EventItem {
   submitterName?: string;
   /** Google Calendar sync dedupe key (inbound ICS sync) */
   gcalEventId?: string;
+  source?: string;
+  sourceTimeText?: string;
+  sourceUpdatedAt?: string;
 }
 
 export interface NewsArticle {

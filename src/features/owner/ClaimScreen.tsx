@@ -6,7 +6,7 @@ import { Button, Field, fieldInputClass, Thumb, Skeleton, Card, SearchField, Emp
 import { useBusinesses, useCreateBusiness, useClaimBusiness } from "@/data/queries";
 import { useSession } from "@/features/account/session";
 import { BUSINESS_CATEGORIES, categoryLabelFor } from "@/lib/taxonomy";
-import { appOnly, LIVE_SITE } from "@/lib/siteMode";
+import { appOnly, OWNER_LINKS } from "@/lib/siteMode";
 import { MutationError } from "./MutationError";
 import { useI18n } from "@/i18n";
 
@@ -92,7 +92,7 @@ export function ClaimScreen() {
         </p>
         {appOnly ? (
           <a
-            href={`${LIVE_SITE}/for-business-owners`}
+            href={OWNER_LINKS.business}
             target="_blank"
             rel="noreferrer noopener"
             className="mt-1.5 inline-flex min-h-tap items-center gap-1 text-sm font-medium text-positive"
@@ -118,7 +118,7 @@ export function ClaimScreen() {
           <section className="px-4 pt-4">
             {appOnly ? (
               <a
-                href={`${LIVE_SITE}/for-business-owners`}
+                href={OWNER_LINKS.business}
                 target="_blank"
                 rel="noreferrer noopener"
                 className="flex min-h-tap w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-base font-medium text-primary-foreground"
@@ -174,7 +174,7 @@ export function ClaimScreen() {
                   title={t("owner.noMatch")}
                   message={t("owner.noMatchMsg")}
                   action={appOnly
-                    ? { label: t("owner.addNewMainSite"), onClick: () => window.open(`${LIVE_SITE}/for-business-owners`, "_blank", "noopener,noreferrer") }
+                    ? { label: t("owner.addNewMainSite"), onClick: () => window.open(OWNER_LINKS.business, "_blank", "noopener,noreferrer") }
                     : { label: t("owner.addNew"), onClick: () => setMode("new") }}
                 />
               ) : (

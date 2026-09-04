@@ -329,7 +329,7 @@ export function ResultsScreen() {
                       <FeedItem
                         key={i}
                         type="bulletin"
-                        title={r.item.body}
+                        title={r.item.title || r.item.body}
                         sourceLabel={t("community.localBusiness")}
                         time={relativeTime(r.item.createdAt)}
                         card

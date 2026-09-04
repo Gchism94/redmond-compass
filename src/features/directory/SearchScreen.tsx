@@ -230,6 +230,6 @@ function buildAutocomplete(r: SearchResult): { title: string; sub: string; image
     case "news":
       return { title: r.item.title, sub: r.item.source };
     case "bulletin":
-      return { title: r.item.body, sub: "Bulletin" };
+      return { title: r.item.title || r.item.body, sub: "Bulletin" };
   }
 }

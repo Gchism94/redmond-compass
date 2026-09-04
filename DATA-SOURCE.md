@@ -9,12 +9,13 @@ Original guidance: the uploaded `DATASOURCE.md`. This file documents what exists
 workflow.** Its sanitized `listBusinessesPublic` function is mirrored into Supabase every
 six hours; the app reads only from that Supabase read model. The legacy Google Sheet
 importer is unscheduled recovery tooling and must not run beside the main-site bridge.
-News mirrors the main site's automation output; events also sync from the public Google
-Calendar (`sync-gcal-events`). See `CONTENT-SYNC.md` and `OWNER-SOURCE-HANDOFF.md`.
+News, approved events, business posts, and classes mirror the main site's public entities;
+events also sync from the public Google Calendar (`sync-gcal-events`). See
+`CONTENT-SYNC.md` and `OWNER-SOURCE-HANDOFF.md`.
 
 ```
 Main site / Base44-GHL ──6-hour guarded mirror──▶ Supabase read model ──▶ App
-Google Calendar ─────────6-hour event sync─────▶        ▲ app-only owner content
+Google Calendar ─────────6-hour event sync─────▶        (read-only content)
 ```
 
 The app depends on the `DataSource` interface (`src/data/DataSource.ts`), never on
@@ -31,7 +32,7 @@ Snake_case columns; the DataSource maps them to the camelCase shapes in
 | Table | Key columns | Notes |
 |---|---|---|
 | `businesses` | id, name, slug ⊥, category, subcategories[], description, address, lat, lng, phone, website, email, hours(jsonb), photos[], amenity_tags[], claimed, verified, **owner_id**→auth.users, **tier** (free/member/pro), created_at, member_since, **ghl_id** ⊥ nullable, recommend_count, + deferred Member fields (story, owner_spotlight, menu, ctas, gallery, follower_count, post_frequency, response_time) | the spine; GHL-shaped |
-| `bulletins` | id, business_id→businesses, body, image, link_cta(jsonb), active_until, scheduled_for, status (draft/scheduled/live/expired), created_at | owner posts |
+| `bulletins` | id, business_id→businesses, title, body, image, gallery_images, link_cta(jsonb), active_until, scheduled_for, status, source metadata, created_at | mirrored approved business posts |
 | `events` | id, business_id→businesses (null = community), title, description, start_at, end_at, venue_name, address, lat, lng, image, category, tags[], link_cta, status | times stored as true instants; read back as Redmond/Pacific wall-clock |
 | `news_articles` | id, title, slug ⊥, excerpt, body, image, source, author, published_at | admin-published |
 | `resources` | id, name, category (emergency/government/community/utilities), description, phone, url, address | civic |
@@ -50,13 +51,13 @@ RLS on all seven tables. Policies + triggers mirror `src/lib/entitlements.ts`:
 - **Public read** on businesses, events, news_articles, resources, recommendations.
   Bulletins: public reads `live`; the owner also sees own drafts/scheduled.
   → readers always get **complete** free listings (row-level, never column-hidden).
-- **Owner writes, gated by ownership + tier:**
+- **Business record owner writes, gated by ownership + tier:**
   - `businesses`: insert/update/delete only by `owner_id = auth.uid()`; new rows must be `tier='free'`.
   - Trigger `enforce_business_entitlements`: a **free** business may not set the Member
     "enhanced profile" fields (story/menu/gallery/ctas/owner_spotlight), and is capped at **5 photos**.
-  - `bulletins`/`events`: writes only by the business owner (`is_business_owner`).
-  - Trigger `enforce_bulletin_cap`: free tier ≤ **3 live** bulletins/month — a capped post
-    is rejected as `live` (the app offers to **schedule** it free; scheduled bypasses the cap).
+  - `bulletins`, `events`, and `business_classes` are browser-read-only. Approved records
+    arrive through the service-role main-site/calendar mirrors; new intake uses the current
+    main-site forms.
 - **Recommendations**: **insert-only** by the authed user for themselves
   (`auth.uid() = user_id`); no update/delete policies; `unique(business_id,user_id)` →
   a positive-only count that can't be down-voted or bombed. Trigger `bump_recommend_count`
@@ -67,8 +68,9 @@ RLS on all seven tables. Policies + triggers mirror `src/lib/entitlements.ts`:
   anon access** (private). Trigger `handle_new_user` auto-creates the row on signup;
   `touch_updated_at` keeps `updated_at` fresh. On first sign-in the app merges the guest's
   localStorage prefs into this row (union of saved/followed/etc.) so nothing is lost.
-- Grants: `anon` = select (content tables only); `authenticated` = select + insert/update/delete
-  (RLS restricts); `service_role` = all (server-side seed / GHL sync / admin).
+- Grants: `anon` = select (content tables only); `authenticated` can personalize and manage
+  permitted account/business records but cannot write mirrored content; `service_role` = all
+  (server-side sync / admin).
 
 ## `createSupabaseSource()` (`src/data/supabase/`)
 

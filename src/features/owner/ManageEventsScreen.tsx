@@ -14,11 +14,17 @@ import { redmondDateYmd } from "@/lib/format";
 import type { EventItem } from "@/lib/types";
 import { useI18n } from "@/i18n";
 import { MutationError } from "./MutationError";
+import { MainSiteContentHandoff } from "./MainSiteContentHandoff";
 import { useOwnerBusiness } from "./useOwnerBusiness";
+import { appOnly } from "@/lib/siteMode";
 
 const CATEGORIES = ["Music", "Community", "Family", "Festival", "Outdoors", "Workshop", "Food & Drink", "Other"];
 
 export function ManageEventsScreen() {
+  return appOnly ? <MainSiteContentHandoff kind="event" /> : <LocalManageEventsScreen />;
+}
+
+function LocalManageEventsScreen() {
   const { t, lang } = useI18n();
   const { ownerBusinessId, data: business, isLoading: businessLoading, isError: businessError, refetch: refetchBusiness } = useOwnerBusiness();
   const events = useEvents({ businessId: ownerBusinessId ?? undefined, includePast: true });
@@ -160,6 +166,10 @@ function EventGroup({ title, emptyText, items, lang, isPast, confirmDeleteId, bu
 }
 
 export function EventEditorScreen() {
+  return appOnly ? <MainSiteContentHandoff kind="event" /> : <LocalEventEditorScreen />;
+}
+
+function LocalEventEditorScreen() {
   const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const { ownerBusinessId, data: business, isLoading: businessLoading, isError: businessError, refetch: refetchBusiness } = useOwnerBusiness();

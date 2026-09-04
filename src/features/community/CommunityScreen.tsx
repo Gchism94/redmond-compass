@@ -87,10 +87,10 @@ export function CommunityScreen() {
       return {
         kind: "bulletin",
         id: bl.id,
-        title: bl.body,
+        title: bl.title || bl.body,
         source: biz?.name ?? t("community.localBusiness"),
         seed: biz?.name,
-        image: biz?.photos[0],
+        image: bl.image || biz?.photos[0],
         businessCategory: biz?.category,
         time: relativeTime(bl.createdAt),
         ts: +new Date(bl.createdAt),

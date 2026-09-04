@@ -44,7 +44,7 @@ createRoot(document.getElementById("root")).render(
   h(I18nProvider, null,
     h(DataProvider, { source },
       h(SessionProvider, null,
-        h(MemoryRouter, { initialEntries: ["/login"] },
+        h(MemoryRouter, { initialEntries: [new URLSearchParams(location.search).get("route") ?? "/login"] },
           h(Routes, null,
             h(Route, { path: "/login", element: h(LoginScreen) }),
             h(Route, { path: "/account", element: h(AccountScreen) }),
@@ -123,12 +123,13 @@ const sourceLink = await page.$eval('a[href="https://redmondcompass.com/dashboar
 }));
 ok(sourceLink.target === "_blank" && sourceLink.rel.includes("noopener"), "main-site dashboard handoff is safe and explicit");
 
-for (const [action, expected] of [["Bulletins", "No bulletins yet"], ["Events", "No events yet"], ["Classes & workshops", "No classes listed yet"]]) {
-  await clickText(action);
-  await waitForText(expected);
-  ok(!(await body()).includes("TEST-NOT-FOUND"), `${action} authenticated manager route renders`);
-  await page.click('button[aria-label="Back"]');
-  await waitForText("Dashboard");
+for (const [label, href] of [
+  ["Submit a business post", "https://redmondcompass.com/submit-post"],
+  ["Submit an event", "https://redmondcompass.com/submit-event"],
+  ["Add a class on the main site", "https://redmondcompass.com/dashboard"],
+]) {
+  const link = await page.$$eval("a", (links, expected) => links.find((item) => item.textContent?.includes(expected))?.getAttribute("href"), label);
+  ok(link === href, `${label} uses the current main-site intake route (${link})`);
 }
 
 await clickText("Edit listing");
@@ -137,6 +138,18 @@ text = await body();
 ok(text.includes("within six hours") && text.includes("Current app details"), "edit route hands canonical fields to the source workflow");
 ok((await page.$$('input:not([type="hidden"])')).length === 0, "app-only edit route cannot create a conflicting canonical edit");
 ok((await page.$eval('textarea[readonly]', (area) => area.value)).includes("Mountain View Auto Repair"), "handoff includes a copyable app-data packet");
+
+for (const [route, expected, href] of [
+  ["/manage/bulletins", "Submit a business post", "https://redmondcompass.com/submit-post"],
+  ["/manage/events", "Submit an event", "https://redmondcompass.com/submit-event"],
+  ["/manage/classes", "Add a class or workshop", "https://redmondcompass.com/dashboard"],
+]) {
+  await page.goto(`${BASE}/?route=${encodeURIComponent(route)}`, { waitUntil: "networkidle0" });
+  await waitForText(expected);
+  const inputCount = await page.$$("input, textarea, select");
+  const hrefFound = await page.$eval(`a[href="${href}"]`, (link) => link.getAttribute("href"));
+  ok(inputCount.length === 0 && hrefFound === href, `${route} is a read-only handoff with no legacy form`);
+}
 
 ok(errors.length === 0, `authenticated owner journey has zero page errors (${errors.join(" | ") || "clean"})`);
 await browser.close();

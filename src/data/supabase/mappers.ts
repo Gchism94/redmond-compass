@@ -79,13 +79,17 @@ export function rowToBulletin(r: Row): Bulletin {
   return {
     id: r.id,
     businessId: r.business_id,
+    title: r.title ?? undefined,
     body: r.body,
     image: r.image ?? undefined,
+    galleryImages: r.gallery_images ?? [],
     linkCta: r.link_cta ?? undefined,
     activeUntil: r.active_until ?? undefined,
     scheduledFor: r.scheduled_for ?? undefined,
     status: r.status,
     createdAt: r.created_at,
+    source: r.source ?? undefined,
+    sourceUpdatedAt: r.source_updated_at ?? undefined,
   };
 }
 
@@ -122,6 +126,8 @@ export function rowToBusinessClass(r: Row): BusinessClass {
     imageUrl: r.image_url ?? undefined,
     status: r.status,
     createdAt: r.created_at,
+    source: r.source ?? undefined,
+    sourceUpdatedAt: r.source_updated_at ?? undefined,
   };
 }
 
@@ -144,6 +150,9 @@ export function rowToEvent(r: Row): EventItem {
     approvalStatus: r.approval_status ?? undefined,
     submitterName: r.submitter_name ?? undefined,
     gcalEventId: r.gcal_event_id ?? undefined,
+    source: r.source ?? undefined,
+    sourceTimeText: r.source_time_text ?? undefined,
+    sourceUpdatedAt: r.source_updated_at ?? undefined,
   };
 }
 

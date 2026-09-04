@@ -6,17 +6,24 @@ app is a read model: it mirrors published business data from the main site's pub
 
 ## Owner workflow
 
-1. New businesses begin at `https://redmondcompass.com/for-business-owners`.
+1. New businesses begin at `https://list.redmondcompass.com/claim-page`.
 2. Existing owners change business name, address, contact details, hours, and identity
    images in `https://redmondcompass.com/dashboard` (or through the main site's emailed
    owner-edit link).
-3. The app refreshes at `47 */6 * * *` UTC. Owners should allow up to six hours.
-4. Bulletins, app-submitted events, and classes remain app-managed features. They do not
-   change the main site's canonical Business record.
+3. New events use `https://redmondcompass.com/submit-event`; new business posts use
+   `https://redmondcompass.com/submit-post`; classes are managed in
+   `https://redmondcompass.com/dashboard`.
+4. The app mirrors businesses at `47 */6 * * *` UTC and approved events, posts, and
+   classes at `37 */6 * * *` UTC. Owners should allow up to six hours after approval.
 
 In app-only mode, `/manage/edit` is a handoff rather than a second editor. It opens the
 main-site dashboard and provides a copyable packet of the current app details. This is the
 safe path for a field that exists in the app but is missing from the main site.
+
+The app-only owner dashboard and every legacy app content-editor URL now hand off to these
+main-site routes. Authenticated browser roles have no insert, update, or delete grants on
+`bulletins`, `events`, or `business_classes`; only the service-role mirror can change them.
+Existing app-authored rows are preserved read-only.
 
 ## What the business mirror retains
 

@@ -194,10 +194,10 @@ export function HomeScreen() {
                   <FeedItem
                     key={bl.id}
                     type="bulletin"
-                    title={bl.body}
+                    title={bl.title || bl.body}
                     sourceLabel={biz?.name ?? t("home.aLocalBusiness")}
                     seed={biz?.name}
-                    image={biz?.photos[0]}
+                    image={bl.image || biz?.photos[0]}
                     businessCategory={biz?.category}
                     time={relativeTime(bl.createdAt)}
                     href={biz ? `/b/${biz.slug}` : undefined}

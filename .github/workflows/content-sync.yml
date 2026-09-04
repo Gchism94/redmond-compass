@@ -1,0 +1,30 @@
+# Approved Redmond Compass events, business posts, and classes → app database.
+# Runs after the calendar sync so duplicate event titles/dates keep the calendar copy.
+name: main-site-content-sync
+on:
+  schedule:
+    - cron: "37 */6 * * *"
+  workflow_dispatch: {}
+concurrency: main-site-content-sync
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify content mapping before writes
+        run: npm run test:content-sync
+      - name: Preview the live reconciliation
+        run: node scripts/sync-main-site-content.mjs --dry-run
+        env:
+          SUPABASE_URL: https://jdrhcmkqtewlzlojixpd.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      - name: Mirror approved content into Supabase
+        run: node scripts/sync-main-site-content.mjs
+        env:
+          SUPABASE_URL: https://jdrhcmkqtewlzlojixpd.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

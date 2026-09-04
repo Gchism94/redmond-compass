@@ -8,6 +8,7 @@ dist-ssr
 .DS_Store
 .vite
 coverage
+.playwright-cli/
 *.log
 *.tsbuildinfo
 pre-push-data.sql

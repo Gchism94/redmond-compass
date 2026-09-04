@@ -7,7 +7,7 @@ import { useSession } from "@/features/account/session";
 import { listingCompleteness } from "@/lib/completeness";
 import { LIMITS } from "@/lib/entitlements";
 import { useI18n } from "@/i18n";
-import { appOnly, HOME_PATH, LIVE_SITE } from "@/lib/siteMode";
+import { appOnly, HOME_PATH, OWNER_LINKS } from "@/lib/siteMode";
 
 /**
  * Owner Dashboard (B1) — light "manage my listing" hub. MVP is FREE only:
@@ -20,7 +20,7 @@ export function OwnerDashboard() {
   const navigate = useNavigate();
   const { ownerBusinessId, data: business, isLoading, isError, refetch } = useOwnerBusiness();
   const { setOwnerBusinessId } = useSession();
-  const bulletinCount = useBulletinCount(ownerBusinessId ?? undefined);
+  const bulletinCount = useBulletinCount(appOnly ? undefined : ownerBusinessId ?? undefined);
 
   if (!ownerBusinessId) return <Navigate to="/claim" replace />;
   if (isLoading) return <DashboardSkeleton />;
@@ -83,7 +83,7 @@ export function OwnerDashboard() {
                 <h2 className="font-heading text-sm font-semibold text-foreground">{t("owner.mainSiteSourceTitle")}</h2>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t("owner.mainSiteSourceBody")}</p>
                 <a
-                  href={`${LIVE_SITE}/dashboard`}
+                  href={OWNER_LINKS.dashboard}
                   target="_blank"
                   rel="noreferrer noopener"
                   className="mt-2 inline-flex min-h-tap items-center gap-1.5 text-sm font-semibold text-positive hover:underline"
@@ -110,19 +110,22 @@ export function OwnerDashboard() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <ActionTile
             icon={<Megaphone size={20} />}
-            label={t("owner.manageBulletins")}
-            badge={`${used}/${cap}`}
-            onClick={() => navigate("/manage/bulletins")}
+            label={appOnly ? t("owner.submitBusinessPost") : t("owner.manageBulletins")}
+            badge={appOnly ? undefined : `${used}/${cap}`}
+            href={appOnly ? OWNER_LINKS.post : undefined}
+            onClick={appOnly ? undefined : () => navigate("/manage/bulletins")}
           />
           <ActionTile
             icon={<CalendarPlus size={20} />}
-            label={t("owner.manageEvents")}
-            onClick={() => navigate("/manage/events")}
+            label={appOnly ? t("owner.submitAnEvent") : t("owner.manageEvents")}
+            href={appOnly ? OWNER_LINKS.event : undefined}
+            onClick={appOnly ? undefined : () => navigate("/manage/events")}
           />
           <ActionTile
             icon={<BookOpen size={20} />}
-            label={t("owner.manageClasses")}
-            onClick={() => navigate("/manage/classes")}
+            label={appOnly ? t("owner.addClassMainSite") : t("owner.manageClasses")}
+            href={appOnly ? OWNER_LINKS.dashboard : undefined}
+            onClick={appOnly ? undefined : () => navigate("/manage/classes")}
           />
           <ActionTile
             icon={<Pencil size={20} />}
@@ -147,18 +150,16 @@ function ActionTile({
   label,
   badge,
   onClick,
+  href,
 }: {
   icon: React.ReactNode;
   label: string;
   badge?: string;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string;
 }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="relative flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card p-3 text-center transition hover:bg-muted focus-visible:outline-none"
-    >
+  const content = (
+    <>
       {badge && (
         <span className="absolute right-2 top-2 rounded-pill bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
           {badge}
@@ -166,7 +167,14 @@ function ActionTile({
       )}
       <span className="text-positive">{icon}</span>
       <span className="text-xs font-medium leading-tight text-foreground">{label}</span>
-    </button>
+      {href && <ExternalLink size={12} className="absolute bottom-2 right-2 text-muted-foreground" aria-hidden />}
+    </>
+  );
+  const className = "relative flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card p-3 text-center transition hover:bg-muted focus-visible:outline-none";
+  return href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>{content}</a>
+  ) : (
+    <button type="button" onClick={onClick} className={className}>{content}</button>
   );
 }
 

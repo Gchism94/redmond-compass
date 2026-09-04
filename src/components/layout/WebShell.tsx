@@ -11,7 +11,7 @@ import { UpdateController } from "@/pwa/UpdateController";
 import { useInstallPrompt } from "@/pwa/useInstallPrompt";
 import { useSession } from "@/features/account/session";
 import { useI18n, type DictKey } from "@/i18n";
-import { appOnly, HOME_PATH, LIVE_SITE } from "@/lib/siteMode";
+import { appOnly, HOME_PATH, LIVE_SITE, OWNER_LINKS } from "@/lib/siteMode";
 import { cn } from "@/lib/cn";
 
 /**
@@ -260,8 +260,8 @@ function WebFooter() {
     {
       headingKey: "web.footer.contribute",
       links: [
-        { labelKey: "web.footer.submitBusiness", to: "/claim" },
-        { labelKey: "web.footer.submitEvent", to: "/manage/event/new" },
+        { labelKey: "web.footer.submitBusiness", to: appOnly ? OWNER_LINKS.business : "/claim" },
+        { labelKey: "web.footer.submitEvent", to: appOnly ? OWNER_LINKS.event : "/manage/event/new" },
       ],
     },
   ];

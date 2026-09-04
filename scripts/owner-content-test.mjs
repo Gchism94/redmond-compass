@@ -49,10 +49,12 @@ createRoot(document.getElementById("root")).render(
 `);
 
 const outdir = path.join(tmp, "site");
+const testConfig = path.join(tmp, "compass.config.ts");
+writeFileSync(testConfig, `export const compassConfig = { siteMode: "full-site", liveSite: "https://redmondcompass.com", appOrigin: "http://localhost:${PORT}" };`);
 await build({
   entryPoints: [entry], bundle: true, format: "esm", platform: "browser", outfile: path.join(outdir, "app.js"),
   logLevel: "error", jsx: "automatic", absWorkingDir: ROOT, nodePaths: [path.join(ROOT, "node_modules")],
-  alias: { "@": path.join(ROOT, "src"), "@config": path.join(ROOT, "compass.config.ts") }, loader: { ".css": "empty" },
+  alias: { "@": path.join(ROOT, "src"), "@config": testConfig }, loader: { ".css": "empty" },
   define: { "import.meta.env.DEV": "false", "import.meta.env.PROD": "true", "import.meta.env.VITE_DATA_SOURCE": '"mock"', "import.meta.env.VITE_SUPABASE_URL": '""', "import.meta.env.VITE_SUPABASE_ANON_KEY": '""', "process.env.NODE_ENV": '"production"' },
 });
 writeFileSync(path.join(outdir, "index.html"), '<!doctype html><html><body><div id="root"></div><script type="module" src="/app.js"></script></body></html>');

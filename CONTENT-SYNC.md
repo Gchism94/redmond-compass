@@ -34,14 +34,14 @@ Base44 owner console before it is retired or moved.
 |---|---|---|---|
 | Businesses | Owner-managed main-site `Business` records, published through `listBusinessesPublic` | `business-sync.yml` → Supabase `businesses` every six hours | Keep the main site authoritative. New listings and core profile edits begin there; app-only `/manage/edit` hands owners back to that workflow. |
 | Business media | Main-site public `image_url` plus previously recovered app media | The main image is mirrored when present; a blank source does not destroy recovered app art | Add a private server-side contract if the owner wants approved `BusinessPhoto` galleries mirrored too. |
-| Events | Public Google Calendar for calendar-owned rows; owner submissions for owner-owned rows | six-hour ICS job → Supabase `events`; owner tools write Supabase | Replace the main site's separate Base44 event list with the same published Supabase query. This also removes its broken calendar-link time formatting. |
+| Events | Main-site approved `Event` records, with Google Calendar retained as a second inbound source | six-hour ICS job plus `content-sync.yml` → Supabase `events`; matching title/date pairs retain the calendar row | New events use the current main-site submission and approval flow. The app is read-only. |
 | News | Base44 daily automation, temporarily | six-hour `news-sync.yml` bridge → Supabase `news_articles` | Short term: Base44 remains the producer. End state: move the automation output to Supabase and have both sites read it. |
-| Bulletins/classes | Business owners in this app | Supabase | Main site reads the same public Supabase rows if these surfaces are added there. |
+| Business posts/classes | Main-site approved `BusinessPost` and `BusinessClass` records | `content-sync.yml` → Supabase `bulletins` and `business_classes` every six hours | New posts use `/submit-post`; classes use the owner dashboard. The app is read-only. |
 | Resources/notices | Editorial/service-role writes | Supabase after the one-time Base44 import | Move future editorial maintenance to one Supabase-backed admin surface. |
 
 ## Bridge safety rules
 
-The business and news bridges are intentionally narrow:
+The business, owner-content, and news bridges are intentionally narrow:
 
 - public main-site functions are read-only; a Supabase service key is used only for the target;
 - Base44 ids remain the Supabase row ids, making retries idempotent;
@@ -66,6 +66,12 @@ The business and news bridges are intentionally narrow:
   small batches and stores the first usable Open Graph/Twitter image. Publisher failures
   never abort the content sync, and short-lived Facebook CDN images are rejected;
 - pure mapping tests and a live dry-run run in each scheduled workflow before production writes.
+- main-site event/post/class rows are namespaced, reconciled only against rows owned by
+  that mirror, and never store the public feed's submitter email;
+- an event already represented by another source on the same Redmond date with the same
+  normalized title keeps the existing copy instead of rendering twice;
+- malformed event times are reported and skipped rather than assigned an invented time;
+- app-authenticated roles cannot write events, posts, or classes around the owner intake flow.
 
 ## Verified cadence and freshness
 
@@ -81,6 +87,10 @@ The business and news bridges are intentionally narrow:
   audit also reports any useful app field that is blank in the authoritative record.
 - Events: GitHub Actions at `23 */6 * * *` UTC. Scheduled runs were observed succeeding on
   September 1–2, 2026.
+- Main-site events, posts, and classes: GitHub Actions at `37 */6 * * *` UTC, after the
+  calendar job. On September 3 the public feeds contained 124 approved events, 2 approved
+  business posts, and 15 business classes (14 open, 1 sold out). All referenced post/class
+  business ids existed in the public directory feed.
 - News: GitHub Actions at `37 */6 * * *` UTC. Scheduled runs were observed succeeding on
   September 1–2, 2026.
 - Legacy Sheet: not scheduled. `sync_runs` contains one successful manual run on August 14,

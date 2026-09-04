@@ -27,12 +27,18 @@ import { formatClassDate, redmondDateYmd } from "@/lib/format";
 import type { BusinessClass } from "@/lib/types";
 import { useI18n } from "@/i18n";
 import { MutationError } from "./MutationError";
+import { MainSiteContentHandoff } from "./MainSiteContentHandoff";
 import { useOwnerBusiness } from "./useOwnerBusiness";
+import { appOnly } from "@/lib/siteMode";
 
 type ActiveClassStatus = Exclude<BusinessClass["status"], "cancelled">;
 
 /** Complete owner view of class/workshop history, including reversible cancellations. */
 export function ManageClassesScreen() {
+  return appOnly ? <MainSiteContentHandoff kind="class" /> : <LocalManageClassesScreen />;
+}
+
+function LocalManageClassesScreen() {
   const { t, lang } = useI18n();
   const { ownerBusinessId, data: business, isLoading: businessLoading, isError: businessError, refetch: refetchBusiness } = useOwnerBusiness();
   const classes = useManagedBusinessClasses(ownerBusinessId ?? undefined);
@@ -295,6 +301,10 @@ function ClassGroup({ title, emptyText, isPast = false, items, lang, confirmDele
 
 /** Create/edit form. Keeping it as a child lets async edit data initialize state once. */
 export function ClassEditorScreen() {
+  return appOnly ? <MainSiteContentHandoff kind="class" /> : <LocalClassEditorScreen />;
+}
+
+function LocalClassEditorScreen() {
   const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const { ownerBusinessId, data: business, isLoading: businessLoading, isError: businessError, refetch: refetchBusiness } = useOwnerBusiness();

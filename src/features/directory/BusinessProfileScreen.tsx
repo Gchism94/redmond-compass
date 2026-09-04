@@ -245,10 +245,10 @@ export function BusinessProfileScreen() {
               <FeedItem
                 key={bl.id}
                 type="bulletin"
-                title={bl.body}
+                title={bl.title || bl.body}
                 sourceLabel={business.name}
                 seed={business.name}
-                image={business.photos[0]}
+                image={bl.image || business.photos[0]}
                 businessCategory={business.category}
                 time={relativeTime(bl.createdAt)}
                 showTypeTag={false}
