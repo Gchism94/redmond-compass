@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { detectInstallEnvironment } from "./installEnvironment";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -7,35 +8,52 @@ interface BeforeInstallPromptEvent extends Event {
 
 /**
  * Install affordance (BUILD-BRIEF §10). Captures `beforeinstallprompt` (Chromium)
- * so we can offer a custom "Add to Home Screen". iOS Safari doesn't fire it — we
+ * so we can offer a custom "Add to Home Screen". iOS browsers don't fire it — we
  * detect iOS + non-standalone to show Share-sheet instructions instead.
  */
+let deferredPrompt: BeforeInstallPromptEvent | null = null;
+let appInstalled = false;
+let listening = false;
+const subscribers = new Set<() => void>();
+
+function notify() {
+  subscribers.forEach((subscriber) => subscriber());
+}
+
+function ensureInstallListeners() {
+  if (listening || typeof window === "undefined") return;
+  listening = true;
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredPrompt = event as BeforeInstallPromptEvent;
+    notify();
+  });
+  window.addEventListener("appinstalled", () => {
+    appInstalled = true;
+    deferredPrompt = null;
+    notify();
+  });
+}
+
+// Register as soon as this module is loaded so a fast Chromium
+// `beforeinstallprompt` event is not lost between render and effect setup.
+ensureInstallListeners();
+
 export function useInstallPrompt() {
-  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(false);
+  const [, redraw] = useState(0);
 
   useEffect(() => {
-    const onPrompt = (e: Event) => {
-      e.preventDefault(); // suppress the mini-infobar; we drive our own UI
-      setDeferred(e as BeforeInstallPromptEvent);
-    };
-    const onInstalled = () => {
-      setInstalled(true);
-      setDeferred(null);
-    };
-    window.addEventListener("beforeinstallprompt", onPrompt);
-    window.addEventListener("appinstalled", onInstalled);
+    const subscriber = () => redraw((value) => value + 1);
+    subscribers.add(subscriber);
     return () => {
-      window.removeEventListener("beforeinstallprompt", onPrompt);
-      window.removeEventListener("appinstalled", onInstalled);
+      subscribers.delete(subscriber);
     };
   }, []);
 
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-  const isIOS =
-    /iphone|ipad|ipod/i.test(ua) ||
-    // iPadOS 13+ reports as desktop Safari with touch
-    (/Macintosh/.test(ua) && typeof navigator !== "undefined" && navigator.maxTouchPoints > 1);
+  const environment = detectInstallEnvironment();
+  // WebKit-based iOS browsers use the Share-sheet installation path. Ignore a
+  // synthetic/development Chromium event when the user agent is an iPhone/iPad.
+  const nativePromptAvailable = environment.platform !== "ios" && !!deferredPrompt && !appInstalled;
   const isStandalone =
     typeof window !== "undefined" &&
     (window.matchMedia("(display-mode: standalone)").matches ||
@@ -43,20 +61,23 @@ export function useInstallPrompt() {
       (navigator as unknown as { standalone?: boolean }).standalone === true);
 
   async function promptInstall(): Promise<"accepted" | "dismissed" | "unavailable"> {
-    if (!deferred) return "unavailable";
-    await deferred.prompt();
-    const { outcome } = await deferred.userChoice;
-    setDeferred(null);
+    if (!deferredPrompt) return "unavailable";
+    const prompt = deferredPrompt;
+    await prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    deferredPrompt = null;
+    notify();
     return outcome;
   }
 
   return {
     /** Chromium native prompt is available */
-    canInstall: !!deferred && !installed,
+    canInstall: nativePromptAvailable,
     /** show iOS "Add to Home Screen" instructions instead */
-    showIosHint: isIOS && !isStandalone && !installed,
+    showIosHint: environment.platform === "ios" && !isStandalone && !appInstalled,
     isStandalone,
-    installed,
+    installed: appInstalled,
     promptInstall,
+    ...environment,
   };
 }

@@ -107,6 +107,12 @@ export default defineConfig({
           { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
           { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
+        // Chrome can use these real product screens for its richer Android
+        // installation dialog instead of presenting only an icon and name.
+        screenshots: [
+          { src: "/landing/app-home.jpg", sizes: "390x780", type: "image/jpeg", form_factor: "narrow", label: "Redmond Compass home" },
+          { src: "/landing/app-events.jpg", sizes: "390x780", type: "image/jpeg", form_factor: "narrow", label: "Redmond Compass events" },
+        ],
         shortcuts: [
           { name: "Search", short_name: "Search", url: "/search", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
           { name: "Events", short_name: "Events", url: "/events", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },

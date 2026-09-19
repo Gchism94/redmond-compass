@@ -68,9 +68,10 @@ const ok = (c, m) => {
 
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: "new", args: ["--no-sandbox"] });
 
-async function newPage(width, height) {
+async function newPage(width, height, userAgent) {
   const page = await browser.newPage();
   await page.setViewport({ width, height, deviceScaleFactor: 2, isMobile: width < 800, hasTouch: width < 800 });
+  if (userAgent) await page.setUserAgent(userAgent);
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
@@ -86,6 +87,53 @@ async function newPage(width, height) {
     }));
   };
   return { page, errors, visit };
+}
+
+const IOS_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+const ANDROID_UA = "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36";
+
+// ---------------- install journey — device-tailored mobile guidance ----------------
+if (APP_ONLY) {
+  {
+    const { page, errors, visit } = await newPage(390, 844, IOS_UA);
+    const label = (m) => `[install/iPhone] ${m}`;
+    const landing = await visit("/");
+    ok(/install on iphone/i.test(landing.text), label("hero action is tailored to iPhone"));
+    await page.$eval("[data-install-cta]", (button) => button.click());
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const dialog = await page.$eval('[role="dialog"]', (element) => ({
+      text: element.textContent || "",
+      platform: element.querySelector("[data-install-guide]")?.getAttribute("data-install-platform"),
+      overflow: element.scrollWidth - element.clientWidth,
+    }));
+    ok(dialog.platform === "ios", label("opens the iOS guide without leaving the landing page"));
+    ok(/share button/i.test(dialog.text) && /add to home screen/i.test(dialog.text) && /open as web app/i.test(dialog.text), label("shows the complete three-step iOS flow"));
+    ok(dialog.overflow === 0, label(`guide has no horizontal overflow (${dialog.overflow})`));
+    ok(errors.length === 0, label(`no page errors (${errors.join(" | ") || "none"})`));
+    await page.close();
+  }
+
+  {
+    const { page, errors, visit } = await newPage(390, 844, ANDROID_UA);
+    const label = (m) => `[install/Android] ${m}`;
+    const landing = await visit("/");
+    ok(/install on android/i.test(landing.text), label("hero action is tailored to Android"));
+    await page.evaluate(() => {
+      window.__installPromptCalled = false;
+      const installEvent = new Event("beforeinstallprompt", { cancelable: true });
+      Object.defineProperties(installEvent, {
+        prompt: { value: async () => { window.__installPromptCalled = true; } },
+        userChoice: { value: Promise.resolve({ outcome: "accepted" }) },
+      });
+      window.dispatchEvent(installEvent);
+    });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await page.$eval("[data-install-cta]", (button) => button.click());
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    ok(await page.evaluate(() => window.__installPromptCalled === true), label("one tap invokes the native browser prompt"));
+    ok(errors.length === 0, label(`no page errors (${errors.join(" | ") || "none"})`));
+    await page.close();
+  }
 }
 
 // ---------------- 390px — AppShell (mobile PWA) + landing ----------------
@@ -335,16 +383,11 @@ if (APP_ONLY) {
     ok(!L.text.includes("Your Guide to Redmond Living"), label("site home NOT presented at /"));
     ok(!/featured/i.test(L.text), label("no Featured on landing (equal ranking)"));
     ok(L.overflowX === 0, label(`landing: no horizontal overflow (${L.overflowX})`));
-    const installCards = await page.$$eval("#install button[aria-expanded]", (buttons) =>
-      buttons.map((button) => ({
-        expanded: button.getAttribute("aria-expanded") === "true",
-        height: Math.round(button.parentElement?.getBoundingClientRect().height ?? 0),
-      })),
+    const installGuides = await page.$$eval("#install [data-install-guide]", (guides) =>
+      guides.map((guide) => guide.getAttribute("data-install-platform")),
     );
-    const expandedHeight = installCards.find((card) => card.expanded)?.height ?? 0;
-    const collapsedHeights = installCards.filter((card) => !card.expanded).map((card) => card.height);
-    ok(expandedHeight > 0 && collapsedHeights.length > 0 && collapsedHeights.every((height) => height < expandedHeight),
-       label("landing: collapsed install cards do not retain empty expanded height"));
+    ok(installGuides.length === 1 && installGuides[0] === "desktop",
+       label("landing: shows one device-tailored install guide instead of three competing cards"));
   }
 
   let r = await visit(HOME);

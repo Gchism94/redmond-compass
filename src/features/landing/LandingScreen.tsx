@@ -1,12 +1,13 @@
-import { useEffect, useId, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
-  ArrowRight, Ban, Bookmark, BookOpen, CalendarDays, ChevronDown, Compass, Download,
-  Eye, Home, Info, Languages, LockOpen, MapPin, Monitor, Plus, Scale, Search, Share,
-  ShieldCheck, Smartphone, Star, Store, UserPlus, WifiOff,
+  ArrowRight, Ban, Bookmark, BookOpen, CalendarDays, Compass, Download,
+  Eye, Home, Info, Languages, LockOpen, MapPin, Scale, Search,
+  ShieldCheck, Star, Store, UserPlus, WifiOff,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useInstallPrompt } from "@/pwa/useInstallPrompt";
+import { InstallDeviceBadge, InstallGuideContent, InstallGuideSheet, installCtaKey } from "@/pwa/InstallGuide";
 import { usePageMeta } from "@/lib/pageMeta";
 import { useI18n, type DictKey } from "@/i18n";
 import { HOME_PATH, LIVE_SITE } from "@/lib/siteMode";
@@ -51,15 +52,22 @@ const CANT: { key: DictKey; icon: LucideIcon }[] = [
 export function LandingScreen() {
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
-  const { canInstall, showIosHint, promptInstall, isStandalone } = useInstallPrompt();
+  const { canInstall, promptInstall, platform, device, browser, isMobile } = useInstallPrompt();
+  const [installGuideOpen, setInstallGuideOpen] = useState(false);
   usePageMeta(t("landing.metaTitle"), t("landing.metaDesc"));
+
+  const runNativeInstall = async () => {
+    const outcome = await promptInstall();
+    if (outcome === "accepted") navigate(HOME_PATH);
+    return outcome;
+  };
 
   const install = async () => {
     if (canInstall) {
-      const outcome = await promptInstall();
+      const outcome = await runNativeInstall();
       if (outcome !== "unavailable") return;
     }
-    document.getElementById("install")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setInstallGuideOpen(true);
   };
 
   return (
@@ -98,11 +106,11 @@ export function LandingScreen() {
               <h1 className="mt-4 max-w-xl font-heading text-4xl font-bold leading-[1.06] sm:mt-5 sm:text-5xl lg:mt-4 lg:text-[2.375rem] xl:text-[2.75rem]">{t("landing.heroTitle")}</h1>
               <p className="mt-4 max-w-xl text-base leading-7 text-background/80 sm:mt-5 lg:mt-4 lg:text-sm lg:leading-[1.45rem] xl:text-[15px] xl:leading-6">{t("landing.heroSub")}</p>
               <div className="mt-6 grid gap-3 sm:mt-7 sm:flex sm:flex-wrap lg:mt-4 xl:mt-5">
-                <button type="button" onClick={() => navigate(HOME_PATH)} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-background px-6 text-base font-semibold text-foreground transition-colors hover:bg-secondary sm:w-auto lg:h-11 lg:px-5 lg:text-sm xl:h-12 xl:px-6 xl:text-base">
+                <button type="button" onClick={() => navigate(HOME_PATH)} className={cn("inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-6 text-base font-semibold transition-colors sm:w-auto lg:h-11 lg:px-5 lg:text-sm xl:h-12 xl:px-6 xl:text-base", isMobile ? "order-2 border border-background/35 text-background hover:bg-background/10" : "order-1 bg-background text-foreground hover:bg-secondary")}>
                   {t("landing.open")} <ArrowRight size={17} />
                 </button>
-                <button type="button" onClick={install} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-background/35 px-6 text-base font-semibold text-background transition-colors hover:bg-background/10 sm:w-auto lg:h-11 lg:px-5 lg:text-sm xl:h-12 xl:px-6 xl:text-base">
-                  <Download size={17} /> {t("landing.install")}
+                <button data-install-cta type="button" onClick={() => void install()} className={cn("inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-6 text-base font-semibold transition-colors sm:w-auto lg:h-11 lg:px-5 lg:text-sm xl:h-12 xl:px-6 xl:text-base", isMobile ? "order-1 bg-background text-foreground hover:bg-secondary" : "order-2 border border-background/35 text-background hover:bg-background/10")}>
+                  <Download size={17} /> {t(installCtaKey(device))}
                 </button>
               </div>
               <p className="mt-5 flex max-w-xl items-start gap-2 text-xs leading-relaxed text-background/70 sm:mt-6 lg:mt-3 xl:mt-4">
@@ -156,26 +164,21 @@ export function LandingScreen() {
         </section>
 
         <section id="install" className="mx-auto mt-16 max-w-6xl scroll-mt-6 px-5 sm:mt-20">
-          <div className="max-w-2xl">
+          <div className="mx-auto max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">{t("landing.installLabel")}</p>
             <h2 className="mt-3 font-heading text-3xl font-bold text-foreground">{t("landing.installTitle")}</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("landing.installSub")}</p>
-          </div>
-          <div className="mt-6 grid items-start gap-3 md:grid-cols-3">
-            <InstallCard icon={Smartphone} title={t("landing.installAndroid")} body={t("landing.installAndroidBody")} highlight={canInstall} action={canInstall ? (
-              <button type="button" onClick={() => void promptInstall()} className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
-                <Download size={14} /> {t("pwa.install")}
-              </button>
-            ) : null} />
-            <InstallCard icon={Share} title={t("landing.installIos")} highlight={showIosHint} body="" action={
-              <p className="mt-1 inline-flex flex-wrap items-center gap-1 text-sm leading-relaxed text-muted-foreground">
-                {t("pwa.iosTap")} <Share size={13} className="inline text-foreground" /> {t("pwa.iosShareThen")} {" "}
-                <span className="inline-flex items-center gap-0.5 font-medium text-foreground"><Plus size={13} /> {t("pwa.addToHome")}</span>.
-              </p>
-            } />
-            <InstallCard icon={Monitor} title={t("landing.installDesktop")} body={t("landing.installDesktopBody")} highlight={!canInstall && !showIosHint && !isStandalone} action={
-              <Link to={HOME_PATH} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-positive">{t("landing.useInBrowser")} <ArrowRight size={14} /></Link>
-            } />
+            <div className="mt-5"><InstallDeviceBadge device={device} /></div>
+            <div className="mt-4 rounded-2xl border border-border bg-card p-5 shadow-card sm:p-6">
+              <InstallGuideContent
+                platform={platform}
+                device={device}
+                browser={browser}
+                canInstall={canInstall}
+                onInstall={() => void runNativeInstall()}
+              />
+            </div>
+            <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">{t("landing.installOtherDevice")}</p>
           </div>
         </section>
 
@@ -209,6 +212,16 @@ export function LandingScreen() {
           </span>
         </div>
       </footer>
+
+      <InstallGuideSheet
+        open={installGuideOpen}
+        onClose={() => setInstallGuideOpen(false)}
+        platform={platform}
+        device={device}
+        browser={browser}
+        canInstall={canInstall}
+        onInstall={async () => { await runNativeInstall(); }}
+      />
     </div>
   );
 }
@@ -249,24 +262,6 @@ function PreviewRow({ icon: Icon, label }: { icon: LucideIcon; label: string }) 
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary"><Icon size={15} /></span>
       <span className="text-[11px] font-semibold text-foreground">{label}</span>
       <ArrowRight size={12} className="ml-auto text-muted-foreground" />
-    </div>
-  );
-}
-
-function InstallCard({ icon: Icon, title, body, action, highlight }: { icon: LucideIcon; title: string; body: string; action?: React.ReactNode; highlight?: boolean }) {
-  const panelId = useId();
-  const [open, setOpen] = useState(!!highlight);
-  useEffect(() => {
-    if (highlight) setOpen(true);
-  }, [highlight]);
-  return (
-    <div className={cn("rounded-xl border bg-card p-4 shadow-card", highlight ? "border-positive/50 ring-1 ring-positive/20" : "border-border")}>
-      <button type="button" aria-controls={panelId} aria-expanded={open} onClick={() => setOpen((value) => !value)} className="flex min-h-tap w-full items-center gap-2.5 text-left">
-        <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", highlight ? "bg-positive/10 text-positive" : "bg-secondary text-muted-foreground")}><Icon size={17} /></span>
-        <span className="flex-1 font-heading text-sm font-semibold text-foreground">{title}</span>
-        <ChevronDown size={15} className={cn("text-muted-foreground transition-transform", open && "rotate-180")} />
-      </button>
-      {open && <div id={panelId} className="mt-2 pl-[46px]">{body && <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>}{action}</div>}
     </div>
   );
 }
